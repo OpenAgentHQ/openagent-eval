@@ -162,14 +162,11 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install build tools
-        run: uv pip install --system build twine
-
       - name: Build package
-        run: uv run python -m build
+        run: uvx --from build python -m build
 
       - name: Verify package
-        run: uv run twine check dist/*
+        run: uvx --from twine twine check dist/*
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
