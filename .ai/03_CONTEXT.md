@@ -1,0 +1,180 @@
+# CONTEXT.md - Working Memory
+
+> This file tracks project state, milestones, and current progress.
+> Update after every milestone.
+
+---
+
+## Current State
+
+| Field | Value |
+|-------|-------|
+| **Phase** | Pre-implementation |
+| **Status** | Architecture Decisions Applied |
+| **Last Updated** | 2025-07-08 |
+| **Next Action** | Awaiting approval to scaffold project |
+
+---
+
+## Project Identity
+
+| Field | Value |
+|-------|-------|
+| **Repository** | openagent-eval |
+| **Package** | openagent_eval |
+| **CLI** | oaeval |
+| **Source of Truth** | PROJECT.md |
+
+---
+
+## Project Understanding
+
+**OpenAgent Eval** is an open-source CLI framework for evaluating RAG systems and AI Agents.
+
+**Core Problem:** Developers can build RAG systems but cannot reliably measure quality, compare experiments, detect hallucinations, or identify retrieval failures.
+
+**Solution:** A local-first, developer-friendly evaluation framework that runs entirely from the command line.
+
+**Target:** Become the `pytest` of AI evaluation.
+
+---
+
+## Architecture Summary
+
+```
+CLI (oaeval - Typer + Rich)
+            │
+            ▼
+SDK (openagent_eval - Core Evaluation API)
+            │
+            ▼
+┌─────────────────────────────────────────┐
+│  Metrics • Providers • Datasets • Reports │
+│  Plugins • Integrations • Exceptions     │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `.ai/00_PROJECT.md` | Single source of truth (Product Specification) |
+| `.ai/02_AGENT.md` | Engineering handbook (coding standards, architecture rules) |
+| `.ai/03_CONTEXT.md` | This file (working memory, progress tracking) |
+| `.ai/04_DECISIONS.md` | Architectural decisions with rationale |
+| `.ai/05_TASKS.md` | Project task list and progress tracking |
+| `.ai/01_ARCHITECTURE.md` | System architecture and design |
+
+---
+
+## Milestones
+
+### Milestone 0: Documentation & Architecture
+- [x] Read and understand PROJECT.md
+- [x] Create AGENT.md
+- [x] Create CONTEXT.md
+- [x] Create DECISIONS.md
+- [x] Create TASKS.md
+- [x] Architecture analysis and improvements
+- [x] Apply architecture decisions (D011-D016)
+- [x] Update all project files
+- [x] Create .ai/ directory structure
+
+### Milestone 1: Project Foundation
+- [ ] Initialize project with uv
+- [ ] Create pyproject.toml
+- [ ] Set up directory structure
+- [ ] Create exception hierarchy
+- [ ] CLI skeleton (Typer)
+- [ ] Configuration system (Pydantic v2 + YAML)
+- [ ] Basic pipeline architecture
+
+### Milestone 2: Data Layer
+- [ ] BaseDatasetLoader interface
+- [ ] JSON loader
+- [ ] JSONL loader
+- [ ] CSV loader
+- [ ] HuggingFace loader
+- [ ] Dataset validation
+
+### Milestone 3: Metrics
+- [ ] BaseMetric interface
+- [ ] MetricResult model
+- [ ] Retrieval metrics
+- [ ] Generation metrics
+- [ ] Classic metrics (BLEU, ROUGE, etc.)
+
+### Milestone 4: Reports
+- [ ] ReportGenerator interface
+- [ ] Terminal report (Rich)
+- [ ] Markdown report
+- [ ] HTML report (Jinja2)
+- [ ] JSON report
+
+### Milestone 5: Providers
+- [ ] LLMProvider interface
+- [ ] Retriever interface
+- [ ] OpenAI adapter
+- [ ] Gemini adapter
+- [ ] Anthropic adapter
+- [ ] Chroma adapter
+
+### Milestone 6: Plugin System
+- [ ] Plugin registry
+- [ ] Entry point discovery
+- [ ] User extension examples
+
+---
+
+## Current Questions
+
+None at this time. Awaiting user approval before scaffolding.
+
+---
+
+## Blockers
+
+None currently.
+
+---
+
+## Architecture Decisions Applied
+
+| ID | Decision | Status |
+|----|----------|--------|
+| D011 | CLI Naming Convention | ✅ Applied |
+| D012 | Core Module Structure | ✅ Applied |
+| D013 | Exception Hierarchy | ✅ Applied |
+| D014 | Testing Structure | ✅ Applied |
+| D015 | Configuration Validation | ✅ Applied |
+| D016 | Documentation Workflow | ✅ Applied |
+
+---
+
+## Notes
+
+- PROJECT.md is comprehensive and well-structured
+- Architecture is clear: SDK + CLI dual interface
+- Plugin-based design is well-defined
+- v1 scope is tightly focused on RAG evaluation
+- Future versions (v2: agents, v3: cloud) are clearly separated
+- All architecture decisions have been applied to project files
+- Project is ready for scaffolding upon approval
+
+---
+
+## Change Log
+
+| Date | Change |
+|------|--------|
+| 2025-07-08 | Initial CONTEXT.md created |
+| 2025-07-08 | Updated Milestone 0 completion status |
+| 2025-07-08 | Added TASKS.md to key files |
+| 2025-07-08 | Architecture analysis completed |
+| 2025-07-08 | Applied architecture decisions D011-D016 |
+| 2025-07-08 | Updated with project identity (repository, package, CLI) |
+| 2025-07-08 | Added ARCHITECTURE.md to key files |
+| 2025-07-08 | Created .ai/ directory structure |
+| 2025-07-08 | Moved all project files to .ai/ |
