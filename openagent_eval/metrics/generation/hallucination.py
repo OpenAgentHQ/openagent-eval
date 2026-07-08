@@ -53,7 +53,8 @@ class HallucinationDetection(BaseMetric):
         # Try DeepEval if available
         try:
             return self._evaluate_with_deepeval(answer, contexts)
-        except ImportError:
+        except (ImportError, Exception) as e:
+            # DeepEval may fail if API key is not configured
             pass
 
         # Fallback: word coverage
