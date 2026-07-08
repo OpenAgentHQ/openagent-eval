@@ -1,0 +1,53 @@
+# Codecov Configuration for OpenAgent Eval
+
+codecov:
+  require_ci_to_pass: yes
+  notify:
+    after_n_builds: 3
+    wait_for_ci: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        if_ci_failed: error
+    patch:
+      default:
+        target: auto
+        threshold: 1%
+        if_ci_failed: error
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+flags:
+  unittests:
+    paths:
+      - openagent_eval/
+    carryforward: true
+
+ignore:
+  - "tests/**"
+  - "docs/**"
+  - "scripts/**"
+  - "**/*.md"
+  - "**/conftest.py"
+  - "**/__init__.py"

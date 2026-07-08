@@ -1,0 +1,74 @@
+# Documentation Workflow for OpenAgent Eval
+# Validates documentation builds with MkDocs
+
+name: Documentation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "README.md"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - "README.md"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_DEFAULT: "3.11"
+
+jobs:
+  docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Install MkDocs and dependencies
+        run: |
+          uv pip install mkdocs mkdocs-material mkdocstrings mkdocstrings-python
+        continue-on-error: true
+
+      - name: Check if mkdocs.yml exists
+        id: check-mkdocs
+        run: |
+          if [ -f "mkdocs.yml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "::warning::mkdocs.yml not found, skipping documentation build"
+          fi
+
+      - name: Build documentation
+        if: steps.check-mkdocs.outputs.exists == 'true'
+        run: uv run mkdocs build --strict
+        continue-on-error: true
+
+      - name: Upload documentation artifact
+        if: steps.check-mkdocs.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: site/
+          retention-days: 7

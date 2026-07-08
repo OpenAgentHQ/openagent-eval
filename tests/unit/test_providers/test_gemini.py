@@ -6,6 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+# Skip tests if google-genai is not installed
+pytest.importorskip("google.genai", reason="google-genai not installed")
+
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
     ProviderExecutionError,

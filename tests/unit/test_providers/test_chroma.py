@@ -6,6 +6,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Skip tests if chromadb is not installed
+chromadb = pytest.importorskip("chromadb", reason="chromadb not installed")
+
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
     ProviderExecutionError,

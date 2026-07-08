@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import anthropic
-import httpx
 import pytest
+
+# Skip tests if anthropic is not installed
+anthropic = pytest.importorskip("anthropic", reason="anthropic not installed")
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,

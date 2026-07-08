@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import groq
-import httpx
 import pytest
+
+# Skip tests if groq is not installed
+groq = pytest.importorskip("groq", reason="groq not installed")
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,

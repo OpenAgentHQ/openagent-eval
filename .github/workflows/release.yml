@@ -1,0 +1,88 @@
+# Release Workflow for OpenAgent Eval
+# Triggered when a GitHub Release is published
+# Builds package and publishes to PyPI using Trusted Publishing (OIDC)
+
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write  # Required for Trusted Publishing
+
+env:
+  PYTHON_DEFAULT: "3.11"
+
+jobs:
+  # ──────────────────────────────────────────────────────────────
+  # Build & Publish to PyPI
+  # ──────────────────────────────────────────────────────────────
+  publish:
+    name: Build & Publish to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/openagent-eval
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install build tools
+        run: uv pip install build twine
+
+      - name: Build package
+        run: uv run python -m build
+
+      - name: Verify package
+        run: uv run twine check dist/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 30
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Uses Trusted Publishing (OIDC) - no API token needed
+        # Requires configuring PyPI trusted publisher in repository settings
+
+  # ──────────────────────────────────────────────────────────────
+  # Create GitHub Release Artifacts
+  # ──────────────────────────────────────────────────────────────
+  release-artifacts:
+    name: Upload Release Artifacts
+    runs-on: ubuntu-latest
+    needs: publish
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Upload wheel to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          draft: false
+          prerelease: false

@@ -1,0 +1,65 @@
+# Dependabot Configuration for OpenAgent Eval
+# Weekly updates for GitHub Actions and pip dependencies
+
+version: 2
+
+updates:
+  # ──────────────────────────────────────────────────────────────
+  # GitHub Actions
+  # ──────────────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "00:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers: []
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # ──────────────────────────────────────────────────────────────
+  # pip (Python dependencies)
+  # ──────────────────────────────────────────────────────────────
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "00:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers: []
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Group related updates
+    groups:
+      dev-dependencies:
+        patterns:
+          - "pytest*"
+          - "ruff"
+          - "mypy"
+          - "coverage*"
+        update-types:
+          - "minor"
+          - "patch"
+      core-dependencies:
+        patterns:
+          - "typer"
+          - "rich"
+          - "pydantic"
+          - "pyyaml"
+          - "loguru"
+          - "jinja2"
+          - "httpx"
+        update-types:
+          - "patch"

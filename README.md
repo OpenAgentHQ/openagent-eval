@@ -2,8 +2,12 @@
 
 **Open-source CLI framework for evaluating RAG systems and AI Agents.**
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/OpenAgentHQ/openagent-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenAgentHQ/openagent-eval/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/OpenAgentHQ/openagent-eval/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenAgentHQ/openagent-eval)
+[![PyPI Version](https://img.shields.io/pypi/v/openagent-eval.svg)](https://pypi.org/project/openagent-eval/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/openagent-eval.svg)](https://pypi.org/project/openagent-eval/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![CodeQL](https://github.com/OpenAgentHQ/openagent-eval/actions/workflows/codeql.yml/badge.svg)](https://github.com/OpenAgentHQ/openagent-eval/actions/workflows/codeql.yml)
 
 ---
 
