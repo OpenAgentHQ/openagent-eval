@@ -9,11 +9,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Phase** | Phase 2 Complete |
-| **Status** | Data Layer Implemented |
+| **Phase** | Phase 5 Complete |
+| **Status** | Provider Layer Implemented |
 | **Last Updated** | 2026-07-08 |
-| **Next Action** | Ready for Phase 3 (Metrics) |
-| **Current Branch** | feature/phase-2-data-layer |
+| **Next Action** | Ready for Phase 6 (Plugin System) |
+| **Current Branch** | feature/phase-5-providers |
 | **Remote** | https://github.com/OpenAgentHQ/openagent-eval.git |
 
 ---
@@ -96,34 +96,38 @@ SDK (openagent_eval - Core Evaluation API)
 - [x] Linting and formatting (ruff)
 
 ### Milestone 2: Data Layer
-- [ ] BaseDatasetLoader interface
-- [ ] JSON loader
-- [ ] JSONL loader
-- [ ] CSV loader
-- [ ] HuggingFace loader
-- [ ] Dataset validation
+- [x] BaseDatasetLoader interface
+- [x] JSON loader
+- [x] JSONL loader
+- [x] CSV loader
+- [x] HuggingFace loader
+- [x] Dataset validation
 
 ### Milestone 3: Metrics
-- [ ] BaseMetric interface
-- [ ] MetricResult model
-- [ ] Retrieval metrics
-- [ ] Generation metrics
-- [ ] Classic metrics (BLEU, ROUGE, etc.)
+- [x] BaseMetric interface
+- [x] MetricResult model
+- [x] Retrieval metrics
+- [x] Generation metrics
+- [x] Classic metrics (BLEU, ROUGE, etc.)
 
 ### Milestone 4: Reports
-- [ ] ReportGenerator interface
-- [ ] Terminal report (Rich)
-- [ ] Markdown report
-- [ ] HTML report (Jinja2)
-- [ ] JSON report
+- [x] ReportGenerator interface
+- [x] Terminal report (Rich)
+- [x] Markdown report
+- [x] HTML report (Jinja2)
+- [x] JSON report
 
 ### Milestone 5: Providers
-- [ ] LLMProvider interface
-- [ ] Retriever interface
-- [ ] OpenAI adapter
-- [ ] Gemini adapter
-- [ ] Anthropic adapter
-- [ ] Chroma adapter
+- [x] LLMProvider interface
+- [x] Retriever interface
+- [x] OpenAI adapter
+- [x] Gemini adapter
+- [x] Anthropic adapter
+- [x] Groq adapter
+- [x] OpenRouter adapter
+- [x] Ollama adapter (token tracking only)
+- [x] Chroma adapter
+- [x] Unit tests (138 tests)
 
 ### Milestone 6: Plugin System
 - [ ] Plugin registry
@@ -134,7 +138,7 @@ SDK (openagent_eval - Core Evaluation API)
 
 ## Current Questions
 
-None at this time. Phase 1 is complete.
+None at this time. Phase 5 is complete.
 
 ---
 
@@ -188,12 +192,12 @@ chore/{description}        # Maintenance tasks
 ## Notes
 
 - Phase 1 is complete - all foundation work done
-- 50 tests passing
-- CLI functional with all commands (init, run, report, compare, list, doctor)
-- Configuration system working with YAML + Pydantic
-- Exception hierarchy implemented
-- Core module stubs created
-- Ready to proceed with Phase 2 (Data Layer)
+- Phase 2 is complete - Data Layer implemented
+- Phase 3 is complete - Metrics System implemented (86 tests)
+- Phase 4 is complete - Reports System implemented (78 tests)
+- Phase 5 is complete - Provider Layer implemented (138 tests)
+- Total tests: 490+ passing
+- Ready to proceed with Phase 6 (Plugin System)
 
 ---
 
@@ -216,3 +220,8 @@ chore/{description}        # Maintenance tasks
 | 2026-07-08 | Phase 2 completed - Data Layer implemented |
 | 2026-07-08 | Dataset loaders (JSON, JSONL, CSV, HuggingFace) working |
 | 2026-07-08 | Ready for Phase 3 (Metrics System) |
+| 2026-07-08 | Phase 3 completed - Metrics System implemented |
+| 2026-07-08 | Phase 4 completed - Reports System implemented |
+| 2026-07-08 | Phase 5 completed - Provider Layer implemented |
+| 2026-07-08 | 138 new provider tests added (490+ total) |
+| 2026-07-08 | PR #7 created for Phase 5 |
