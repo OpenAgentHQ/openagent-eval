@@ -7,16 +7,6 @@
 
 ## TODO
 
-### Phase 2: Data Layer
-- [ ] Define BaseDatasetLoader interface
-- [ ] Implement JSON dataset loader
-- [ ] Implement JSONL dataset loader
-- [ ] Implement CSV dataset loader
-- [ ] Implement HuggingFace dataset loader
-- [ ] Create dataset validation (Pydantic models)
-- [ ] Implement dataset schema enforcement
-- [ ] Write unit tests for all loaders
-
 ### Phase 3: Metrics System
 - [ ] Define BaseMetric interface
 - [ ] Create MetricResult model
@@ -138,6 +128,16 @@
 - [x] Create .ai/ directory structure
 - [x] Move all project files to .ai/
 
+### Phase 2: Data Layer
+- [x] Define BaseDatasetLoader interface
+- [x] Implement JSON dataset loader
+- [x] Implement JSONL dataset loader
+- [x] Implement CSV dataset loader
+- [x] Implement HuggingFace dataset loader
+- [x] Create dataset validation (Pydantic models)
+- [x] Implement dataset schema enforcement
+- [x] Write unit tests for all loaders
+
 ---
 
 ## BLOCKED
@@ -194,18 +194,6 @@ Phase 8 (Documentation) ← can run in parallel with Phase 7
 
 | Date | Change |
 |------|--------|
-<<<<<<< HEAD
-| 2025-07-08 | Initial TASKS.md created |
-| 2025-07-08 | Updated with architecture decisions (D011-D016) |
-| 2025-07-08 | Added exception hierarchy to Phase 1 |
-| 2025-07-08 | Added core module to Phase 1 |
-| 2025-07-08 | Added ARCHITECTURE.md to Phase 1 |
-| 2025-07-08 | Created .ai/ directory structure |
-| 2025-07-08 | Moved all project files to .ai/ |
-| 2025-07-08 | Phase 1 completed - all foundation work done |
-| 2025-07-08 | 50 tests passing |
-| 2025-07-08 | CLI functional with all commands |
-=======
 | 2026-07-08 | Initial TASKS.md created |
 | 2026-07-08 | Updated with architecture decisions (D011-D016) |
 | 2026-07-08 | Added exception hierarchy to Phase 1 |
@@ -213,4 +201,6 @@ Phase 8 (Documentation) ← can run in parallel with Phase 7
 | 2026-07-08 | Added ARCHITECTURE.md to Phase 1 |
 | 2026-07-08 | Created .ai/ directory structure |
 | 2026-07-08 | Moved all project files to .ai/ |
->>>>>>> fd5438a9a42901cddae6ccd191cff531f23a81c7
+| 2026-07-08 | Phase 1 completed - all foundation work done |
+| 2026-07-08 | Phase 2 completed - Data Layer implemented |
+| 2026-07-08 | Starting Phase 3 - Metrics System |
