@@ -27,6 +27,7 @@ dependencies = [
     "pyyaml>=6.0",
     "loguru>=0.7.0",
     "jinja2>=3.1.0",
+    "httpx>=0.27.0",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +60,15 @@ oaeval = "openagent_eval.cli.main:app"
 
 [project.entry-points."openagent_eval.providers"]
 # Custom providers can be registered here
+
+[project.entry-points."openagent_eval.retrievers"]
+# Custom retrievers can be registered here
+
+[project.entry-points."openagent_eval.dataset_loaders"]
+# Custom dataset loaders can be registered here
+
+[project.entry-points."openagent_eval.report_generators"]
+# Custom report generators can be registered here
 
 [build-system]
 requires = ["hatchling"]

@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# OpenCode and Agent configurations
+.opencode/
+.agents/
+.tmp/

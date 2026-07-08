@@ -2022,6 +2022,8 @@ name = "openagent-eval"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
+    { name = "jinja2" },
     { name = "loguru" },
     { name = "pydantic" },
     { name = "pyyaml" },
@@ -2075,6 +2077,8 @@ requires-dist = [
     { name = "datasets", marker = "extra == 'datasets'", specifier = ">=2.0.0" },
     { name = "deepeval", marker = "extra == 'evaluation'", specifier = ">=1.0.0" },
     { name = "evaluate", marker = "extra == 'evaluation'", specifier = ">=0.4.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "jinja2", specifier = ">=3.1.0" },
     { name = "loguru", specifier = ">=0.7.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10.0" },
     { name = "openagent-eval", extras = ["dev", "evaluation", "datasets"], marker = "extra == 'all'" },

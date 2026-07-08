@@ -8,12 +8,12 @@
 ## TODO
 
 ### Phase 6: Plugin System
-- [ ] Design plugin registry
-- [ ] Implement entry point discovery
-- [ ] Create plugin loading mechanism
-- [ ] Write plugin development guide
-- [ ] Create example custom metric
-- [ ] Write unit tests for plugin system
+- [x] Design plugin registry
+- [x] Implement entry point discovery
+- [x] Create plugin loading mechanism
+- [x] Write plugin development guide
+- [x] Create example custom metric
+- [x] Write unit tests for plugin system
 
 ### Phase 7: CLI Commands
 - [ ] Implement `oaeval init`
@@ -50,6 +50,14 @@
 ---
 
 ## COMPLETED
+
+### Phase 6: Plugin System
+- [x] Design plugin registry
+- [x] Implement entry point discovery
+- [x] Create plugin loading mechanism
+- [x] Write plugin development guide
+- [x] Create example custom metric
+- [x] Write unit tests for plugin system
 
 ### Phase 5: Providers
 - [x] Define LLMProvider interface
@@ -205,3 +213,5 @@ Phase 8 (Documentation) ← can run in parallel with Phase 7
 | 2026-07-08 | Phase 4 completed - Reports System implemented (78 new tests) |
 | 2026-07-08 | Phase 5 completed - Provider Layer implemented (138 new tests) |
 | 2026-07-08 | PR #7 created for Phase 5 |
+| 2026-07-08 | Phase 6 completed - Plugin System implemented (27 new tests) |
+| 2026-07-08 | Created plugin development guide |
