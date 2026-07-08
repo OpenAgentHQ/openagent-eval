@@ -195,10 +195,10 @@ Phase 8 (Documentation) ← can run in parallel with Phase 7
 
 | Date | Change |
 |------|--------|
-| 2025-07-08 | Initial TASKS.md created |
-| 2025-07-08 | Updated with architecture decisions (D011-D016) |
-| 2025-07-08 | Added exception hierarchy to Phase 1 |
-| 2025-07-08 | Added core module to Phase 1 |
-| 2025-07-08 | Added ARCHITECTURE.md to Phase 1 |
-| 2025-07-08 | Created .ai/ directory structure |
-| 2025-07-08 | Moved all project files to .ai/ |
+| 2026-07-08 | Initial TASKS.md created |
+| 2026-07-08 | Updated with architecture decisions (D011-D016) |
+| 2026-07-08 | Added exception hierarchy to Phase 1 |
+| 2026-07-08 | Added core module to Phase 1 |
+| 2026-07-08 | Added ARCHITECTURE.md to Phase 1 |
+| 2026-07-08 | Created .ai/ directory structure |
+| 2026-07-08 | Moved all project files to .ai/ |

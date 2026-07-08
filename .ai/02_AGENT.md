@@ -676,6 +676,45 @@ Every Pull Request must include a clear and professional description:
 
 ---
 
+## Date & Time Rules (MANDATORY)
+
+### Verification Requirement
+
+**NEVER guess or hardcode dates.** Always verify the current date and time before making any changes.
+
+### How to Verify
+
+1. **If internet access is available:** Verify using a reliable online source
+2. **Otherwise:** Use the operating system's local date and time
+3. **Never** assume the year or reuse dates from previous sessions
+
+### When to Use Verified Dates
+
+Always use the verified current date and time when creating or updating:
+- Architecture Decision Records (ADRs)
+- Changelog entries
+- Documentation
+- Task updates
+- Context updates
+- Milestone logs
+- Any generated project files
+
+### Date Format
+
+Use ISO 8601 format: `YYYY-MM-DD`
+
+Example: `2026-07-08`
+
+### Rules
+
+1. **ALWAYS** verify the current date before writing any date
+2. **ALWAYS** use the verified date, not a guessed or hardcoded date
+3. **NEVER** assume the year is the same as previous sessions
+4. **ALWAYS** check the system date or online source
+5. **ALWAYS** use consistent date format (YYYY-MM-DD)
+
+---
+
 ## What NOT to Do
 
 - Do NOT build on LangChain or other AI frameworks

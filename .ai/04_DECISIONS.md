@@ -9,7 +9,7 @@
 
 ### D001: No LangChain Dependency
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Building an evaluation framework that needs to support multiple AI frameworks.
 
@@ -36,7 +36,7 @@
 
 ### D002: SDK + CLI Dual Interface
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need both CLI for quick usage and SDK for programmatic access.
 
@@ -61,7 +61,7 @@
 
 ### D003: Plugin-Based Architecture
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need extensibility for metrics, providers, and other components.
 
@@ -86,7 +86,7 @@
 
 ### D004: Local-First Design
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Developers want simple evaluation without complex setup.
 
@@ -112,7 +112,7 @@
 
 ### D005: YAML Configuration
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need simple, readable configuration format.
 
@@ -138,7 +138,7 @@
 
 ### D006: Async Pipeline Execution
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Evaluations need to process many questions efficiently.
 
@@ -164,7 +164,7 @@
 
 ### D007: Pydantic v2 for Validation
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need strong typing and configuration validation.
 
@@ -190,7 +190,7 @@
 
 ### D008: v1 Scope - RAG Evaluation Only
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need to focus on core functionality for first release.
 
@@ -215,7 +215,7 @@
 
 ### D009: Rich for Terminal UI
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need beautiful terminal output without building a dashboard.
 
@@ -241,7 +241,7 @@
 
 ### D010: uv as Package Manager
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need fast, modern dependency management.
 
@@ -267,7 +267,7 @@
 
 ### D011: CLI Naming Convention
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need consistent naming across repository, package, and CLI.
 
@@ -298,7 +298,7 @@
 
 ### D012: Core Module Structure
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need clear separation of orchestration concerns.
 
@@ -328,7 +328,7 @@
 
 ### D013: Exception Hierarchy
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need structured error handling across the framework.
 
@@ -362,7 +362,7 @@
 
 ### D014: Testing Structure
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need proper testing structure for maintainability.
 
@@ -393,7 +393,7 @@
 
 ### D015: Configuration Validation Requirements
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need robust configuration validation.
 
@@ -425,7 +425,7 @@
 
 ### D016: Documentation Workflow
 
-**Date:** 2025-07-08
+**Date:** 2026-07-08
 **Status:** Accepted
 **Context:** Need to maintain project documentation automatically.
 
