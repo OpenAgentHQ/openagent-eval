@@ -46,7 +46,35 @@ class BERTScore(BaseMetric):
             pass
 
         # Fallback: sentence-transformers
-        return self._evaluate_with_transformers(answer, ground_truth)
+        try:
+            return self._evaluate_with_transformers(answer, ground_truth)
+        except ImportError:
+            pass
+
+        # Fallback: word overlap (no ML dependencies)
+        return self._evaluate_simple(answer, ground_truth)
+
+    def _evaluate_simple(self, answer: str, ground_truth: str) -> MetricResult:
+        """Simple word overlap fallback when ML libraries are unavailable."""
+        answer_words = set(answer.lower().split())
+        truth_words = set(ground_truth.lower().split())
+
+        if not answer_words or not truth_words:
+            return MetricResult(
+                score=0.0,
+                reason="Empty answer or ground truth",
+                metadata={"method": "word_overlap"},
+            )
+
+        intersection = answer_words & truth_words
+        union = answer_words | truth_words
+        score = len(intersection) / len(union) if union else 0.0
+
+        return MetricResult(
+            score=score,
+            reason=f"Jaccard similarity (fallback): {score:.4f}",
+            metadata={"method": "word_overlap"},
+        )
 
     def _evaluate_with_bertscore(
         self, answer: str, ground_truth: str
