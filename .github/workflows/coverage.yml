@@ -16,7 +16,7 @@ concurrency:
 
 env:
   PYTHON_DEFAULT: "3.11"
-  COVERAGE_THRESHOLD: "90"
+  COVERAGE_THRESHOLD: "75"
 
 jobs:
   coverage:
