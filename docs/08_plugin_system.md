@@ -1,323 +1,184 @@
-# Plugin System
+# Plugin System Guide
 
 ## Overview
 
-OpenAgent Eval uses a plugin-based architecture to enable extensibility. Users can add custom metrics, providers, dataset loaders, and report generators without modifying the core codebase.
+OpenAgent Eval supports a plugin system that allows you to extend the framework with custom metrics, providers, retrievers, dataset loaders, and report generators. Plugins are discovered automatically via Python entry points.
 
----
+## Plugin Types
 
-## Architecture
+OpenAgent Eval supports five types of plugins:
 
+1. **Metrics** - Custom evaluation metrics
+2. **Providers** - LLM and retriever adapters
+3. **Retriever** - Document retrieval providers
+4. **Dataset Loaders** - Custom dataset formats
+5. **Report Generators** - Custom report formats
+
+## Creating a Plugin
+
+### 1. Create a Python Package
+
+Create a new Python package for your plugin:
+
+```bash
+mkdir my-oaeval-plugin
+cd my-oaeval-plugin
 ```
-┌─────────────────────────────────────────┐
-│            Plugin Manager               │
-│  ┌─────────────┐  ┌─────────────────┐  │
-│  │   Loader    │  │   Discovery     │  │
-│  │  (load)     │  │  (entry points) │  │
-│  └─────────────┘  └─────────────────┘  │
-└─────────────────────┬───────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────┐
-│              Registry                   │
-│  ┌───────────┬───────────┬───────────┐  │
-│  │  Metrics  │ Providers │  Reports  │  │
-│  └───────────┴───────────┴───────────┘  │
-└─────────────────────────────────────────┘
-```
 
----
+### 2. Define Your Plugin
 
-## Extension Points
-
-### 1. Metrics
-
-Add custom evaluation metrics.
-
-**Interface:** `BaseMetric`
+#### Custom Metric Example
 
 ```python
-from openagent_eval.metrics import BaseMetric, MetricResult
+# my_oaeval_plugin/metrics.py
+from openagent_eval.metrics.base import BaseMetric, MetricResult
 
-class CustomMetric(BaseMetric):
-    name = "custom_metric"
-    description = "My custom evaluation metric"
+
+class MyCustomMetric(BaseMetric):
+    """A custom evaluation metric."""
+    
+    name = "my_custom_metric"
+    description = "Evaluates something custom"
     
     def evaluate(self, **kwargs) -> MetricResult:
-        # Implementation
-        score = 0.95
+        # Your evaluation logic here
+        score = 0.85
+        
         return MetricResult(
             score=score,
-            reason="Custom evaluation complete",
-            metadata={"details": "..."}
+            reason="Custom evaluation completed",
+            metadata={"custom_data": "value"}
         )
 ```
 
-**Register:**
-
-```toml
-# pyproject.toml
-[project.entry-points."openagent_eval.metrics"]
-custom_metric = "my_package.metrics:CustomMetric"
-```
-
-### 2. LLM Providers
-
-Add custom LLM provider adapters.
-
-**Interface:** `LLMProvider`
+#### Custom Provider Example
 
 ```python
+# my_oaeval_plugin/providers.py
 from openagent_eval.providers.base.llm import LLMProvider
 
-class CustomLLM(LLMProvider):
-    name = "custom_llm"
+
+class MyCustomProvider(LLMProvider):
+    """A custom LLM provider."""
+    
+    name = "my_custom_provider"
+    description = "A custom LLM provider"
     
     async def generate(self, prompt: str, **kwargs) -> str:
-        # Call your LLM API
-        response = await call_custom_api(prompt)
-        return response
+        # Your LLM integration here
+        return "Generated response"
     
     async def get_token_count(self, text: str) -> int:
-        # Return token count
+        # Your token counting logic here
         return len(text.split())
 ```
 
-**Register:**
+### 3. Configure Entry Points
+
+Add entry points to your `pyproject.toml`:
 
 ```toml
-[project.entry-points."openagent_eval.providers.llm"]
-custom_llm = "my_package.providers:CustomLLM"
-```
-
-### 3. Retriever Providers
-
-Add custom retriever adapters.
-
-**Interface:** `Retriever`
-
-```python
-from openagent_eval.providers.base.retriever import Retriever
-
-class CustomRetriever(Retriever):
-    name = "custom_retriever"
-    
-    async def retrieve(self, query: str, k: int = 5) -> List[Document]:
-        # Your retrieval logic
-        documents = await search(query, k=k)
-        return documents
-```
-
-**Register:**
-
-```toml
-[project.entry-points."openagent_eval.providers.retriever"]
-custom_retriever = "my_package.retrievers:CustomRetriever"
-```
-
-### 4. Dataset Loaders
-
-Add custom dataset format support.
-
-**Interface:** `BaseDatasetLoader`
-
-```python
-from openagent_eval.datasets.base import BaseDatasetLoader
-
-class CustomLoader(BaseDatasetLoader):
-    name = "custom_loader"
-    
-    def load(self, path: str) -> Dataset:
-        # Load your custom format
-        data = read_custom_format(path)
-        return Dataset(items=data)
-    
-    def validate(self, data: Any) -> bool:
-        # Validate data structure
-        return isinstance(data, list)
-```
-
-**Register:**
-
-```toml
-[project.entry-points."openagent_eval.datasets"]
-custom_loader = "my_package.loaders:CustomLoader"
-```
-
-### 5. Report Generators
-
-Add custom report formats.
-
-**Interface:** `ReportGenerator`
-
-```python
-from openagent_eval.reports.base import ReportGenerator
-
-class CustomReport(ReportGenerator):
-    name = "custom_report"
-    
-    def generate(self, results: EvaluationResult) -> str:
-        # Generate your custom report
-        report = format_custom(results)
-        return report
-```
-
-**Register:**
-
-```toml
-[project.entry-points."openagent_eval.reports"]
-custom_report = "my_package.reports:CustomReport"
-```
-
----
-
-## Plugin Discovery
-
-Plugins are discovered via Python entry points. The plugin manager scans:
-
-1. Built-in plugins (in `openagent_eval/`)
-2. Installed packages with entry points
-3. Local plugins (if configured)
-
-### Discovery Process
-
-```
-1. Scan entry point groups
-   └── openagent_eval.metrics
-   └── openagent_eval.providers.llm
-   └── openagent_eval.providers.retriever
-   └── openagent_eval.datasets
-   └── openagent_eval.reports
-
-2. Load plugin classes
-   └── Import module
-   └── Get class from entry point
-
-3. Register in registry
-   └── Validate interface
-   └── Store in registry
-```
-
----
-
-## Plugin Loading
-
-```python
-from openagent_eval.plugins import PluginManager
-
-manager = PluginManager()
-
-# Discover all plugins
-manager.discover()
-
-# Get a specific metric
-faithfulness = manager.get_metric("faithfulness")
-
-# Get all available metrics
-all_metrics = manager.list_metrics()
-
-# Get a provider
-openai = manager.get_provider("llm", "openai")
-```
-
----
-
-## Creating a Plugin Package
-
-### 1. Create Package Structure
-
-```
-my-oaeval-plugin/
-├── pyproject.toml
-├── README.md
-└── my_package/
-    ├── __init__.py
-    ├── metrics/
-    │   ├── __init__.py
-    │   └── custom_metric.py
-    └── providers/
-        ├── __init__.py
-        └── custom_llm.py
-```
-
-### 2. Configure Entry Points
-
-```toml
-# pyproject.toml
 [project]
 name = "my-oaeval-plugin"
 version = "0.1.0"
-dependencies = ["openagent-eval>=0.1.0"]
+description = "Custom plugin for OpenAgent Eval"
+requires-python = ">=3.11"
+dependencies = [
+    "openagent-eval>=0.1.0",
+]
 
 [project.entry-points."openagent_eval.metrics"]
-custom_metric = "my_package.metrics.custom_metric:CustomMetric"
+my_custom_metric = "my_oaeval_plugin.metrics:MyCustomMetric"
 
-[project.entry-points."openagent_eval.providers.llm"]
-custom_llm = "my_package.providers.custom_llm:CustomLLM"
+[project.entry-points."openagent_eval.providers"]
+my_custom_provider = "my_oaeval_plugin.providers:MyCustomProvider"
 ```
 
-### 3. Install Plugin
+### 4. Install Your Plugin
 
 ```bash
 pip install -e .
-# or
-uv add -e .
 ```
 
-### 4. Use Plugin
+Or with uv:
 
 ```bash
-oaeval run config.yaml
-# Plugin automatically discovered and available
+uv pip install -e .
 ```
 
----
+## Using Plugins
 
-## Plugin Development Guide
-
-### Best Practices
-
-1. **Follow interfaces** - Always implement the base interface
-2. **Return proper types** - Use `MetricResult`, `Document`, etc.
-3. **Handle errors gracefully** - Never raise generic exceptions
-4. **Add type hints** - All public functions must have type hints
-5. **Write tests** - Include tests for your plugin
-6. **Document** - Add docstrings and README
-
-### Testing Plugins
+Once installed, plugins are automatically discovered when you import OpenAgent Eval:
 
 ```python
-import pytest
-from my_package.metrics import CustomMetric
+from openagent_eval.core.registry import Registry
 
-def test_custom_metric():
-    metric = CustomMetric()
-    result = metric.evaluate(answer="test", context="test context")
+# Create registry and load plugins
+registry = Registry()
+
+# Your custom metric is now available
+metric = registry.get_metric("my_custom_metric")
+```
+
+## Plugin Interface Requirements
+
+All plugins must implement:
+
+1. `name` attribute - Unique identifier string
+2. `description` attribute - Human-readable description
+3. Required methods for their type
+
+### Metric Interface
+
+```python
+class BaseMetric:
+    name: str
+    description: str
+    
+    def evaluate(self, **kwargs) -> MetricResult:
+        ...
+```
+
+### Provider Interface
+
+```python
+class LLMProvider:
+    name: str
+    description: str
+    
+    async def generate(self, prompt: str, **kwargs) -> str:
+        ...
+    
+    async def get_token_count(self, text: str) -> int:
+        ...
+```
+
+## Testing Your Plugin
+
+Create tests for your plugin:
+
+```python
+# tests/test_my_metric.py
+import pytest
+from my_oaeval_plugin.metrics import MyCustomMetric
+
+
+def test_my_metric():
+    metric = MyCustomMetric()
+    result = metric.evaluate(question="test", answer="test")
     
     assert 0.0 <= result.score <= 1.0
-    assert result.reason is not None
-    assert isinstance(result.metadata, dict)
+    assert result.reason != ""
 ```
 
-### Error Handling
+## Best Practices
 
-```python
-from openagent_eval.exceptions import MetricExecutionError
-
-class CustomMetric(BaseMetric):
-    def evaluate(self, **kwargs) -> MetricResult:
-        try:
-            # Your logic
-            score = calculate_score(kwargs)
-            return MetricResult(score=score, reason="Success")
-        except ValueError as e:
-            raise MetricExecutionError(
-                message=f"Failed to evaluate: {e}",
-                metric_name=self.name
-            )
-```
-
----
+1. **Keep plugins focused** - One plugin per functionality
+2. **Follow naming conventions** - Use snake_case for names
+3. **Provide clear descriptions** - Help users understand what your plugin does
+4. **Handle errors gracefully** - Use appropriate exception types
+5. **Write tests** - Ensure your plugin works correctly
+6. **Document usage** - Provide examples in your plugin's README
 
 ## Built-in Plugins
 
@@ -361,42 +222,36 @@ OpenAgent Eval includes the following built-in plugins:
 - `html` - HTML with Jinja2
 - `json` - JSON output
 
----
-
 ## Troubleshooting
 
-### Plugin Not Found
+### Plugin Not Discovered
+
+1. Ensure entry points are correctly configured in `pyproject.toml`
+2. Reinstall the plugin: `pip install -e .`
+3. Check that the plugin class has `name` and `description` attributes
+
+### Import Errors
+
+1. Ensure all dependencies are installed
+2. Check that the plugin module is importable
+3. Verify the entry point path is correct
+
+### Plugin Loading Fails
+
+1. Check the plugin class implements required methods
+2. Ensure the plugin class inherits from the correct base class
+3. Look at logs for detailed error messages
+
+## Example Plugin Structure
 
 ```
-Error: Plugin 'my_metric' not found
+my-oaeval-plugin/
+├── my_oaeval_plugin/
+│   ├── __init__.py
+│   ├── metrics.py
+│   └── providers.py
+├── tests/
+│   └── test_metrics.py
+├── pyproject.toml
+└── README.md
 ```
-
-**Solutions:**
-
-1. Ensure plugin is installed: `pip install -e .`
-2. Check entry points in `pyproject.toml`
-3. Verify module path is correct
-
-### Plugin Load Error
-
-```
-Error: Failed to load plugin 'my_metric'
-```
-
-**Solutions:**
-
-1. Check import paths
-2. Verify dependencies are installed
-3. Check for syntax errors in plugin code
-
-### Interface Error
-
-```
-Error: Plugin 'my_metric' does not implement BaseMetric
-```
-
-**Solutions:**
-
-1. Ensure class inherits from `BaseMetric`
-2. Implement all required methods
-3. Return proper types (`MetricResult`)

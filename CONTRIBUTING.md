@@ -2,255 +2,127 @@
 
 Thank you for your interest in contributing to OpenAgent Eval! This document provides guidelines and information for contributors.
 
----
-
-## Table of Contents
-
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [How to Contribute](#how-to-contribute)
-- [Pull Request Process](#pull-request-process)
-- [Coding Standards](#coding-standards)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Community](#community)
-
----
-
 ## Code of Conduct
 
-We follow the [Contributor Covenant](https://www.contributor-covenant.org/). Please be respectful and inclusive in all interactions.
-
----
+This project follows our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.11+
-- [uv](https://github.com/astral-sh/uv) (package manager)
+- Python 3.11 or higher
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
 - Git
 
-### Fork and Clone
+### Finding Something to Work On
 
-```bash
-# Fork the repository on GitHub
-
-# Clone your fork
-git clone https://github.com/YOUR_USERNAME/openagent-eval.git
-cd openagent-eval
-
-# Add upstream remote
-git remote add upstream https://github.com/OpenAgentHQ/openagent-eval.git
-```
-
----
+- **Good First Issues**: Look for issues labeled `good first issue`
+- **Help Wanted**: Check issues labeled `help wanted`
+- **Documentation**: Help improve documentation
+- **Tests**: Add or improve test coverage
 
 ## Development Setup
 
-### 1. Install Dependencies
+### 1. Fork and Clone
 
 ```bash
+git clone https://github.com/{your-username}/openagent-eval.git
+cd openagent-eval
+```
+
+### 2. Add Upstream Remote
+
+```bash
+git remote add upstream https://github.com/openagenthq/openagent-eval.git
+```
+
+### 3. Install Dependencies
+
+```bash
+# Using uv (recommended)
 uv sync
+
+# Or using pip
+pip install -e ".[dev]"
 ```
 
-### 2. Set Up Pre-commit Hooks
+### 4. Create a Branch
 
 ```bash
-uv run pre-commit install
+git fetch upstream
+git checkout -b {type}/{description} upstream/main
 ```
 
-### 3. Verify Setup
+### 5. Verify Setup
 
 ```bash
-# Run tests
 uv run pytest
+uv run ruff check .
+```
 
-# Run linting
+## Making Changes
+
+### Branch Naming
+
+| Type | Format | Example |
+|------|--------|---------|
+| Feature | `feature/{description}` | `feature/add-oauth` |
+| Bug Fix | `fix/{description}` | `fix/null-pointer` |
+| Documentation | `docs/{description}` | `docs/update-readme` |
+| Refactor | `refactor/{description}` | `refactor/extract-utils` |
+| Test | `test/{description}` | `test/add-unit-tests` |
+
+### Coding Standards
+
+- Follow PEP 8 conventions
+- Use type hints for all function signatures
+- Write clear, readable code
+- Add docstrings for public APIs
+- Keep functions small and focused
+- No hardcoded values
+
+### Formatting and Linting
+
+This project uses [Ruff](https://docs.astral.sh/ruff/) for formatting and linting.
+
+```bash
+# Check for issues
 uv run ruff check .
 
-# Run type checking
+# Auto-fix issues
+uv run ruff check --fix .
+
+# Format code
+uv run ruff format .
+```
+
+### Type Checking
+
+This project uses [mypy](https://mypy.readthedocs.io/) for static type checking.
+
+```bash
 uv run mypy openagent_eval/
 ```
 
----
+### Testing
 
-## How to Contribute
-
-### Reporting Bugs
-
-1. Check [existing issues](https://github.com/OpenAgentHQ/openagent-eval/issues)
-2. Create a new issue with:
-   - Clear title
-   - Steps to reproduce
-   - Expected behavior
-   - Actual behavior
-   - Environment details
-
-### Suggesting Features
-
-1. Check [existing issues](https://github.com/OpenAgentHQ/openagent-eval/issues)
-2. Create a new issue with:
-   - Clear title
-   - Problem description
-   - Proposed solution
-   - Alternatives considered
-
-### Contributing Code
-
-1. Find an issue to work on (or create one)
-2. Comment on the issue to claim it
-3. Create a branch from `main`
-4. Make your changes
-5. Write tests
-6. Update documentation
-7. Submit a pull request
-
----
-
-## Pull Request Process
-
-### 1. Create a Branch
-
-```bash
-git checkout -b feature/your-feature-name
-# or
-git checkout -b fix/your-bug-fix
-# or
-git checkout -b docs/your-documentation
-```
-
-### 2. Make Changes
-
-- Follow coding standards
-- Write tests for new functionality
-- Update documentation as needed
-
-### 3. Commit
-
-```bash
-git add .
-git commit -m "feat: Add new metric implementation"
-```
-
-**Commit Message Format:**
-
-```
-type: Short description
-
-Optional longer description
-
-Closes #123
-```
-
-**Types:**
-
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation
-- `refactor:` Code refactoring
-- `test:` Tests
-- `chore:` Maintenance
-
-### 4. Push
-
-```bash
-git push origin feature/your-feature-name
-```
-
-### 5. Create Pull Request
-
-- Go to GitHub and create a new PR
-- Fill out the PR template
-- Link the related issue
-- Request review
-
-### 6. Code Review
-
-- Address review comments
-- Make requested changes
-- Get approval from maintainer
-
-### 7. Merge
-
-- Maintainer will merge your PR
-- Delete your branch
-
----
-
-## Coding Standards
-
-### Python Style
-
-- Follow [PEP 8](https://peps.python.org/pep-0008/)
-- Use type hints on all public functions
-- Keep functions under 50 lines
-- Single responsibility per function/class
-
-### Naming
-
-```python
-# Variables and functions
-user_name = "John"
-def calculate_score():
-
-# Classes
-class BaseMetric:
-
-# Constants
-MAX_RETRIES = 3
-```
-
-### Imports
-
-```python
-# Standard library
-import os
-from typing import List
-
-# Third-party
-import yaml
-from pydantic import BaseModel
-
-# Local
-from openagent_eval.metrics import BaseMetric
-```
-
-### Docstrings
-
-```python
-def calculate_score(answer: str, ground_truth: str) -> float:
-    """Calculate similarity score between answer and ground truth.
-    
-    Args:
-        answer: The generated answer
-        ground_truth: The expected answer
-        
-    Returns:
-        Similarity score between 0 and 1
-        
-    Example:
-        >>> calculate_score("hello", "hello world")
-        0.75
-    """
-```
-
----
-
-## Testing
-
-### Running Tests
+- Write tests for new features
+- Maintain or improve test coverage
+- Use descriptive test names
+- Test edge cases
 
 ```bash
 # Run all tests
 uv run pytest
 
-# Run specific test file
-uv run pytest tests/unit/test_metrics/test_faithfulness.py
-
 # Run with coverage
-uv run pytest --cov=openagent_eval --cov-report=html
+uv run pytest --cov=openagent_eval
+
+# Run specific test file
+uv run pytest tests/unit/test_exceptions.py
+
+# Run slow tests
+uv run pytest -m slow
 ```
 
 ### Writing Tests
@@ -280,47 +152,109 @@ class TestMyMetric:
 - Mock all external dependencies
 - Test both success and failure paths
 
----
+## Commit Guidelines
 
-## Documentation
+### Commit Message Format
 
-### Types of Documentation
+```
+type(scope): description
 
-1. **Code Documentation** - Docstrings in code
-2. **API Documentation** - Generated from docstrings
-3. **User Guides** - In `docs/` directory
-4. **Developer Guides** - In `docs/` directory
+optional body
 
-### Updating Documentation
+optional footer
+```
 
-- Update docs when adding features
-- Add examples for new functionality
-- Keep README.md up to date
+### Types
 
----
+| Type | Description | Example |
+|------|-------------|---------|
+| `feat` | New feature | `feat(metrics): add BERTScore metric` |
+| `fix` | Bug fix | `fix(config): handle missing yaml key` |
+| `docs` | Documentation | `docs(readme): add installation steps` |
+| `style` | Formatting | `style: fix indentation` |
+| `refactor` | Code refactoring | `refactor(utils): extract helpers` |
+| `test` | Tests | `test(metrics): add faithfulness tests` |
+| `chore` | Maintenance | `chore: update dependencies` |
+| `perf` | Performance | `perf(query): add caching` |
+| `ci` | CI/CD | `ci: add release workflow` |
+| `build` | Build | `build: configure hatch` |
 
-## Community
+### Rules
 
-### Getting Help
+- Use imperative mood ("add feature" not "added feature")
+- Keep subject line under 72 characters
+- Reference issues when applicable
+- Use body for complex changes
+- Do not use a period at the end of the subject line
 
-- **GitHub Issues** - For bugs and feature requests
-- **Discord** - For questions and discussions
-- **Discussions** - For general topics
+## Pull Request Process
 
-### Staying Updated
+### Before Submitting
 
-- Watch the repository
-- Follow us on Twitter
-- Join our newsletter
+1. Update your branch:
+   ```bash
+   git fetch upstream
+   git rebase upstream/main
+   ```
 
----
+2. Run all checks:
+   ```bash
+   uv run pytest
+   uv run ruff check .
+   uv run mypy openagent_eval/
+   ```
 
-## Recognition
+3. Update documentation if needed
 
-Contributors will be recognized in:
+### Submitting
 
-- README.md
-- CHANGELOG.md
-- Release notes
+1. Push your branch
+2. Create a pull request on GitHub
+3. Fill out the PR template completely
+4. Add appropriate labels
+5. Request review from maintainers
+
+### Review Process
+
+1. Maintainers will review your PR
+2. Address feedback promptly
+3. Make requested changes
+4. Push updates to the same branch
+
+### After Merge
+
+1. Delete your feature branch
+2. Pull the latest main
+
+## Reporting Issues
+
+### Bug Reports
+
+When reporting bugs, include:
+1. Clear description of the bug
+2. Steps to reproduce
+3. Expected vs actual behavior
+4. Environment details
+5. Screenshots (if applicable)
+
+### Feature Requests
+
+When requesting features, include:
+1. Clear description of the feature
+2. Use case
+3. Alternatives considered
+4. Additional context
+
+### Security Issues
+
+For security issues, see [SECURITY.md](SECURITY.md). Do not create public issues for security vulnerabilities.
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](LICENSE).
+
+## Questions?
+
+If you have questions about contributing, feel free to open a discussion or create an issue with the `question` label.
 
 Thank you for contributing to OpenAgent Eval!
