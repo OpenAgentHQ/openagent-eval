@@ -66,7 +66,11 @@ class HallucinationDetection(BaseMetric):
         from deepeval.metrics import HallucinationMetric
         from deepeval.test_case import LLMTestCase
 
+        # Build context string for the input field
+        context_text = "\n".join(contexts) if contexts else ""
+
         test_case = LLMTestCase(
+            input=context_text,
             actual_output=answer,
             retrieval_context=contexts,
         )
