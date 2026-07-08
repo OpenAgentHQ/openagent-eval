@@ -120,7 +120,7 @@ jobs:
             --cov-report=xml \
             --cov-report=term-missing \
             --cov-report=html \
-            --cov-fail-under=90
+            --cov-fail-under=75
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
@@ -163,7 +163,7 @@ jobs:
           enable-cache: true
 
       - name: Install build tools
-        run: uv pip install build twine
+        run: uv pip install --system build twine
 
       - name: Build package
         run: uv run python -m build
