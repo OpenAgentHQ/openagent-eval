@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpenAgent Eval — The pytest of AI evaluation</title>
+
+<!-- Fonts: Space Grotesk (display) + Inter (body) + JetBrains Mono (code) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<style>
+/* ===========================================================
+   VIEWPORT FITTING: MANDATORY BASE STYLES (from STYLE_PRESETS.md)
+   =========================================================== */
+html, body { height: 100%; overflow-x: hidden; }
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+
+.slide {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.slide-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-height: 100%;
+  overflow: hidden;
+  padding: var(--slide-padding);
+}
+
+:root {
+  --title-size: clamp(1.5rem, 5vw, 4rem);
+  --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+  --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+  --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+  --small-size: clamp(0.65rem, 1vw, 0.875rem);
+
+  --slide-padding: clamp(1rem, 4vw, 4rem);
+  --content-gap: clamp(0.5rem, 2vw, 2rem);
+  --element-gap: clamp(0.25rem, 1vw, 1rem);
+}
+
+.card, .container, .content-box {
+  max-width: min(90vw, 1000px);
+  max-height: min(80vh, 700px);
+}
+
+.feature-list, .bullet-list { gap: clamp(0.4rem, 1vh, 1rem); }
+.feature-list li, .bullet-list li { font-size: var(--body-size); line-height: 1.4; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: clamp(0.5rem, 1.5vw, 1rem);
+}
+
+img, .image-container { max-width: 100%; max-height: min(50vh, 400px); object-fit: contain; }
+
+@media (max-height: 700px) {
+  :root {
+    --slide-padding: clamp(0.75rem, 3vw, 2rem);
+    --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+    --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+    --h2-size: clamp(1rem, 3vw, 1.75rem);
+  }
+}
+@media (max-height: 600px) {
+  :root {
+    --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+    --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+    --title-size: clamp(1.1rem, 4vw, 2rem);
+    --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+  }
+  .nav-dots, .keyboard-hint, .decorative { display: none; }
+}
+@media (max-height: 500px) {
+  :root {
+    --slide-padding: clamp(0.4rem, 2vw, 1rem);
+    --title-size: clamp(1rem, 3.5vw, 1.5rem);
+    --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+    --body-size: clamp(0.65rem, 1vw, 0.85rem);
+  }
+}
+@media (max-width: 600px) {
+  :root { --title-size: clamp(1.25rem, 7vw, 2.5rem); }
+  .grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+  html { scroll-behavior: auto; }
+}
+
+/* ===========================================================
+   THEME — "Precision Instrument" (matches the docs site)
+   =========================================================== */
+:root {
+  --bg: #0d1126;
+  --bg-2: #131a3a;
+  --ink: #eef1fb;
+  --muted: #9aa3c7;
+  --brand: #5c6bc0;
+  --brand-bright: #7986cb;
+  --signal: #ffb300;
+  --line: rgba(121, 134, 203, 0.18);
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Atmospheric dot-grid + glow behind every slide */
+.slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(92, 107, 192, 0.18), transparent 45%),
+    radial-gradient(circle at 88% 82%, rgba(255, 179, 0, 0.10), transparent 42%),
+    radial-gradient(rgba(121, 134, 203, 0.10) 1px, transparent 1px);
+  background-size: auto, auto, 26px 26px;
+  pointer-events: none;
+}
+.slide-content { position: relative; z-index: 1; }
+
+h1, h2, h3 {
+  font-family: "Space Grotesk", sans-serif;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+h1 { font-size: var(--title-size); font-weight: 700; }
+h2 { font-size: var(--h2-size); font-weight: 600; }
+h3 { font-size: var(--h3-size); font-weight: 600; }
+
+.eyebrow {
+  display: inline-block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: var(--small-size);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--signal);
+  margin-bottom: var(--element-gap);
+}
+
+.lede { color: var(--muted); font-size: var(--body-size); max-width: 46ch; line-height: 1.55; }
+
+/* Reveal animation (triggered by IntersectionObserver) */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.5s ease, transform 0.5s ease; }
+.reveal.in { opacity: 1; transform: none; }
+.reveal.d1 { transition-delay: 0.08s; }
+.reveal.d2 { transition-delay: 0.16s; }
+.reveal.d3 { transition-delay: 0.24s; }
+.reveal.d4 { transition-delay: 0.32s; }
+.reveal.d5 { transition-delay: 0.40s; }
+
+/* Bullet list */
+.bullet-list { list-style: none; display: flex; flex-direction: column; gap: var(--element-gap); margin-top: var(--content-gap); }
+.bullet-list li { display: flex; gap: 0.7rem; align-items: flex-start; color: var(--ink); }
+.bullet-list li::before {
+  content: ""; flex: none; width: 8px; height: 8px; margin-top: 0.5em;
+  border-radius: 2px; background: var(--signal); transform: rotate(45deg);
+}
+
+/* Feature cards */
+.grid.cards { margin-top: var(--content-gap); }
+.card {
+  background: linear-gradient(160deg, var(--bg-2), rgba(19, 26, 58, 0.4));
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--brand-bright);
+  border-radius: 0.8rem;
+  padding: clamp(0.8rem, 1.6vw, 1.3rem);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.card:hover { transform: translateY(-4px); border-top-color: var(--signal); }
+.card .ico { font-size: 1.4rem; }
+.card h3 { font-size: var(--h3-size); margin: 0.4rem 0 0.3rem; }
+.card p { color: var(--muted); font-size: var(--small-size); line-height: 1.45; }
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: var(--element-gap); }
+.chips span {
+  font-family: var(--mono); font-size: var(--small-size);
+  padding: 0.3rem 0.65rem; border-radius: 0.5rem;
+  background: rgba(92, 107, 192, 0.12); border: 1px solid var(--line); color: var(--ink);
+}
+
+/* Code block */
+.code {
+  font-family: var(--mono); font-size: clamp(0.7rem, 1.3vw, 1rem);
+  background: #070a18; color: #d7ddf7; border: 1px solid var(--line);
+  border-radius: 0.7rem; padding: clamp(0.8rem, 1.6vw, 1.3rem);
+  line-height: 1.6; overflow: hidden; margin-top: var(--content-gap);
+  max-width: min(92vw, 880px);
+}
+.code .c { color: #6b739c; }      /* comment */
+.code .k { color: var(--signal); } /* keyword / prompt */
+.code .s { color: #8fd0a8; }       /* string-ish */
+
+/* Pipeline diagram */
+.pipe { display: flex; align-items: stretch; gap: 0.5rem; flex-wrap: wrap; margin-top: var(--content-gap); }
+.pipe .node {
+  flex: 1 1 120px; min-width: 110px; background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 0.6rem; padding: 0.7rem; text-align: center; font-size: var(--small-size);
+}
+.pipe .node b { display: block; font-family: "Space Grotesk", sans-serif; color: var(--brand-bright); margin-bottom: 0.2rem; }
+.pipe .arrow { align-self: center; color: var(--signal); font-size: 1.2rem; }
+
+/* Two-column layout */
+.split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(1rem, 3vw, 3rem); align-items: center; }
+@media (max-width: 800px) { .split { grid-template-columns: 1fr; } }
+
+/* Title slide specifics */
+.title-slide .slide-content { align-items: flex-start; }
+.badge {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  font-size: var(--small-size); font-weight: 600; color: var(--brand-bright);
+  background: rgba(255, 179, 0, 0.12); border: 1px solid rgba(255, 179, 0, 0.35);
+  padding: 0.28rem 0.7rem; border-radius: 999px; margin-bottom: var(--content-gap);
+}
+.badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 3px rgba(255,179,0,0.25); }
+.title-slide h1 {
+  background: linear-gradient(120deg, #fff 30%, var(--brand-bright) 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.install {
+  display: inline-flex; align-items: center; gap: 0.6rem; margin-top: var(--content-gap);
+  font-family: var(--mono); font-size: var(--body-size); color: #e8ecff;
+  background: #070a18; border: 1px solid var(--line); padding: 0.6rem 0.95rem; border-radius: 0.6rem;
+}
+.install::before { content: "$"; color: var(--signal); font-weight: 700; }
+
+/* Footer meta on each slide */
+.slide .meta {
+  position: absolute; bottom: clamp(0.6rem, 2vh, 1.4rem); left: var(--slide-padding); right: var(--slide-padding);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: var(--small-size); color: var(--muted); z-index: 2;
+}
+.slide .meta .dot { color: var(--signal); }
+
+/* Progress bar */
+.progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--signal); z-index: 50; transition: width 0.3s ease; }
+
+/* Nav dots */
+.nav-dots { position: fixed; right: clamp(0.6rem, 1.5vw, 1.4rem); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 0.5rem; z-index: 50; }
+.nav-dots button { width: 9px; height: 9px; border-radius: 50%; border: none; background: var(--line); cursor: pointer; padding: 0; transition: background 0.2s, transform 0.2s; }
+.nav-dots button.active { background: var(--signal); transform: scale(1.4); }
+
+/* Slide counter + hint */
+.counter { position: fixed; top: clamp(0.6rem, 2vh, 1.4rem); right: clamp(0.8rem, 2vw, 1.6rem); font-family: var(--mono); font-size: var(--small-size); color: var(--muted); z-index: 50; }
+.keyboard-hint { position: fixed; bottom: clamp(0.6rem, 2vh, 1.4rem); left: 50%; transform: translateX(-50%); font-size: var(--small-size); color: var(--muted); z-index: 50; opacity: 0.7; }
+</style>
+</head>
+
+<body>
+<div class="progress" id="progress"></div>
+<nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+<div class="counter" id="counter">01 / 12</div>
+<div class="keyboard-hint">← → or scroll to navigate</div>
+
+<main>
+
+  <!-- 1 · TITLE -->
+  <section class="slide title-slide" id="s1" aria-label="Title">
+    <div class="slide-content">
+      <span class="badge reveal">v0.1.0 · Local-first · Apache 2.0</span>
+      <h1 class="reveal d1">The pytest of<br />AI evaluation</h1>
+      <p class="lede reveal d2">OpenAgent Eval is an open-source, local-first framework for evaluating RAG systems and AI agents — a clean CLI, a typed Python SDK, and a pluggable metric &amp; provider architecture.</p>
+      <div class="install reveal d3">pip install openagent-eval</div>
+    </div>
+    <div class="meta"><span>OpenAgent Eval</span><span class="dot">●</span><span>Overview Deck</span></div>
+  </section>
+
+  <!-- 2 · PROBLEM -->
+  <section class="slide" id="s2" aria-label="The problem">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Why this exists</span>
+      <h2 class="reveal d1">Shipping AI without measuring it is flying blind</h2>
+      <ul class="bullet-list">
+        <li class="reveal d1">RAG quality depends on retrieval <em>and</em> generation — both fail silently.</li>
+        <li class="reveal d2">Prompt tweaks move metrics you can't see.</li>
+        <li class="reveal d3">Hallucinations and retrieval gaps slip into production.</li>
+        <li class="reveal d4">Teams need reproducible, comparable experiments — not vibes.</li>
+        <li class="reveal d5">Evaluation should be a test suite, not a spreadsheet.</li>
+      </ul>
+    </div>
+    <div class="meta"><span>The problem</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 3 · WHAT IT IS -->
+  <section class="slide" id="s3" aria-label="What it is">
+    <div class="slide-content">
+      <span class="eyebrow reveal">What it is</span>
+      <h2 class="reveal d1">One pipeline, every stage pluggable</h2>
+      <p class="lede reveal d2">A <code>Config</code> describes your dataset, retriever, LLM, and metrics. The <code>Engine</code> loads data, runs retrieval and generation, scores results, and persists a report.</p>
+      <div class="pipe reveal d3">
+        <div class="node"><b>Config</b>config.yaml</div>
+        <div class="arrow">→</div>
+        <div class="node"><b>Engine</b>orchestrates</div>
+        <div class="arrow">→</div>
+        <div class="node"><b>Metrics</b>score</div>
+        <div class="arrow">→</div>
+        <div class="node"><b>Report</b>terminal / html</div>
+      </div>
+    </div>
+    <div class="meta"><span>What it is</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 4 · FEATURES -->
+  <section class="slide" id="s4" aria-label="Features">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Features</span>
+      <h2 class="reveal d1">Built for developers, not dashboards</h2>
+      <div class="grid cards">
+        <div class="card reveal d1"><div class="ico">🚀</div><h3>Local-First</h3><p>Runs on your machine. No cloud, no auth, no data leaving your laptop.</p></div>
+        <div class="card reveal d2"><div class="ico">⌨️</div><h3>CLI + SDK</h3><p>Drive it from <code>oaeval</code> or embed <code>Engine</code> in pytest.</p></div>
+        <div class="card reveal d3"><div class="ico">🧩</div><h3>Framework Agnostic</h3><p>Works with LangChain, LlamaIndex, or fully custom pipelines.</p></div>
+        <div class="card reveal d1"><div class="ico">🔌</div><h3>Pluggable</h3><p>Swap LLMs, retrievers, embedders, and metrics via clean ports.</p></div>
+        <div class="card reveal d2"><div class="ico">📊</div><h3>Comprehensive Metrics</h3><p>Retrieval, generation, performance, and cost in one interface.</p></div>
+        <div class="card reveal d3"><div class="ico">📄</div><h3>Beautiful Reports</h3><p>Terminal, Markdown, HTML, JSON — with failure analysis.</p></div>
+      </div>
+    </div>
+    <div class="meta"><span>Features</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 5 · ARCHITECTURE -->
+  <section class="slide" id="s5" aria-label="Architecture">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Architecture</span>
+      <h2 class="reveal d1">Provider-agnostic by design</h2>
+      <div class="split">
+        <div>
+          <ul class="bullet-list">
+            <li class="reveal d1"><code>Config</code> — Pydantic models validate every run.</li>
+            <li class="reveal d2"><code>Engine</code> + <code>Pipeline</code> — async retrieve → generate → score.</li>
+            <li class="reveal d3"><code>Executor</code> — concurrent items with a worker pool.</li>
+            <li class="reveal d4"><code>Registry</code> — resolves metrics &amp; providers by name.</li>
+          </ul>
+        </div>
+        <div class="pipe reveal d2" style="flex-direction:column;">
+          <div class="node"><b>Dataset</b>json · csv · pdf</div>
+          <div class="arrow">↓</div>
+          <div class="node"><b>Retriever</b>chroma · faiss · …</div>
+          <div class="arrow">↓</div>
+          <div class="node"><b>LLM</b>openai · ollama · …</div>
+          <div class="arrow">↓</div>
+          <div class="node"><b>Metrics</b>registry</div>
+        </div>
+      </div>
+    </div>
+    <div class="meta"><span>Architecture</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 6 · METRICS -->
+  <section class="slide" id="s6" aria-label="Evaluation metrics">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Evaluation Metrics</span>
+      <h2 class="reveal d1">Four categories, one consistent score</h2>
+      <div class="grid cards">
+        <div class="card reveal d1"><h3>Retrieval</h3><div class="chips"><span>context_precision</span><span>context_recall</span><span>mrr</span><span>ndcg</span><span>hit_rate</span></div></div>
+        <div class="card reveal d2"><h3>Generation</h3><div class="chips"><span>faithfulness</span><span>answer_relevancy</span><span>hallucination</span><span>f1_score</span><span>bertscore</span></div></div>
+        <div class="card reveal d3"><h3>Performance</h3><div class="chips"><span>latency</span></div></div>
+        <div class="card reveal d4"><h3>Cost</h3><div class="chips"><span>token_count</span></div></div>
+      </div>
+    </div>
+    <div class="meta"><span>Metrics</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 7 · PROVIDERS -->
+  <section class="slide" id="s7" aria-label="Supported providers">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Supported Providers</span>
+      <h2 class="reveal d1">Bring your own, or use what ships</h2>
+      <div class="grid cards">
+        <div class="card reveal d1"><h3>LLM</h3><div class="chips"><span>openai</span><span>gemini</span><span>anthropic</span><span>groq</span><span>openrouter</span><span>ollama</span><span>mock</span></div></div>
+        <div class="card reveal d2"><h3>Retriever</h3><div class="chips"><span>chroma</span><span>memory</span><span>bm25</span><span>faiss</span><span>qdrant</span><span>pinecone</span><span>weaviate</span><span>pgvector</span></div></div>
+        <div class="card reveal d3"><h3>Embedder</h3><div class="chips"><span>sentence_transformers</span><span>mock</span></div></div>
+      </div>
+    </div>
+    <div class="meta"><span>Providers</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 8 · CLI -->
+  <section class="slide" id="s8" aria-label="CLI">
+    <div class="slide-content">
+      <span class="eyebrow reveal">CLI</span>
+      <h2 class="reveal d1">Six commands cover the whole loop</h2>
+      <div class="code reveal d2"><span class="c"># create, run, inspect, compare</span>
+oaeval init                      <span class="c"># scaffold config</span>
+oaeval run config.yaml           <span class="c"># evaluate</span>
+oaeval report latest             <span class="c"># view results</span>
+oaeval compare exp-a exp-b       <span class="c"># side-by-side</span>
+oaeval list                      <span class="c"># history</span>
+oaeval doctor                    <span class="c"># env check</span></div>
+    </div>
+    <div class="meta"><span>CLI</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 9 · PYTHON SDK -->
+  <section class="slide" id="s9" aria-label="Python SDK">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Python SDK</span>
+      <h2 class="reveal d1">Embed evaluation in your tests</h2>
+      <div class="code reveal d2"><span class="k">import</span> asyncio
+<span class="k">from</span> openagent_eval.config.models <span class="k">import</span> Config
+<span class="k">from</span> openagent_eval.core.engine <span class="k">import</span> Engine
+
+config = Config(dataset={<span class="s">"path"</span>: <span class="s">"data/questions.json"</span>},
+               llm={<span class="s">"provider"</span>: <span class="s">"openai"</span>, <span class="s">"model"</span>: <span class="s">"gpt-4o-mini"</span>})
+engine = Engine(config)
+report = asyncio.run(engine.run(dataset))
+<span class="k">assert</span> report.summary[<span class="s">"failed_evaluations"</span>] == 0</div>
+    </div>
+    <div class="meta"><span>Python SDK</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 10 · QUICKSTART -->
+  <section class="slide" id="s10" aria-label="Quickstart">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Quickstart</span>
+      <h2 class="reveal d1">From install to insight in minutes</h2>
+      <div class="code reveal d2">pip install openagent-eval
+oaeval init                    <span class="c"># write config.yaml</span>
+oaeval run config.yaml         <span class="c"># run evaluation</span>
+oaeval report latest           <span class="c"># inspect report</span></div>
+      <p class="lede reveal d3" style="margin-top:var(--content-gap);">Offline? Use the built-in <code>mock</code> providers — no API keys required.</p>
+    </div>
+    <div class="meta"><span>Quickstart</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 11 · ROADMAP -->
+  <section class="slide" id="s11" aria-label="Roadmap">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Roadmap</span>
+      <h2 class="reveal d1">From RAG to agent evaluation</h2>
+      <div class="grid cards">
+        <div class="card reveal d1"><h3>v1.0 · Now</h3><p>RAG pipeline, CLI + SDK, plugins, multi-format reports, retrieval/generation/performance/cost metrics.</p></div>
+        <div class="card reveal d2"><h3>v2.0 · Next</h3><p>Tool-call, planning, memory &amp; multi-agent evaluation. More retrievers &amp; experiment tracking.</p></div>
+        <div class="card reveal d3"><h3>v3.0 · Future</h3><p>CI/CD integration, native GitHub Action, cloud sync, hosted dashboard.</p></div>
+      </div>
+    </div>
+    <div class="meta"><span>Roadmap</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+  <!-- 12 · COMMUNITY / CLOSE -->
+  <section class="slide" id="s12" aria-label="Community">
+    <div class="slide-content">
+      <span class="eyebrow reveal">Community</span>
+      <h2 class="reveal d1">Built in the open</h2>
+      <ul class="bullet-list">
+        <li class="reveal d1">GitHub — <code>github.com/OpenAgentHQ/openagent-eval</code></li>
+        <li class="reveal d2">Docs — <code>docs.openagenthq.com</code></li>
+        <li class="reveal d3">Discord &amp; Discussions for questions and roadmap input</li>
+        <li class="reveal d4">Apache 2.0 — contributions of every size welcome</li>
+      </ul>
+      <div class="install reveal d5">pip install openagent-eval</div>
+    </div>
+    <div class="meta"><span>Get involved</span><span class="dot">●</span><span>OpenAgent Eval</span></div>
+  </section>
+
+</main>
+
+<script>
+/* ===========================================================
+   Presentation controller — keyboard, wheel, touch, dots
+   =========================================================== */
+(function () {
+  "use strict";
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var total = slides.length;
+  var current = 0;
+  var locked = false;
+
+  var progress = document.getElementById("progress");
+  var counter = document.getElementById("counter");
+  var dotsWrap = document.getElementById("navDots");
+
+  // Build nav dots
+  slides.forEach(function (_, i) {
+    var b = document.createElement("button");
+    b.setAttribute("aria-label", "Go to slide " + (i + 1));
+    b.addEventListener("click", function () { go(i); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+  function update() {
+    progress.style.width = ((current + 1) / total * 100) + "%";
+    counter.textContent = pad(current + 1) + " / " + pad(total);
+    dots.forEach(function (d, i) { d.classList.toggle("active", i === current); });
+  }
+
+  function go(i) {
+    i = Math.max(0, Math.min(total - 1, i));
+    current = i;
+    slides[i].scrollIntoView({ behavior: "smooth" });
+    update();
+  }
+
+  // Keyboard
+  document.addEventListener("keydown", function (e) {
+    if (["ArrowDown", "ArrowRight", "PageDown", " "].indexOf(e.key) !== -1) { e.preventDefault(); go(current + 1); }
+    else if (["ArrowUp", "ArrowLeft", "PageUp"].indexOf(e.key) !== -1) { e.preventDefault(); go(current - 1); }
+    else if (e.key === "Home") { e.preventDefault(); go(0); }
+    else if (e.key === "End") { e.preventDefault(); go(total - 1); }
+  });
+
+  // Wheel (debounced)
+  window.addEventListener("wheel", function (e) {
+    if (locked) return;
+    if (Math.abs(e.deltaY) < 12) return;
+    locked = true;
+    go(current + (e.deltaY > 0 ? 1 : -1));
+    setTimeout(function () { locked = false; }, 600);
+  }, { passive: true });
+
+  // Touch swipe
+  var startY = null;
+  window.addEventListener("touchstart", function (e) { startY = e.touches[0].clientY; }, { passive: true });
+  window.addEventListener("touchend", function (e) {
+    if (startY === null) return;
+    var dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dy) > 45) go(current + (dy < 0 ? 1 : -1));
+    startY = null;
+  }, { passive: true });
+
+  // Reveal-on-enter via IntersectionObserver
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) {
+        en.target.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("in"); });
+      }
+    });
+  }, { threshold: 0.35 });
+  slides.forEach(function (s) { io.observe(s); });
+
+  update();
+})();
+</script>
+</body>
+</html>
