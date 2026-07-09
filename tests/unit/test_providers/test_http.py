@@ -7,7 +7,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from openagent_eval.providers.models import Document
 from openagent_eval.providers.retrievers.http import HttpRetriever, _dig
 
 
