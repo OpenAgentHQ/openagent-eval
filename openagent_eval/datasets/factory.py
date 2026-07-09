@@ -9,28 +9,31 @@ from pathlib import Path
 from typing import Any
 
 from openagent_eval.config.models import DatasetConfig
-from openagent_eval.datasets.base import DatasetLoader
-from openagent_eval.datasets.csv_loader import CsvDatasetLoader
-from openagent_eval.datasets.json_loader import JsonDatasetLoader
-from openagent_eval.datasets.jsonl_loader import JsonlDatasetLoader
+from openagent_eval.datasets.base import BaseDatasetLoader
+from openagent_eval.datasets.csv_loader import CSVDatasetLoader
+from openagent_eval.datasets.json_loader import JSONDatasetLoader
+from openagent_eval.datasets.jsonl_loader import JSONLDatasetLoader
+from openagent_eval.datasets.pdf_loader import PDFDatasetLoader
 from openagent_eval.exceptions.dataset import InvalidDatasetError
 
 # Map of file extensions to loader classes
-_LOADER_MAP: dict[str, type[DatasetLoader]] = {
-    ".json": JsonDatasetLoader,
-    ".jsonl": JsonlDatasetLoader,
-    ".csv": CsvDatasetLoader,
+_LOADER_MAP: dict[str, type[BaseDatasetLoader]] = {
+    ".json": JSONDatasetLoader,
+    ".jsonl": JSONLDatasetLoader,
+    ".csv": CSVDatasetLoader,
+    ".pdf": PDFDatasetLoader,
 }
 
 # Map of format strings to loader classes
-_FORMAT_MAP: dict[str, type[DatasetLoader]] = {
-    "json": JsonDatasetLoader,
-    "jsonl": JsonlDatasetLoader,
-    "csv": CsvDatasetLoader,
+_FORMAT_MAP: dict[str, type[BaseDatasetLoader]] = {
+    "json": JSONDatasetLoader,
+    "jsonl": JSONLDatasetLoader,
+    "csv": CSVDatasetLoader,
+    "pdf": PDFDatasetLoader,
 }
 
 
-def _get_loader(config: DatasetConfig) -> DatasetLoader:
+def _get_loader(config: DatasetConfig) -> BaseDatasetLoader:
     """Get the appropriate loader based on config.
 
     Format is determined by (in priority order):
@@ -96,8 +99,17 @@ def load_dataset(config: DatasetConfig) -> list[dict[str, Any]]:
     loader = _get_loader(config)
     path = Path(config.path)
 
-    return loader.load(
-        path=path,
-        limit=config.limit,
-        shuffle=config.shuffle,
-    )
+    dataset = loader.load(path=path)
+
+    items = list(dataset.items)
+
+    if config.shuffle:
+        import random
+
+        rng = random.Random(42)
+        rng.shuffle(items)
+
+    if config.limit is not None:
+        items = items[: config.limit]
+
+    return [item.to_dict() for item in items]

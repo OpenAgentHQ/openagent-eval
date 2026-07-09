@@ -49,8 +49,11 @@ evaluation = [
 datasets = [
     "datasets>=2.0.0",
 ]
+pdf = [
+    "pypdf>=4.0.0",
+]
 all = [
-    "openagent-eval[dev,evaluation,datasets]",
+    "openagent-eval[dev,evaluation,datasets,pdf]",
 ]
 
 [project.scripts]

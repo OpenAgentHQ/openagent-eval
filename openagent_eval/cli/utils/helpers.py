@@ -86,12 +86,16 @@ def apply_output_override(config: object, output: str | None) -> None:
 
 
 def load_dataset_for_run(config: object) -> list:
-    """Load dataset items from config."""
-    from openagent_eval.datasets import JSONDatasetLoader
+    """Load dataset items from config.
+
+    Auto-detects the dataset format from the file extension (or the explicit
+    ``format`` field in the configuration) and returns a list of item
+    dictionaries suitable for the evaluation engine.
+    """
+    from openagent_eval.datasets.factory import load_dataset
 
     try:
-        loader = JSONDatasetLoader()
-        return loader.load(Path(config.dataset.path))
+        return load_dataset(config.dataset)
     except Exception as e:
         raise ConfigurationError(
             message=f"Failed to load dataset: {e}",

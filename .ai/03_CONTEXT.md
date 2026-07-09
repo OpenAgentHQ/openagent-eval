@@ -232,3 +232,4 @@ chore/{description}        # Maintenance tasks
 | 2026-07-08 | Phase 6 completed - Plugin System implemented |
 | 2026-07-08 | 27 new plugin tests added (517+ total) |
 | 2026-07-08 | Created plugin development guide |
+| 2026-07-10 | Added PDF dataset loader (PDFDatasetLoader) with pypdf optional dependency |

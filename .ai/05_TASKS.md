@@ -111,6 +111,7 @@
 - [x] Implement JSONL dataset loader
 - [x] Implement CSV dataset loader
 - [x] Implement HuggingFace dataset loader
+- [x] Implement PDF dataset loader (pypdf, optional `pdf` extra)
 - [x] Create dataset validation (Pydantic models)
 - [x] Implement dataset schema enforcement
 - [x] Write unit tests for all loaders
@@ -215,3 +216,4 @@ Phase 8 (Documentation) ← can run in parallel with Phase 7
 | 2026-07-08 | PR #7 created for Phase 5 |
 | 2026-07-08 | Phase 6 completed - Plugin System implemented (27 new tests) |
 | 2026-07-08 | Created plugin development guide |
+| 2026-07-10 | Added PDF dataset loader (PDFDatasetLoader) with pypdf optional dependency |
