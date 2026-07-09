@@ -80,7 +80,7 @@ class LLMProvider(ABC):
         Raises:
             ProviderError: If token counting fails.
         """
-        ...
+        pass
 
     def validate_inputs(self, **kwargs: Any) -> None:  # noqa: B027
         """Validate provider inputs before execution.
