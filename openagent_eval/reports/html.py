@@ -73,10 +73,11 @@ class HTMLReport(ReportGenerator):
         Raises:
             ImportError: If jinja2 is not installed.
         """
-        from jinja2 import Template
+        from jinja2 import Environment, select_autoescape
 
         template_str = self._load_template()
-        template = Template(template_str)
+        env = Environment(autoescape=select_autoescape(["html", "xml"]))
+        template = env.from_string(template_str)
         return template.render(**context)
 
     def generate(self, report: Any) -> str:
