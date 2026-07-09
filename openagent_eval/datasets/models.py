@@ -28,6 +28,10 @@ class DatasetItemModel(BaseModel):
     question: str = Field(..., min_length=1, description="The question to evaluate")
     ground_truth: str | None = Field(None, description="The expected correct answer")
     context: str | None = Field(None, description="The context provided to the RAG system")
+    ground_truth_contexts: list[str] = Field(
+        default_factory=list,
+        description="Ground-truth relevant contexts for retrieval evaluation",
+    )
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     contexts: list[str] = Field(default_factory=list, description="Retrieved contexts")
 

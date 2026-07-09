@@ -58,10 +58,10 @@ class TestConfigModels:
     def test_metrics_config(self) -> None:
         """Test MetricsConfig creation."""
         config = MetricsConfig()
-        assert "precision" in config.retrieval
+        assert "context_precision" in config.retrieval
         assert "faithfulness" in config.generation
         assert "latency" in config.performance
-        assert "tokens" in config.cost
+        assert "token_count" in config.cost
 
     def test_report_config(self) -> None:
         """Test ReportConfig creation."""
@@ -142,5 +142,7 @@ class TestConfigLoader:
         config_path.write_text(yaml.dump(config_dict), encoding="utf-8")
 
         config = load_config(config_path)
-        assert "precision" in config.metrics.retrieval
+        # Legacy metric names are normalised to canonical registry names.
+        assert "context_precision" in config.metrics.retrieval
+        assert "context_recall" in config.metrics.retrieval
         assert "faithfulness" in config.metrics.generation

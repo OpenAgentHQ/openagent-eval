@@ -17,7 +17,7 @@ def sample_config() -> Config:
         dataset=DatasetConfig(path="tests/sample_data/test_dataset.json"),
         llm=LLMConfig(provider="openai", model="gpt-4o"),
         metrics=MetricsConfig(
-            retrieval=["precision", "recall"],
+            retrieval=["context_precision", "context_recall"],
             generation=["faithfulness"],
         ),
     )
@@ -49,7 +49,7 @@ def sample_config_dict() -> dict:
         "dataset": {"path": "tests/sample_data/test_dataset.json"},
         "llm": {"provider": "openai", "model": "gpt-4o"},
         "metrics": {
-            "retrieval": ["precision", "recall"],
+            "retrieval": ["context_precision", "context_recall"],
             "generation": ["faithfulness"],
         },
     }
@@ -87,7 +87,7 @@ def sample_config_path(tmp_path: Path) -> Path:
         "dataset": {"path": "tests/sample_data/test_dataset.json"},
         "llm": {"provider": "openai", "model": "gpt-4o"},
         "metrics": {
-            "retrieval": ["precision", "recall"],
+            "retrieval": ["context_precision", "context_recall"],
             "generation": ["faithfulness"],
         },
     }

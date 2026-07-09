@@ -50,12 +50,14 @@ class HallucinationDetection(BaseMetric):
                 metadata={"method": "word_coverage"},
             )
 
-        # Try DeepEval if available
+        # Try DeepEval if available. Fall back to local heuristic for any
+        # runtime error (missing API key, model init failure, etc.).
         try:
             return self._evaluate_with_deepeval(answer, contexts)
-        except (ImportError, Exception) as e:
-            # DeepEval may fail if API key is not configured
+        except ImportError:
             pass
+        except Exception:
+            pass  # DeepEval runtime failure → use local fallback
 
         # Fallback: word coverage
         return self._evaluate_simple(answer, contexts)

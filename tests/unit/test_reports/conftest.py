@@ -28,7 +28,7 @@ def sample_config() -> Config:
         llm=LLMConfig(provider="openai", model="gpt-4o"),
         retriever=RetrieverConfig(provider="chroma"),
         metrics=MetricsConfig(
-            retrieval=["precision", "recall"],
+            retrieval=["context_precision", "context_recall"],
             generation=["faithfulness"],
         ),
         report=ReportConfig(

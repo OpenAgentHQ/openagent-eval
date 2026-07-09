@@ -27,7 +27,7 @@ class TestPipelineIntegration:
             dataset=DatasetConfig(path=str(sample_config_path)),
             llm=LLMConfig(provider="openai", model="gpt-4o"),
             metrics=MetricsConfig(
-                retrieval=["precision"],
+                retrieval=["context_precision"],
                 generation=["faithfulness"],
             ),
         )
@@ -58,7 +58,7 @@ class TestPipelineIntegration:
             llm=LLMConfig(provider="openai", model="gpt-4o"),
         )
         assert config.retriever.provider == "chroma"
-        assert config.metrics.retrieval == ["precision", "recall", "mrr"]
+        assert config.metrics.retrieval == ["context_precision", "context_recall", "mrr"]
 
     def test_metric_registry(self):
         """Test that metrics can be registered and retrieved."""

@@ -61,15 +61,51 @@ def load_config(config_path: str | Path) -> Config:
         if isinstance(raw_config.get("dataset"), str):
             raw_config["dataset"] = {"path": raw_config["dataset"]}
 
-        # Handle legacy 'metrics' field (list of strings)
+        # Handle legacy 'metrics' field (flat list of strings) and translate
+        # legacy metric names to the canonical registry names.
+        _LEGACY_METRIC_MAP = {
+            "precision": "context_precision",
+            "recall": "context_recall",
+            "mrr": "mrr",
+            "ndcg": "ndcg",
+            "hit_rate": "hit_rate",
+            "faithfulness": "faithfulness",
+            "relevancy": "answer_relevancy",
+            "hallucination": "hallucination",
+            "similarity": "semantic_similarity",
+            "latency": "latency",
+            "tokens": "token_count",
+        }
         if isinstance(raw_config.get("metrics"), list):
             metrics_list = raw_config.pop("metrics")
+            normalised = [
+                _LEGACY_METRIC_MAP.get(m, m) for m in metrics_list
+            ]
             raw_config["metrics"] = {
-                "retrieval": [m for m in metrics_list if m in ("precision", "recall", "mrr", "ndcg", "hit_rate")],
-                "generation": [m for m in metrics_list if m in ("faithfulness", "relevancy", "hallucination", "similarity")],
-                "performance": [m for m in metrics_list if m in ("latency",)],
-                "cost": [m for m in metrics_list if m in ("tokens",)],
+                "retrieval": [
+                    m for m in normalised
+                    if m in ("context_precision", "context_recall", "recall_at_k",
+                             "precision_at_k", "hit_rate", "mrr", "ndcg")
+                ],
+                "generation": [
+                    m for m in normalised
+                    if m in ("faithfulness", "answer_relevancy", "hallucination",
+                             "semantic_similarity", "exact_match", "f1_score",
+                             "bleu", "rouge", "bertscore")
+                ],
+                "performance": [m for m in normalised if m in ("latency",)],
+                "cost": [m for m in normalised if m in ("token_count",)],
             }
+
+        # Handle legacy 'retrieval' block (provider/collection_name) -> 'retriever'.
+        if "retrieval" in raw_config and "retriever" not in raw_config:
+            retrieval = raw_config.pop("retrieval") or {}
+            provider = retrieval.get("provider") or "chroma"
+            settings = {}
+            if retrieval.get("collection_name"):
+                settings["collection_name"] = retrieval["collection_name"]
+            settings.update(retrieval.get("settings", {}))
+            raw_config["retriever"] = {"provider": provider, "settings": settings}
 
         # Handle legacy 'output' field (string format)
         if isinstance(raw_config.get("output"), str):

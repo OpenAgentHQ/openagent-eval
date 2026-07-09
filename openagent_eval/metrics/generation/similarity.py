@@ -50,15 +50,23 @@ class SemanticSimilarity(BaseMetric):
         # Fallback: word overlap
         return self._evaluate_simple(answer, ground_truth)
 
+    @property
+    def _transformer(self):
+        """Lazily load and cache the SentenceTransformer model (heavy load)."""
+        if getattr(self, "_cached_model", None) is None:
+            from sentence_transformers import SentenceTransformer
+
+            self._cached_model = SentenceTransformer("all-MiniLM-L6-v2")
+        return self._cached_model
+
     def _evaluate_with_transformers(
         self, answer: str, ground_truth: str
     ) -> MetricResult:
         """Evaluate using sentence-transformers."""
-        from sentence_transformers import SentenceTransformer
         from sklearn.metrics.pairwise import cosine_similarity
         import numpy as np
 
-        model = SentenceTransformer("all-MiniLM-L6-v2")
+        model = self._transformer
         embeddings = model.encode([answer, ground_truth])
         similarity = cosine_similarity(
             embeddings[0].reshape(1, -1),

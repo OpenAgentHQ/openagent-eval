@@ -9,6 +9,10 @@ DEFAULT_OUTPUT_DIR = Path("./reports")
 DEFAULT_CONFIG_CONTENT = """\
 # OpenAgent Eval Configuration
 # See documentation for options: https://github.com/OpenAgentHQ/openagent-eval
+#
+# For a fully offline dry-run (no API keys / vector store required), set:
+#   llm.provider: mock
+#   retriever.provider: mock
 
 dataset:
   path: data/questions.json
@@ -19,16 +23,23 @@ llm:
   model: gpt-4o-mini
   temperature: 0.0
 
-retrieval:
-  # provider: chromadb
-  # collection_name: my_collection
+retriever:
+  provider: chroma
+  settings:
+    collection_name: my_collection
 
-evaluation:
-  metrics:
-    - answer_relevancy
-    - faithfulness
+metrics:
+  retrieval:
     - context_precision
     - context_recall
+    - mrr
+  generation:
+    - faithfulness
+    - answer_relevancy
+  performance:
+    - latency
+  cost:
+    - token_count
 
 report:
   output: terminal

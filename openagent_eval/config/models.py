@@ -43,14 +43,19 @@ class RetrieverConfig(BaseModel):
 
 
 class MetricsConfig(BaseModel):
-    """Metrics configuration."""
+    """Metrics configuration.
+
+    Metric names must match the keys in ``openagent_eval.metrics.METRIC_REGISTRY``
+    (e.g. ``context_precision``, ``context_recall``, ``mrr``, ``faithfulness``,
+    ``answer_relevancy``, ``latency``, ``token_count``).
+    """
 
     retrieval: list[str] = Field(
-        default_factory=lambda: ["precision", "recall", "mrr"],
+        default_factory=lambda: ["context_precision", "context_recall", "mrr"],
         description="Retrieval metrics to compute",
     )
     generation: list[str] = Field(
-        default_factory=lambda: ["faithfulness", "relevancy"],
+        default_factory=lambda: ["faithfulness", "answer_relevancy"],
         description="Generation metrics to compute",
     )
     performance: list[str] = Field(
@@ -58,7 +63,7 @@ class MetricsConfig(BaseModel):
         description="Performance metrics to track",
     )
     cost: list[str] = Field(
-        default_factory=lambda: ["tokens"],
+        default_factory=lambda: ["token_count"],
         description="Cost metrics to track",
     )
 

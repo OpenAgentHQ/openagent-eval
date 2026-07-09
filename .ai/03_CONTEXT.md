@@ -9,11 +9,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Phase** | Phase 6 In Progress |
-| **Status** | Plugin System Implemented |
-| **Last Updated** | 2026-07-08 |
-| **Next Action** | Ready for Phase 7 (CLI Commands) |
-| **Current Branch** | feature/phase-6-plugins |
+| **Phase** | Phase 7 Complete |
+| **Status** | Evaluation pipeline implemented (retriever → LLM → metrics) |
+| **Last Updated** | 2026-07-10 |
+| **Next Action** | Real provider runs (Chroma/OpenAI) / Phase 8 Documentation |
+| **Current Branch** | feature/functional-pipeline |
 | **Remote** | https://github.com/OpenAgentHQ/openagent-eval.git |
 
 ---
@@ -137,6 +137,23 @@ SDK (openagent_eval - Core Evaluation API)
 - [x] Example custom metric plugin created
 - [x] Unit tests for plugin system written (27 tests)
 
+### Milestone 7: Functional Evaluation Pipeline (CORRECTED)
+> NOTE: The pipeline (`core/pipeline.py`) was previously a STUB — `_evaluate_item`
+> never called a retriever, LLM, or any metric, so `oaeval run` produced empty
+> results despite the earlier "complete" status. This was fixed on 2026-07-10.
+- [x] `Pipeline._evaluate_item` now runs Retriever → LLM → Metrics end-to-end
+- [x] `Engine` wires providers (factory) + metric registry + `Executor`
+- [x] `providers/factory.py` maps provider config → adapter instances
+- [x] Mock LLM + Mock Retriever for offline dry-run (no API keys)
+- [x] `Executor.gather` for bounded parallel item evaluation (D006)
+- [x] `recall_at_k` fixed to true recall (was binary, == hit_rate)
+- [x] `Pipeline._compute_summary` reports real error count (was hardcoded 0)
+- [x] Hallucination metric no longer swallows all errors
+- [x] Heavy models (SentenceTransformer/Ragas) cached per metric instance
+- [x] Config template + `MetricsConfig` defaults aligned to registry names
+- [x] `DatasetItemModel.ground_truth_contexts` added for retrieval eval
+- [x] Integration test (mock end-to-end) + recall_at_k unit test added
+
 ---
 
 ## Current Questions
@@ -200,8 +217,12 @@ chore/{description}        # Maintenance tasks
 - Phase 4 is complete - Reports System implemented (78 tests)
 - Phase 5 is complete - Provider Layer implemented (138 tests)
 - Phase 6 is complete - Plugin System implemented (27 tests)
-- Total tests: 517+ passing
-- Ready to proceed with Phase 7 (CLI Commands)
+- Phase 7 is complete - Evaluation pipeline is now functional (was a stub)
+- CORRECTION: earlier "517+ passing / all phases complete" status was inaccurate —
+  the core pipeline did not actually evaluate. That gap is closed.
+- `oaeval run` now produces real answers, computed metrics, token usage, and latency.
+- Offline dry-run works via `llm.provider: mock` + `retriever.provider: mock`.
+- Ready to proceed with Phase 8 (Documentation) or real provider runs.
 
 ---
 
@@ -209,6 +230,7 @@ chore/{description}        # Maintenance tasks
 
 | Date | Change |
 |------|--------|
+| 2026-07-10 | Pipeline stub fixed: retriever→LLM→metrics wired; mock providers added; recall_at_k/summary/hallucination bugs fixed; config aligned |
 | 2026-07-08 | Initial CONTEXT.md created |
 | 2026-07-08 | Updated Milestone 0 completion status |
 | 2026-07-08 | Added TASKS.md to key files |

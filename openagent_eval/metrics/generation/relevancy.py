@@ -58,11 +58,19 @@ class AnswerRelevancy(BaseMetric):
         # Fallback: simple word overlap
         return self._evaluate_simple(question, answer)
 
+    @property
+    def _ragas_relevancy_metric(self):
+        """Lazily import and cache the Ragas answer_relevancy metric (heavy import)."""
+        if getattr(self, "_cached_ragas_rel", None) is None:
+            from ragas.metrics import answer_relevancy as ragas_relevancy
+
+            self._cached_ragas_rel = ragas_relevancy
+        return self._cached_ragas_rel
+
     def _evaluate_with_ragas(
         self, question: str, answer: str
     ) -> MetricResult:
         """Evaluate using Ragas answer_relevancy."""
-        from ragas.metrics import answer_relevancy as ragas_relevancy
         from datasets import Dataset
 
         data = {
@@ -72,7 +80,7 @@ class AnswerRelevancy(BaseMetric):
             "ground_truth": [""],
         }
         dataset = Dataset.from_dict(data)
-        result = ragas_relevancy.evaluate(dataset)
+        result = self._ragas_relevancy_metric.evaluate(dataset)
         score = result["answer_relevancy"]
 
         return MetricResult(

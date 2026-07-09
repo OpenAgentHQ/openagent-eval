@@ -123,7 +123,8 @@ class TestRecallAtK:
             k=2,
         )
         assert result.score == 1.0
-        assert result.metadata["found"] is True
+        assert result.metadata["relevant_in_top_k"] == 1
+        assert result.metadata["relevant_total"] == 1
 
     def test_miss_in_top_k(self):
         """No relevant context in top-K."""
@@ -133,7 +134,20 @@ class TestRecallAtK:
             k=2,
         )
         assert result.score == 0.0
-        assert result.metadata["found"] is False
+        assert result.metadata["relevant_in_top_k"] == 0
+        assert result.metadata["relevant_total"] == 1
+
+    def test_partial_recall(self):
+        """Recall reflects the fraction of relevant contexts recovered."""
+        result = self.metric.evaluate(
+            retrieved_contexts=["ctx1", "ctx_x"],
+            ground_truth_contexts=["ctx1", "ctx2", "ctx3"],
+            k=2,
+        )
+        # 1 of 3 relevant contexts in top-2 -> 1/3
+        assert result.score == pytest.approx(1 / 3)
+        assert result.metadata["relevant_in_top_k"] == 1
+        assert result.metadata["relevant_total"] == 3
 
     def test_default_k(self):
         """Default K uses all retrieved contexts."""

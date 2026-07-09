@@ -58,11 +58,19 @@ class Faithfulness(BaseMetric):
         # Fallback: simple word overlap
         return self._evaluate_simple(answer, contexts)
 
+    @property
+    def _ragas_faithfulness_metric(self):
+        """Lazily import and cache the Ragas faithfulness metric (heavy import)."""
+        if getattr(self, "_cached_ragas_faith", None) is None:
+            from ragas.metrics import faithfulness as ragas_faithfulness
+
+            self._cached_ragas_faith = ragas_faithfulness
+        return self._cached_ragas_faith
+
     def _evaluate_with_ragas(
         self, answer: str, contexts: list[str]
     ) -> MetricResult:
         """Evaluate using Ragas faithfulness."""
-        from ragas.metrics import faithfulness as ragas_faithfulness
         from datasets import Dataset
 
         data = {
@@ -72,7 +80,7 @@ class Faithfulness(BaseMetric):
             "ground_truth": [""],
         }
         dataset = Dataset.from_dict(data)
-        result = ragas_faithfulness.evaluate(dataset)
+        result = self._ragas_faithfulness_metric.evaluate(dataset)
         score = result["faithfulness"]
 
         return MetricResult(

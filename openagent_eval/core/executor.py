@@ -70,6 +70,30 @@ class Executor:
         coroutines = [_run_with_semaphore(task) for task in tasks]
         return await asyncio.gather(*coroutines)
 
+    async def gather(self, coroutines: list[Any]) -> list[Any]:
+        """Run coroutines concurrently with the configured concurrency limit.
+
+        Args:
+            coroutines: List of coroutine objects to execute.
+
+        Returns:
+            List of results in the same order as ``coroutines``.
+
+        Raises:
+            MetricExecutionError: If a coroutine times out.
+        """
+        async def _run(coro: Any) -> Any:
+            async with self._semaphore:
+                try:
+                    return await asyncio.wait_for(coro, timeout=self.timeout)
+                except asyncio.TimeoutError:
+                    raise MetricExecutionError(
+                        message=f"Task timed out after {self.timeout}s",
+                        details={"timeout": self.timeout},
+                    ) from None
+
+        return await asyncio.gather(*[_run(c) for c in coroutines])
+
     async def execute_sequential(
         self,
         tasks: list[Callable[..., Coroutine[Any, Any, Any]]],
@@ -123,9 +147,12 @@ class Executor:
             **kwargs: Keyword arguments to pass to the function.
 
         Returns:
-            The result of the function.
+            An awaitable resolving to the result of the function.
         """
         loop = asyncio.get_event_loop()
+        if not loop.is_running():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
         return loop.run_in_executor(
             self._thread_pool,
             lambda: func(*args, **kwargs),

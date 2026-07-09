@@ -16,13 +16,14 @@
 - [x] Write unit tests for plugin system
 
 ### Phase 7: CLI Commands
-- [ ] Implement `oaeval init`
-- [ ] Implement `oaeval run`
-- [ ] Implement `oaeval report`
-- [ ] Implement `oaeval compare`
-- [ ] Implement `oaeval list`
-- [ ] Implement `oaeval doctor`
-- [ ] Write CLI integration tests
+- [x] Implement `oaeval init`
+- [x] Implement `oaeval run` (now functional end-to-end)
+- [x] Implement `oaeval report`
+- [x] Implement `oaeval compare`
+- [x] Implement `oaeval list`
+- [x] Implement `oaeval doctor`
+- [x] Write CLI integration tests
+- [x] Wire evaluation pipeline (retriever → LLM → metrics) — was a stub
 
 ### Phase 8: Documentation
 - [ ] Create docs/01_vision.md
@@ -179,7 +180,10 @@ Phase 8 (Documentation) ← can run in parallel with Phase 7
 - Phase 1 is complete - all foundation work done
 - Phases 2-5 can be developed in parallel
 - Phase 6 requires interfaces from Phases 2-5
-- Phase 7 is integration work
+- Phase 7 is complete - CLI works and the evaluation pipeline is now functional
+- CORRECTION: the earlier "all phases complete / 517+ passing" claim was inaccurate;
+  the core pipeline was a stub that produced empty results. Fixed 2026-07-10.
+- `oaeval run` now retrieves, generates, and scores; offline dry-run via mock providers.
 - Phase 8 can start early and run in parallel
 - Exception hierarchy is part of Phase 1 (required foundation)
 - Core module (engine, pipeline, executor, registry) is part of Phase 1
@@ -200,6 +204,7 @@ Phase 8 (Documentation) ← can run in parallel with Phase 7
 
 | Date | Change |
 |------|--------|
+| 2026-07-10 | Pipeline stub fixed; mock providers added; recall_at_k/summary/hallucination bugs fixed; config aligned to registry; Phase 7 marked complete |
 | 2026-07-08 | Initial TASKS.md created |
 | 2026-07-08 | Updated with architecture decisions (D011-D016) |
 | 2026-07-08 | Added exception hierarchy to Phase 1 |
