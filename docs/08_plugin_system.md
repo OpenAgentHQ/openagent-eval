@@ -214,6 +214,19 @@ OpenAgent Eval includes the following built-in plugins:
 ### Retriever Providers
 
 - `chroma` - ChromaDB
+- `memory` - In-memory cosine vector store (NumPy, no external service)
+- `bm25` - BM25 lexical baseline (`rank-bm25`)
+- `http` - Generic REST/HTTP search endpoint (`httpx`)
+- `qdrant` - Qdrant
+- `pinecone` - Pinecone
+- `weaviate` - Weaviate
+- `faiss` - Local FAISS index (`faiss-cpu`)
+- `pgvector` - PostgreSQL + pgvector
+- `elasticsearch` - Elasticsearch (lexical or kNN)
+- `mock` - Offline deterministic retriever
+
+See `docs/12_retrievers.md` for configuration details and the embedder
+abstraction used by vector retrievers.
 
 ### Report Generators
 

@@ -52,8 +52,16 @@ datasets = [
 pdf = [
     "pypdf>=4.0.0",
 ]
+# --- Retriever provider extras -------------------------------------------
+qdrant = ["qdrant-client>=1.7.0"]
+pinecone = ["pinecone-client>=2.2.0"]
+weaviate = ["weaviate-client>=4.5.0"]
+faiss = ["faiss-cpu>=1.7.0"]
+pgvector = ["psycopg[binary]>=3.1.0", "pgvector>=0.2.0"]
+elasticsearch = ["elasticsearch>=8.0.0"]
+bm25 = ["rank-bm25>=0.2.0"]
 all = [
-    "openagent-eval[dev,evaluation,datasets,pdf]",
+    "openagent-eval[dev,evaluation,datasets,pdf,qdrant,pinecone,weaviate,faiss,pgvector,elasticsearch,bm25]",
 ]
 
 [project.scripts]

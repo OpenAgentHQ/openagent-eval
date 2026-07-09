@@ -40,6 +40,36 @@ class RetrieverConfig(BaseModel):
 
     provider: str = Field(..., description="Retriever provider name (e.g., chroma)")
     settings: dict[str, Any] = Field(default_factory=dict, description="Provider-specific settings")
+    embedder: "EmbedderConfig | None" = Field(
+        None,
+        description="Embedder config for retrievers that need local embeddings "
+        "(e.g. memory, faiss, qdrant, pinecone, pgvector). Ignored by "
+        "server-side embedding backends (chroma, weaviate).",
+    )
+
+
+class EmbedderConfig(BaseModel):
+    """Embedder configuration for retrievers that embed locally.
+
+    Example:
+        ```yaml
+        retriever:
+          provider: memory
+          embedder:
+            provider: sentence_transformers
+            model: all-MiniLM-L6-v2
+        ```
+    """
+
+    provider: str = Field(
+        ..., description="Embedder provider name (e.g., sentence_transformers)"
+    )
+    model: str = Field(
+        "all-MiniLM-L6-v2", description="Embedding model identifier"
+    )
+    settings: dict[str, Any] = Field(
+        default_factory=dict, description="Provider-specific settings (e.g. device)"
+    )
 
 
 class MetricsConfig(BaseModel):

@@ -32,6 +32,7 @@ from openagent_eval.exceptions.provider import (
 )
 from openagent_eval.providers.base.retriever import Retriever
 from openagent_eval.providers.models import Document
+from openagent_eval.providers.retrievers._scoring import normalize_distance
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +167,7 @@ class ChromaRetriever(Retriever):
             strict=True,
         ):
             # ChromaDB distances are raw; normalise to 0-1 range when possible.
-            score = self._normalise_distance(distance)
+            score = normalize_distance(distance, space=self.distance_fn)
             documents.append(
                 Document(
                     content=content,
@@ -183,22 +184,3 @@ class ChromaRetriever(Retriever):
             query[:50],
         )
         return documents
-
-    def _normalise_distance(self, distance: float) -> float:
-        """Clamp a raw ChromaDB distance to the 0.0–1.0 range.
-
-        ChromaDB distances can exceed 1.0 for L2 and inner-product metrics.
-        This method clamps the value to stay within the Document model's
-        validated range.
-
-        Args:
-            distance: Raw distance returned by ChromaDB.
-
-        Returns:
-            Normalised score between 0.0 and 1.0.
-        """
-        if self.distance_fn == "cosine":
-            # Cosine distance is already in [0, 2]; map to [0, 1].
-            return max(0.0, min(1.0, distance / 2.0))
-        # L2 and IP distances are unbounded; clamp directly.
-        return max(0.0, min(1.0, distance))

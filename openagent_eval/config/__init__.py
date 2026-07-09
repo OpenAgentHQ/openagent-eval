@@ -4,6 +4,7 @@ from openagent_eval.config.loader import load_config
 from openagent_eval.config.models import (
     Config,
     DatasetConfig,
+    EmbedderConfig,
     LLMConfig,
     MetricsConfig,
     RetrieverConfig,
@@ -12,6 +13,7 @@ from openagent_eval.config.models import (
 __all__ = [
     "Config",
     "DatasetConfig",
+    "EmbedderConfig",
     "LLMConfig",
     "MetricsConfig",
     "RetrieverConfig",
