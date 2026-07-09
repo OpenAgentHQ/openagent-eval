@@ -1,45 +1,282 @@
 /* ===========================================================================
-   OpenAgent Eval — custom documentation styles
+   OpenAgent Eval — Design System
+   Direction: "Precision Instrument / Technical Editorial"
+   Indigo field · single amber signal accent · Inter + Space Grotesk
    =========================================================================== */
 
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
 :root {
-  --oaeval-brand: #3949ab;
-  --oaeval-brand-light: #5c6bc0;
+  /* Brand field */
+  --oae-brand: #3949ab;
+  --oae-brand-600: #3f51b5;
+  --oae-brand-300: #7986cb;
+
+  /* Signal accent — used sparingly for highlights, numbers, badges */
+  --oae-signal: #ffb300;
+  --oae-signal-soft: rgba(255, 179, 0, 0.14);
+
+  /* Ink + surface */
+  --oae-ink: #1a1f36;
+  --oae-ink-soft: #4a5070;
+  --oae-line: rgba(57, 73, 171, 0.14);
+
+  /* Motion */
+  --oae-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --oae-rise: 0.7s var(--oae-ease) both;
 }
 
-/* Hero / landing page tweaks */
-.md-typeset .hero h1 {
-  margin-bottom: 0;
-  font-weight: 800;
+/* ---------------------------------------------------------------------------
+   Typography — give headings a distinctive display face
+   --------------------------------------------------------------------------- */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-family: "Space Grotesk", var(--md-text-font, "Inter"), sans-serif;
   letter-spacing: -0.02em;
+  font-weight: 600;
 }
 
-.md-typeset .hero h2 {
-  font-weight: 500;
-  opacity: 0.85;
+.md-typeset h1 {
+  font-weight: 700;
 }
 
-.md-typeset .center {
-  text-align: center;
+/* Eyebrow label used above section headings on the landing page */
+.oae-eyebrow {
+  display: inline-block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oae-signal);
+  margin-bottom: 0.4rem;
 }
 
-.md-typeset .tx-center {
-  text-align: center;
+/* ---------------------------------------------------------------------------
+   Landing hero — two-column composition with atmosphere
+   --------------------------------------------------------------------------- */
+.oae-hero {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 2.5rem;
+  align-items: center;
+  padding: 2.5rem 0 1rem;
+  position: relative;
 }
 
-/* Make the grid cards feel a little more spacious on the landing page */
-.md-typeset .grid.cards > ul > li {
+/* Dot-grid + gradient mesh atmosphere behind the hero */
+.oae-hero::before {
+  content: "";
+  position: absolute;
+  inset: -2rem -4rem 0 -4rem;
+  z-index: -1;
+  background-image:
+    radial-gradient(circle at 18% 20%, rgba(57, 73, 171, 0.10), transparent 42%),
+    radial-gradient(circle at 82% 12%, rgba(255, 179, 0, 0.10), transparent 40%),
+    radial-gradient(rgba(57, 73, 171, 0.10) 1px, transparent 1px);
+  background-size: auto, auto, 22px 22px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+          mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  pointer-events: none;
+}
+
+.oae-hero__copy {
+  min-width: 0;
+}
+
+.oae-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--oae-brand);
+  background: var(--oae-signal-soft);
+  border: 1px solid rgba(255, 179, 0, 0.35);
+}
+
+.oae-badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--oae-signal);
+  box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.25);
+}
+
+.oae-hero h1 {
+  font-size: clamp(2.1rem, 4.4vw, 3.3rem);
+  line-height: 1.04;
+  margin: 1rem 0 0.6rem;
+  background: linear-gradient(120deg, var(--oae-ink) 30%, var(--oae-brand) 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.oae-lede {
+  font-size: 1.08rem;
+  line-height: 1.6;
+  color: var(--oae-ink-soft);
+  max-width: 34rem;
+  margin: 0 0 1.4rem;
+}
+
+.oae-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+/* Install command styled as a terminal chip */
+.oae-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.92rem;
+  color: var(--oae-ink);
+  background: #0f1430;
+  color: #e8ecff;
+  padding: 0.6rem 0.95rem;
   border-radius: 0.6rem;
-  border: 1px solid var(--md-default-fg-color--lightest);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid rgba(121, 134, 203, 0.4);
+  box-shadow: 0 10px 30px rgba(15, 20, 48, 0.25);
 }
 
-.md-typeset .grid.cards > ul > li:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(57, 73, 171, 0.15);
+.oae-install::before {
+  content: "$";
+  color: var(--oae-signal);
+  font-weight: 700;
 }
 
-/* Buttons spacing on hero */
-.md-typeset .hero .md-button {
-  margin: 0.25rem;
+/* Hero art panel */
+.oae-hero__art {
+  position: relative;
+}
+
+.oae-hero__art img {
+  width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  border: 1px solid var(--oae-line);
+  box-shadow: 0 24px 60px rgba(57, 73, 171, 0.18);
+  background: #fff;
+}
+
+/* ---------------------------------------------------------------------------
+   Staggered hero reveal — one directed load sequence
+   --------------------------------------------------------------------------- */
+.oae-hero__copy > *,
+.oae-hero__art {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: oae-rise var(--oae-rise);
+}
+
+.oae-hero__copy > *:nth-child(1) { animation-delay: 0.05s; }
+.oae-hero__copy > *:nth-child(2) { animation-delay: 0.13s; }
+.oae-hero__copy > *:nth-child(3) { animation-delay: 0.21s; }
+.oae-hero__copy > *:nth-child(4) { animation-delay: 0.29s; }
+.oae-hero__copy > *:nth-child(5) { animation-delay: 0.37s; }
+.oae-hero__art { animation-delay: 0.30s; }
+
+@keyframes oae-rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oae-hero__copy > *,
+  .oae-hero__art {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Section rhythm
+   --------------------------------------------------------------------------- */
+.oae-section {
+  padding: 2.2rem 0 0.5rem;
+}
+
+.oae-section h2 {
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Feature cards — accent top rule, refined elevation
+   --------------------------------------------------------------------------- */
+.md-typeset .oae-features.grid.cards > ul {
+  gap: 1rem;
+}
+
+.md-typeset .oae-features.grid.cards > ul > li {
+  border: 1px solid var(--oae-line);
+  border-top: 3px solid var(--oae-brand-300);
+  border-radius: 0.7rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+  transition: transform 0.2s var(--oae-ease), box-shadow 0.2s var(--oae-ease),
+    border-color 0.2s var(--oae-ease);
+}
+
+.md-typeset .oae-features.grid.cards > ul > li:hover {
+  transform: translateY(-4px);
+  border-top-color: var(--oae-signal);
+  box-shadow: 0 14px 34px rgba(57, 73, 171, 0.16);
+}
+
+.md-typeset .oae-features.grid.cards > ul > li > p:first-child {
+  font-weight: 600;
+  color: var(--oae-ink);
+}
+
+/* ---------------------------------------------------------------------------
+   Provider / metric chips
+   --------------------------------------------------------------------------- */
+.oae-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.oae-chips li {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.5rem;
+  background: rgba(57, 73, 171, 0.06);
+  border: 1px solid var(--oae-line);
+  color: var(--oae-ink-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   Misc polish
+   --------------------------------------------------------------------------- */
+::selection {
+  background: var(--oae-signal-soft);
+  color: var(--oae-ink);
+}
+
+.md-typeset .oae-center { text-align: center; }
+
+.md-typeset .oae-hero .md-button { margin: 0; }
+
+/* Responsive: stack the hero on small screens */
+@media (max-width: 60em) {
+  .oae-hero {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
+  }
+  .oae-hero__art { order: -1; }
 }

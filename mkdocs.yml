@@ -27,6 +27,9 @@ theme:
   favicon: assets/favicon.svg
   logo: assets/logo.svg
   custom_dir: docs/overrides
+  font:
+    text: Inter
+    code: JetBrains Mono
   palette:
     # Light mode
     - media: "(prefers-color-scheme: light)"

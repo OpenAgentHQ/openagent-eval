@@ -6,31 +6,31 @@ hide:
 
 # OpenAgent Eval
 
-<center>
-
-::: {.center .hero .tx-center}
-
-# OpenAgent Eval
-## The `pytest` of AI evaluation
-
-**Open-source, local-first framework for evaluating RAG systems and AI Agents — a clean CLI, a typed Python SDK, and a pluggable metric/provider architecture.**
-
-[Getting Started :octicons-arrow-right-24:](installation.md){ .md-button .md-button--primary }
-[View on GitHub :octicons-mark-github-16:](https://github.com/OpenAgentHQ/openagent-eval){ .md-button }
-
-```bash
-pip install openagent-eval
-```
-
-:::
-
-</center>
+<div class="oae-hero">
+  <div class="oae-hero__copy">
+    <span class="oae-badge">v0.1.0 · Local-first · Apache 2.0</span>
+    <h1>The pytest of AI evaluation</h1>
+    <p class="oae-lede">
+      Open-source, local-first framework for evaluating RAG systems and AI agents.
+      A clean CLI, a typed Python SDK, and a pluggable metric &amp; provider architecture —
+      measure quality the way you test code.
+    </p>
+    <div class="oae-cta">
+      <a href="installation.md" class="md-button md-button--primary">Get Started</a>
+      <a href="https://github.com/OpenAgentHQ/openagent-eval" class="md-button">GitHub</a>
+    </div>
+    <div class="oae-install">pip install openagent-eval</div>
+  </div>
+  <div class="oae-hero__art">
+    <img src="assets/hero.svg" alt="OpenAgent Eval pipeline: config to engine to report" loading="lazy">
+  </div>
+</div>
 
 ---
 
 ## Why OpenAgent Eval
 
-<div class="grid cards" markdown>
+<div class="grid cards oae-features" markdown>
 
 - :material-rocket-launch: **Local-First**
   Runs entirely on your machine. No dashboards or accounts required — your data never leaves your laptop.
@@ -54,7 +54,10 @@ pip install openagent-eval
 
 ---
 
-## Quick Start
+<div class="oae-section">
+  <span class="oae-eyebrow">Quick Start</span>
+  <h2>From install to insight in minutes</h2>
+</div>
 
 ```bash
 # Install
@@ -75,11 +78,13 @@ See the [Quickstart](quickstart.md) for a full walkthrough, or jump straight to 
 
 ---
 
-## Architecture Overview
+<div class="oae-section">
+  <span class="oae-eyebrow">Architecture</span>
+  <h2>One pipeline, every stage pluggable</h2>
+</div>
 
-OpenAgent Eval is a modular, provider-agnostic pipeline. A `Config` describes your dataset, retriever,
-LLM, and the metrics to compute. The `Engine` loads the dataset, runs retrieval and generation, scores
-the results with the selected metrics, and persists a report.
+A `Config` describes your dataset, retriever, LLM, and the metrics to compute. The `Engine` loads the
+dataset, runs retrieval and generation, scores the results, and persists a report.
 
 ```mermaid
 flowchart LR
@@ -98,11 +103,14 @@ Every stage is pluggable. Read more on the [Architecture](architecture.md) page.
 
 ---
 
-## Evaluation Metrics
+<div class="oae-section">
+  <span class="oae-eyebrow">Evaluation Metrics</span>
+  <h2>Four categories, one consistent score</h2>
+</div>
 
 Metric names map to the built-in registry (`openagent_eval.metrics.METRIC_REGISTRY`):
 
-<div class="grid cards" markdown>
+<div class="grid cards oae-features" markdown>
 
 - :material-magnify: **Retrieval**
   `context_precision`, `context_recall`, `recall_at_k`, `precision_at_k`, `hit_rate`, `mrr`, `ndcg`
@@ -120,7 +128,10 @@ Metric names map to the built-in registry (`openagent_eval.metrics.METRIC_REGIST
 
 ---
 
-## Supported Providers
+<div class="oae-section">
+  <span class="oae-eyebrow">Supported Providers</span>
+  <h2>Bring your own, or use what ships</h2>
+</div>
 
 | LLM Providers | Retriever Providers | Embedders |
 | --- | --- | --- |
@@ -130,7 +141,10 @@ Bring your own by implementing the provider base classes — see [API Reference]
 
 ---
 
-## Python SDK
+<div class="oae-section">
+  <span class="oae-eyebrow">Python SDK</span>
+  <h2>Embed evaluation in your test suite</h2>
+</div>
 
 ```python
 import asyncio
@@ -153,7 +167,10 @@ The SDK is fully documented in the [API Reference](api.md) and demonstrated in
 
 ---
 
-## CLI
+<div class="oae-section">
+  <span class="oae-eyebrow">CLI</span>
+  <h2>Six commands cover the whole loop</h2>
+</div>
 
 | Command | Description |
 | --- | --- |
@@ -168,7 +185,10 @@ Full command documentation lives in [CLI Reference](cli.md).
 
 ---
 
-## Contributing
+<div class="oae-section">
+  <span class="oae-eyebrow">Contributing</span>
+  <h2>Built in the open, by the community</h2>
+</div>
 
 OpenAgent Eval is community-driven. Contributions of every size are welcome — from bug reports to new
 metrics and providers.
@@ -179,9 +199,12 @@ metrics and providers.
 
 ---
 
-## Community
+<div class="oae-section oae-center">
+  <span class="oae-eyebrow">Community</span>
+  <h2>Help shape the roadmap</h2>
+</div>
 
-Stay connected and help shape the roadmap:
+Stay connected:
 
 - :fontawesome-brands-github: [GitHub](https://github.com/OpenAgentHQ/openagent-eval)
 - :fontawesome-brands-x-twitter: [X / Twitter](https://x.com/openagenthq)
@@ -191,7 +214,7 @@ Stay connected and help shape the roadmap:
 
 ---
 
-<div class="center" markdown>
+<div class="oae-center" markdown>
 
 **OpenAgent Eval** &mdash; Apache 2.0 License. Built by the OpenAgent Eval Contributors.
 
