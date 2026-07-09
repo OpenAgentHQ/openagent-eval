@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
-
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
     ProviderExecutionError,
