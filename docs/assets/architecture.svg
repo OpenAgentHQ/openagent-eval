@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 380" width="760" height="380" role="img" aria-label="OpenAgent Eval architecture diagram">
+  <title>OpenAgent Eval architecture</title>
+  <defs>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f4f6fc"/>
+    </linearGradient>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 z" fill="#3949ab"/>
+    </marker>
+  </defs>
+  <rect width="760" height="380" fill="#eef1fb"/>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14" fill="#3949ab" text-anchor="middle">
+    <rect x="40" y="40" width="160" height="60" rx="12" fill="url(#box)" stroke="#c7cdf0"/>
+    <text x="120" y="76">config.yaml</text>
+
+    <rect x="300" y="40" width="160" height="60" rx="12" fill="url(#box)" stroke="#c7cdf0"/>
+    <text x="380" y="76">Engine</text>
+
+    <rect x="560" y="40" width="160" height="60" rx="12" fill="url(#box)" stroke="#c7cdf0"/>
+    <text x="640" y="76">Dataset</text>
+
+    <rect x="300" y="150" width="160" height="56" rx="12" fill="#e8ebfb" stroke="#c7cdf0"/>
+    <text x="380" y="184">Retriever</text>
+
+    <rect x="300" y="230" width="160" height="56" rx="12" fill="#e8ebfb" stroke="#c7cdf0"/>
+    <text x="380" y="264">LLM</text>
+
+    <rect x="300" y="310" width="160" height="56" rx="12" fill="#e8ebfb" stroke="#c7cdf0"/>
+    <text x="380" y="344">Metrics</text>
+
+    <rect x="560" y="310" width="160" height="56" rx="12" fill="#3949ab"/>
+    <text x="640" y="344" fill="#ffffff">Report</text>
+
+    <path d="M200 70 H300" stroke="#3949ab" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M460 70 C 520 70, 520 70, 560 70" stroke="#3949ab" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M380 100 V150" stroke="#3949ab" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M380 206 V230" stroke="#3949ab" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M380 286 V310" stroke="#3949ab" stroke-width="3" marker-end="url(#a)"/>
+    <path d="M460 338 H560" stroke="#3949ab" stroke-width="3" marker-end="url(#a)"/>
+  </g>
+</svg>

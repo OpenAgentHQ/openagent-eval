@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{# Announcement bar shown at the top of every page. #}
+{% block announce %}
+  OpenAgent Eval v0.1.0 is here — the <strong>pytest</strong> of AI evaluation.
+  <a href="https://github.com/OpenAgentHQ/openagent-eval/releases" style="color: inherit; text-decoration: underline;">
+    Read the release notes
+  </a>
+{% endblock %}
+
+{% block extrahead %}
+  {# Preconnect to speed up font loading #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+{% endblock %}

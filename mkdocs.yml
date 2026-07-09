@@ -1,0 +1,155 @@
+# =============================================================================
+# OpenAgent Eval — MkDocs Material configuration
+# =============================================================================
+# Local preview : pip install mkdocs-material && mkdocs serve
+# Deploy        : git push origin main  -> automated via GitHub Actions
+# =============================================================================
+
+site_name: OpenAgent Eval
+site_description: Open-source AI Agent Evaluation Framework
+site_url: https://openagenthq.github.io/openagent-eval/
+site_author: OpenAgent Eval Contributors
+copyright: Copyright &copy; 2024 OpenAgent Eval Contributors &mdash; Apache 2.0 License
+
+# -----------------------------------------------------------------------------
+# Repository integration
+# -----------------------------------------------------------------------------
+repo_name: OpenAgentHQ/openagent-eval
+repo_url: https://github.com/OpenAgentHQ/openagent-eval
+edit_uri: edit/main/docs/
+
+# -----------------------------------------------------------------------------
+# Theme
+# -----------------------------------------------------------------------------
+theme:
+  name: material
+  language: en
+  favicon: assets/favicon.svg
+  logo: assets/logo.svg
+  custom_dir: docs/overrides
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs                  # top-level navigation tabs
+    - navigation.tabs.sticky           # keep tabs visible on scroll
+    - navigation.sections              # group nav items into sections
+    - navigation.top                   # "back to top" button
+    - navigation.instant               # instant (SPA-like) navigation
+    - navigation.instant.prefetch      # prefetch linked pages
+    - navigation.instant.progress      # progress bar on navigation
+    - navigation.tracking              # highlight current location
+    - navigation.indexes               # section index pages
+    - toc.follow                       # TOC follows scroll position
+    - toc.integrate                    # merge TOC into nav on mobile
+    - content.code.copy                # copy button on code blocks
+    - content.code.annotate            # code annotations (+)
+    - content.code.select              # click to select code blocks
+    - content.tooltips                 # tooltips on cross-references
+    - search.suggest                   # search suggestions
+    - search.highlight                 # highlight search matches
+    - search.share                     # shareable search links
+    - announce.dismiss                 # dismissible announcement bar
+
+# -----------------------------------------------------------------------------
+# Plugins
+# -----------------------------------------------------------------------------
+plugins:
+  - search:
+      lang: en
+  - social:
+      enabled: false
+  - tags:
+      enabled: true
+
+# -----------------------------------------------------------------------------
+# Markdown extensions
+# -----------------------------------------------------------------------------
+markdown_extensions:
+  # Admonitions / callouts
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  # Highlighting & code
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  # Formatting
+  - pymdownx.smartsymbols
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - def_list
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+# -----------------------------------------------------------------------------
+# Extra assets / metadata
+# -----------------------------------------------------------------------------
+extra:
+  version: 0.1.0
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/OpenAgentHQ/openagent-eval
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/openagenthq
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/openagenthq
+  analytics:
+    provider: false
+
+extra_css:
+  - stylesheets/extra.css
+
+# -----------------------------------------------------------------------------
+# Navigation
+# -----------------------------------------------------------------------------
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quickstart: quickstart.md
+  - Guide:
+      - Architecture: architecture.md
+      - CLI Reference: cli.md
+      - API Reference: api.md
+      - Examples: examples.md
+  - Community:
+      - Contributing: contributing.md
+      - Roadmap: roadmap.md
+      - FAQ: faq.md

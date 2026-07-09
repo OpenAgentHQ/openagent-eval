@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="OpenAgent Eval logo">
+  <title>OpenAgent Eval</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5c6bc0"/>
+      <stop offset="1" stop-color="#3949ab"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#g)"/>
+  <path d="M40 44 h48 M40 64 h48 M40 84 h30" stroke="#ffffff" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <circle cx="86" cy="84" r="7" fill="#ffffff"/>
+</svg>

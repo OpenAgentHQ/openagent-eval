@@ -1,0 +1,45 @@
+/* ===========================================================================
+   OpenAgent Eval — custom documentation styles
+   =========================================================================== */
+
+:root {
+  --oaeval-brand: #3949ab;
+  --oaeval-brand-light: #5c6bc0;
+}
+
+/* Hero / landing page tweaks */
+.md-typeset .hero h1 {
+  margin-bottom: 0;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset .hero h2 {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.md-typeset .center {
+  text-align: center;
+}
+
+.md-typeset .tx-center {
+  text-align: center;
+}
+
+/* Make the grid cards feel a little more spacious on the landing page */
+.md-typeset .grid.cards > ul > li {
+  border-radius: 0.6rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(57, 73, 171, 0.15);
+}
+
+/* Buttons spacing on hero */
+.md-typeset .hero .md-button {
+  margin: 0.25rem;
+}

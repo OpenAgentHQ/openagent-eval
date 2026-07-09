@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" width="800" height="420" role="img" aria-label="OpenAgent Eval hero illustration">
+  <title>OpenAgent Eval — evaluate, compare, improve</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eef1fb"/>
+      <stop offset="1" stop-color="#dfe4f7"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f4f6fc"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="420" fill="url(#bg)"/>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <rect x="80" y="90" width="260" height="150" rx="16" fill="url(#card)" stroke="#c7cdf0"/>
+    <text x="104" y="135" font-size="20" font-weight="700" fill="#3949ab">Config</text>
+    <text x="104" y="170" font-size="14" fill="#5a5f7a">dataset · retriever</text>
+    <text x="104" y="192" font-size="14" fill="#5a5f7a">llm · metrics</text>
+    <text x="104" y="214" font-size="14" fill="#5a5f7a">output</text>
+
+    <rect x="430" y="90" width="260" height="150" rx="16" fill="url(#card)" stroke="#c7cdf0"/>
+    <text x="454" y="135" font-size="20" font-weight="700" fill="#3949ab">Engine</text>
+    <text x="454" y="170" font-size="14" fill="#5a5f7a">retrieve → generate</text>
+    <text x="454" y="192" font-size="14" fill="#5a5f7a">→ score</text>
+    <text x="454" y="214" font-size="14" fill="#5a5f7a">→ report</text>
+
+    <path d="M340 165 H430" stroke="#3949ab" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <rect x="255" y="300" width="290" height="70" rx="16" fill="#3949ab"/>
+    <text x="400" y="342" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">Evaluation Report</text>
+    <path d="M560 165 C 620 165, 620 300, 560 320" stroke="#3949ab" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+
+    <defs>
+      <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+        <path d="M0 0 L6 3 L0 6 z" fill="#3949ab"/>
+      </marker>
+    </defs>
+  </g>
+</svg>
