@@ -84,6 +84,13 @@ class BM25Retriever(Retriever):
             ) from exc
 
         try:
+            if not self._raw_docs:
+                # BM25Okapi([]) raises ZeroDivisionError; an empty corpus is
+                # valid (just returns no results) so handle it gracefully.
+                self._bm25 = None
+                self._docs = []
+                self._indexed = True
+                return
             corpus = [self._tokenize(d.get("content", "")) for d in self._raw_docs]
             self._bm25 = BM25Okapi(corpus)
             self._docs = [
@@ -112,7 +119,9 @@ class BM25Retriever(Retriever):
             return []
 
         try:
-            raw_scores = self._bm25.get_scores(self._tokenize(query))
+            # get_scores returns a numpy array; convert to a plain list so the
+            # shared min-max normalizer (which checks `if not scores`) works.
+            raw_scores = self._bm25.get_scores(self._tokenize(query)).tolist()
             norm = minmax_normalize(raw_scores)
         except Exception as exc:
             raise ProviderExecutionError(

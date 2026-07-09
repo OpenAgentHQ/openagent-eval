@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from openagent_eval.metrics.generation import (
@@ -249,6 +251,10 @@ class TestHallucinationDetection:
     def setup_method(self):
         self.metric = HallucinationDetection()
 
+    @pytest.mark.skipif(
+        "OPENAI_API_KEY" not in os.environ,
+        reason="HallucinationDetection uses DeepEval (OpenAI) and needs OPENAI_API_KEY",
+    )
     def test_grounded_answer(self):
         """Answer grounded in context."""
         result = self.metric.evaluate(
@@ -257,6 +263,10 @@ class TestHallucinationDetection:
         )
         assert result.score < 0.5
 
+    @pytest.mark.skipif(
+        "OPENAI_API_KEY" not in os.environ,
+        reason="HallucinationDetection uses DeepEval (OpenAI) and needs OPENAI_API_KEY",
+    )
     def test_hallucinated_answer(self):
         """Answer not in context."""
         result = self.metric.evaluate(
