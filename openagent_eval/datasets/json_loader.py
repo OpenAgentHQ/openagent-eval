@@ -67,6 +67,14 @@ class JSONDatasetLoader(BaseDatasetLoader):
                 line_number=e.lineno,
             ) from e
 
+        # Support both a top-level array and the common {"items": [...]} wrapper.
+        if (
+            isinstance(raw_data, dict)
+            and "items" in raw_data
+            and isinstance(raw_data["items"], list)
+        ):
+            raw_data = raw_data["items"]
+
         return self._parse_data(raw_data, path)
 
     def validate(self, data: Any) -> bool:

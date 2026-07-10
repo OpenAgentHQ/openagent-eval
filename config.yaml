@@ -1,0 +1,27 @@
+# OpenAgent Eval Configuration
+# See documentation for options: https://github.com/OpenAgentHQ/openagent-eval
+
+dataset:
+  path: data/sample_questions.json
+  format: json
+  # limit: 100
+
+llm:
+  provider: openai
+  model: gpt-4o-mini
+  temperature: 0.0
+
+retrieval:
+  # provider: chromadb
+  # collection_name: my_collection
+
+evaluation:
+  metrics:
+    - answer_relevancy
+    - faithfulness
+    - context_precision
+    - context_recall
+
+report:
+  output: terminal
+  output_dir: ./reports

@@ -12,10 +12,14 @@ import os
 import time
 from typing import Any
 
-import anthropic
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
+    ProviderError,
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
@@ -106,6 +110,16 @@ class Anthropic(LLMProvider):
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+
+        if anthropic is None:
+            raise ProviderError(
+                message=(
+                    "The 'anthropic' package is required for the Anthropic provider. "
+                    "Install with: pip install openagent-eval[providers]"
+                ),
+                provider_name="anthropic",
+            )
+
         self._client = anthropic.AsyncAnthropic(api_key=api_key)
 
     async def generate(self, prompt: str, **kwargs: Any) -> str:

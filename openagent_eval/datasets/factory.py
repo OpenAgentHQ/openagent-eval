@@ -60,8 +60,19 @@ def _get_loader(config: DatasetConfig) -> BaseDatasetLoader:
             format=config.format,
         )
 
+    # Guard against directory paths, which have no usable extension and
+    # would otherwise surface a misleading "set the format field" error.
+    path = Path(config.path)
+    if path.is_dir():
+        raise InvalidDatasetError(
+            message=f"Dataset path '{config.path}' is a directory, not a file. "
+            f"Point 'path' to a dataset file (e.g. data/sample_questions.json) "
+            f"or set the 'format' field explicitly in your config.",
+            dataset_path=config.path,
+        )
+
     # Fall back to file extension
-    ext = Path(config.path).suffix.lower()
+    ext = path.suffix.lower()
     if ext in _LOADER_MAP:
         return _LOADER_MAP[ext]()
 

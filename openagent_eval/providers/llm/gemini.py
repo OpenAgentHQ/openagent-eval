@@ -23,21 +23,22 @@ from typing import Any
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
+    ProviderError,
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
 from openagent_eval.providers.models import LLMResponse, TokenUsage
 
-# google-genai SDK imports (current, non-deprecated SDK)
+# google-genai SDK imports (current, non-deprecated SDK). Imported lazily so
+# the module can be imported without the optional dependency installed.
 try:
     from google import genai
     from google.genai import errors as genai_errors
     from google.genai import types
-except ImportError as exc:
-    raise ImportError(
-        "google-genai package is required for Gemini provider. "
-        "Install it with: pip install google-genai"
-    ) from exc
+except ImportError:
+    genai = None
+    genai_errors = None
+    types = None
 
 import httpx
 
@@ -113,6 +114,15 @@ class Gemini(LLMProvider):
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
+
+        if genai is None:
+            raise ProviderError(
+                message=(
+                    "The 'google-genai' package is required for the Gemini provider. "
+                    "Install with: pip install openagent-eval[providers]"
+                ),
+                provider_name=self.name,
+            )
 
         try:
             self._client = genai.Client(api_key=resolved_api_key)

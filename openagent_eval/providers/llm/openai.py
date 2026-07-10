@@ -36,11 +36,16 @@ import os
 import time
 from typing import TYPE_CHECKING, Any
 
-import tiktoken
-from openai import AsyncOpenAI
+try:
+    import tiktoken
+    from openai import AsyncOpenAI
+except ImportError:
+    tiktoken = None
+    AsyncOpenAI = None
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
+    ProviderError,
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
@@ -116,6 +121,15 @@ class OpenAIProvider(LLMProvider):
         if not self._api_key:
             raise ProviderConnectionError(
                 message="OpenAI API key not provided. Set OPENAI_API_KEY environment variable or pass api_key parameter.",
+                provider_name=self.name,
+            )
+
+        if AsyncOpenAI is None:
+            raise ProviderError(
+                message=(
+                    "The 'openai' and 'tiktoken' packages are required for the "
+                    "OpenAI provider. Install with: pip install openagent-eval[providers]"
+                ),
                 provider_name=self.name,
             )
 

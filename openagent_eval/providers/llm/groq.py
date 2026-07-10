@@ -14,10 +14,14 @@ import os
 import time
 from typing import Any
 
-import groq
+try:
+    import groq
+except ImportError:
+    groq = None
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
+    ProviderError,
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
@@ -116,6 +120,15 @@ class Groq(LLMProvider):
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+
+        if groq is None:
+            raise ProviderError(
+                message=(
+                    "The 'groq' package is required for the Groq provider. "
+                    "Install with: pip install openagent-eval[providers]"
+                ),
+                provider_name="groq",
+            )
 
         try:
             self.client = groq.AsyncGroq(api_key=api_key)

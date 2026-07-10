@@ -6,6 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+import httpx
+
 # Skip tests if anthropic is not installed
 anthropic = pytest.importorskip("anthropic", reason="anthropic not installed")
 
