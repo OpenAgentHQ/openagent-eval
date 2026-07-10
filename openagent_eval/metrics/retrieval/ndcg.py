@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
+from openagent_eval.metrics.retrieval._normalize import normalize_context
 
 
 def _dcg(relevances: list[int], k: int) -> float:
@@ -79,8 +80,8 @@ class NDCG(BaseMetric):
         Returns:
             MetricResult with NDCG score.
         """
-        retrieved = kwargs.get("retrieved_contexts", [])
-        ground_truth = kwargs.get("ground_truth_contexts", [])
+        retrieved = [normalize_context(c) for c in kwargs.get("retrieved_contexts", [])]
+        ground_truth = [normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])]
         k = kwargs.get("k", len(retrieved))
 
         if not ground_truth:
@@ -103,13 +104,14 @@ class NDCG(BaseMetric):
             for ctx in retrieved[:k]
         ]
 
-        # Ideal: all relevant contexts first
-        ideal_relevances = sorted(relevances, reverse=True)
-        # Pad with 1s if we have more ground truth than retrieved
-        ideal_relevances.extend(
-            [1] * (min(len(ground_truth), k) - len(ideal_relevances))
+        # Ideal ranking: place every relevant (ground-truth) document first,
+        # capped at k. This must be derived from the total number of relevant
+        # documents, NOT from what happened to be retrieved — otherwise NDCG is
+        # overstated whenever retrieval misses relevant ground-truth docs.
+        num_relevant = len(ground_truth_set)
+        ideal_relevances = [1] * min(num_relevant, k) + [0] * max(
+            0, k - min(num_relevant, k)
         )
-        ideal_relevances = ideal_relevances[:k]
 
         score = _ndcg(relevances, ideal_relevances, k)
         relevant_count = sum(relevances)

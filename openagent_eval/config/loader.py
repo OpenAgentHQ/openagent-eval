@@ -97,6 +97,23 @@ def load_config(config_path: str | Path) -> Config:
                 "cost": [m for m in normalised if m in ("token_count",)],
             }
 
+            # Surface metrics that were silently dropped (unknown name or typo)
+            # so users are not left wondering why an expected metric never ran.
+            kept = set(
+                raw_config["metrics"]["retrieval"]
+                + raw_config["metrics"]["generation"]
+                + raw_config["metrics"]["performance"]
+                + raw_config["metrics"]["cost"]
+            )
+            dropped = [m for m in normalised if m not in kept]
+            if dropped:
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    "The following metrics were not recognised and will be "
+                    f"ignored: {sorted(set(dropped))}"
+                )
+
         # Handle legacy 'retrieval' block (provider/collection_name) -> 'retriever'.
         if "retrieval" in raw_config and "retriever" not in raw_config:
             retrieval = raw_config.pop("retrieval") or {}

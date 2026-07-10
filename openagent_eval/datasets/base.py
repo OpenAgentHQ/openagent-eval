@@ -29,6 +29,7 @@ class DatasetItem:
     context: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     contexts: list[str] = field(default_factory=list)
+    ground_truth_contexts: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format.
@@ -43,6 +44,8 @@ class DatasetItem:
             result["context"] = self.context
         if self.contexts:
             result["contexts"] = self.contexts
+        if self.ground_truth_contexts:
+            result["ground_truth_contexts"] = self.ground_truth_contexts
         if self.metadata:
             result["metadata"] = self.metadata
         return result
@@ -70,7 +73,9 @@ class Dataset:
     @property
     def has_ground_truth(self) -> bool:
         """Check if all items have ground truth answers."""
-        return all(item.ground_truth is not None for item in self.items)
+        return len(self.items) > 0 and all(
+            item.ground_truth is not None for item in self.items
+        )
 
     @property
     def questions(self) -> list[str]:

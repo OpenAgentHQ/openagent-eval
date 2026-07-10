@@ -22,9 +22,10 @@ def validate_config(config: Config) -> list[str]:
     """
     warnings: list[str] = []
 
-    # Validate dataset path exists
+    # Validate dataset path exists. HuggingFace hub datasets (format="hf") are
+    # referenced by name rather than a local file, so skip this check for them.
     dataset_path = Path(config.dataset.path)
-    if not dataset_path.exists():
+    if config.dataset.format != "hf" and not dataset_path.exists():
         raise ConfigurationError(
             message=f"Dataset file not found: {config.dataset.path}",
             field="dataset.path",

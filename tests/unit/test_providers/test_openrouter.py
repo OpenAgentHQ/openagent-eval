@@ -252,3 +252,38 @@ class TestOpenRouterTokenCount:
             "This is a much longer sentence for testing token estimation"
         )
         assert long > short
+
+
+# ---------------------------------------------------------------------------
+# L24 regression: generate_with_usage returns LLMResponse
+# ---------------------------------------------------------------------------
+class TestOpenRouterGenerateWithUsage:
+    """L24: generate_with_usage() must return LLMResponse with content + usage."""
+
+    @pytest.mark.asyncio
+    async def test_generate_with_usage_returns_llm_response(
+        self, provider_with_key: OpenRouter, mock_httpx_client
+    ):
+        """generate_with_usage() returns LLMResponse with correct fields."""
+        from openagent_eval.providers.models import LLMResponse
+
+        mock_response = _make_response(
+            status_code=200,
+            json_data={
+                "choices": [{"message": {"content": "Hello from OR"}}],
+                "usage": {
+                    "prompt_tokens": 5,
+                    "completion_tokens": 10,
+                    "total_tokens": 15,
+                },
+            },
+            text='{"choices": [...]}',
+        )
+        mock_httpx_client.post = AsyncMock(return_value=mock_response)
+
+        result = await provider_with_key.generate_with_usage("Test prompt")
+        assert isinstance(result, LLMResponse)
+        assert result.content == "Hello from OR"
+        assert result.usage.prompt_tokens == 5
+        assert result.usage.completion_tokens == 10
+        assert result.usage.total_tokens == 15

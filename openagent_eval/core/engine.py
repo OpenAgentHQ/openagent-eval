@@ -80,7 +80,7 @@ class Engine:
 
         summary = {
             "total_items": len(dataset),
-            "successful_evaluations": len(result.results),
+            "successful_evaluations": len(result.results) - len(result.errors),
             "failed_evaluations": len(result.errors),
             "metrics_summary": result.summary.get("metrics", {}),
             "total_tokens": result.summary.get("total_tokens", 0),

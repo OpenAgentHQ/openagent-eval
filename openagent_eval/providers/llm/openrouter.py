@@ -11,6 +11,7 @@ OpenAgent Eval evaluation pipeline.
 from __future__ import annotations
 
 import os
+import time
 from typing import Any
 
 import httpx
@@ -20,6 +21,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
+from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 
 class OpenRouter(LLMProvider):
@@ -71,6 +73,7 @@ class OpenRouter(LLMProvider):
 
     def __init__(
         self,
+        config: Any | None = None,
         api_key: str | None = None,
         model: str = "openai/gpt-4o-mini",
         temperature: float = 0.0,
@@ -80,6 +83,7 @@ class OpenRouter(LLMProvider):
         """Initialize the OpenRouter provider.
 
         Args:
+            config: Optional LLMConfig (reads api_key, model, temperature, max_tokens).
             api_key: OpenRouter API key. If not provided, falls back to
                 OPENROUTER_API_KEY environment variable.
             model: Model identifier for generation. Defaults to "openai/gpt-4o-mini".
@@ -90,6 +94,20 @@ class OpenRouter(LLMProvider):
         Raises:
             ProviderConnectionError: If API key is not provided or found in environment.
         """
+        if config is not None:
+            api_key = api_key or getattr(config, "api_key", None)
+            model = getattr(config, "model", model) or model
+            temperature = (
+                getattr(config, "temperature", temperature)
+                if getattr(config, "temperature", None) is not None
+                else temperature
+            )
+            max_tokens = (
+                getattr(config, "max_tokens", max_tokens)
+                if getattr(config, "max_tokens", None) is not None
+                else max_tokens
+            )
+
         if api_key is None:
             api_key = os.environ.get("OPENROUTER_API_KEY")
             if api_key is None:
@@ -104,10 +122,10 @@ class OpenRouter(LLMProvider):
         self.max_tokens = max_tokens
         self.base_url = base_url.rstrip("/")
 
-    async def generate(self, prompt: str, **kwargs: Any) -> str:
-        """Generate a response from the LLM.
+    async def generate_with_usage(self, prompt: str, **kwargs: Any) -> "LLMResponse":
+        """Generate a response and return it with token usage and latency.
 
-        Sends the prompt to OpenRouter's API and returns the generated text.
+        Sends the prompt to OpenRouter's API and returns an ``LLMResponse``.
         Supports additional generation parameters via kwargs.
 
         Args:
@@ -118,7 +136,7 @@ class OpenRouter(LLMProvider):
                 - model (str): Override default model for this request.
 
         Returns:
-            The generated text response from the LLM.
+            An ``LLMResponse`` with the generated content and usage stats.
 
         Raises:
             ProviderConnectionError: If the connection to OpenRouter fails.
@@ -144,6 +162,7 @@ class OpenRouter(LLMProvider):
             "X-Title": "OpenAgent Eval",
         }
 
+        start_time = time.monotonic()
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -178,7 +197,15 @@ class OpenRouter(LLMProvider):
 
                 content = result["choices"][0]["message"]["content"]
 
-                return content
+                latency_ms = (time.monotonic() - start_time) * 1000.0
+                usage = self._extract_usage(result)
+                return LLMResponse(
+                    content=content,
+                    model=kwargs.get("model", self.model),
+                    usage=usage,
+                    provider=self.name,
+                    latency_ms=latency_ms,
+                )
 
         except httpx.ConnectError as e:
             raise ProviderConnectionError(
@@ -198,6 +225,35 @@ class OpenRouter(LLMProvider):
                 provider_name="openrouter",
                 original_error=e,
             ) from e
+
+    def _extract_usage(self, result: dict[str, Any]) -> "TokenUsage":
+        """Extract token usage from an OpenRouter API response."""
+        usage_data = result.get("usage") or {}
+        return TokenUsage(
+            prompt_tokens=usage_data.get("prompt_tokens", 0),
+            completion_tokens=usage_data.get("completion_tokens", 0),
+            total_tokens=usage_data.get("total_tokens", 0),
+        )
+
+    async def generate(self, prompt: str, **kwargs: Any) -> str:
+        """Generate a response from the LLM.
+
+        Sends the prompt to OpenRouter's API and returns the generated text.
+        Supports additional generation parameters via kwargs.
+
+        Args:
+            prompt: The input prompt to send to the LLM.
+            **kwargs: Additional generation parameters (see ``generate_with_usage``).
+
+        Returns:
+            The generated text response from the LLM.
+
+        Raises:
+            ProviderConnectionError: If the connection to OpenRouter fails.
+            ProviderExecutionError: If the API request fails or returns an error.
+        """
+        response = await self.generate_with_usage(prompt, **kwargs)
+        return response.content
 
     async def get_token_count(self, text: str) -> int:
         """Count the number of tokens in the given text.

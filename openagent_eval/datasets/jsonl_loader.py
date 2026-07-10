@@ -139,6 +139,7 @@ class JSONLDatasetLoader(BaseDatasetLoader):
                         context=model.context,
                         metadata=model.metadata,
                         contexts=model.contexts,
+                        ground_truth_contexts=model.ground_truth_contexts,
                     )
                 )
             except Exception as e:

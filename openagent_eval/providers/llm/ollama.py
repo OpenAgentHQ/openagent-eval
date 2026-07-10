@@ -99,6 +99,7 @@ class Ollama(LLMProvider):
 
     def __init__(
         self,
+        config: Any | None = None,
         base_url: str = "http://localhost:11434",
         model: str = "llama3.2",
         temperature: float = 0.7,
@@ -108,12 +109,26 @@ class Ollama(LLMProvider):
         """Initialize the Ollama provider.
 
         Args:
+            config: Optional LLMConfig (reads api_key, model, temperature, max_tokens).
             base_url: Ollama server URL. Defaults to http://localhost:11434.
             model: Model identifier for Ollama. Defaults to "llama3.2".
             temperature: Sampling temperature (0.0-2.0). Defaults to 0.7.
             max_tokens: Maximum tokens to generate. None for unlimited.
             timeout: Request timeout in seconds. Defaults to 120.0.
         """
+        if config is not None:
+            model = getattr(config, "model", model) or model
+            temperature = (
+                getattr(config, "temperature", temperature)
+                if getattr(config, "temperature", None) is not None
+                else temperature
+            )
+            max_tokens = (
+                getattr(config, "max_tokens", max_tokens)
+                if getattr(config, "max_tokens", None) is not None
+                else max_tokens
+            )
+
         self._base_url = base_url.rstrip("/")
         self._model = model
         self._temperature = temperature
@@ -217,12 +232,11 @@ class Ollama(LLMProvider):
         try:
             response = await self._client.post(
                 "/api/tokenize",
-                content={"model": self._model, "content": text},
-                headers={"Content-Type": "application/json"},
+                json={"model": self._model, "content": text},
             )
             response.raise_for_status()
             data = response.json()
-            return data.get("token_count", 0)
+            return len(data.get("tokens", []))
         except Exception:
             # Fallback to word-based approximation
             return len(text.split())

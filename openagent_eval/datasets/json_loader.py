@@ -145,6 +145,7 @@ class JSONDatasetLoader(BaseDatasetLoader):
                         context=model.context,
                         metadata=model.metadata,
                         contexts=model.contexts,
+                        ground_truth_contexts=model.ground_truth_contexts,
                     )
                 )
             except Exception as e:
@@ -155,6 +156,13 @@ class JSONDatasetLoader(BaseDatasetLoader):
                 message=f"Failed to parse {len(validation_errors)} item(s)",
                 dataset_path=str(path),
                 validation_errors=validation_errors,
+            )
+
+        if not items:
+            raise DatasetValidationError(
+                message="Dataset is empty (no valid items found)",
+                dataset_path=str(path),
+                validation_errors=["No valid items in file"],
             )
 
         return Dataset(

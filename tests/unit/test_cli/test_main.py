@@ -65,3 +65,26 @@ def test_cli_invalid_command():
     """Test that CLI handles invalid commands gracefully."""
     result = runner.invoke(app, ["invalid-command"])
     assert result.exit_code != 0
+
+
+# ------------------------------------------------------------------ #
+# M18 regression test                                                  #
+# ------------------------------------------------------------------ #
+def test_resolve_report_id_accepts_file_path(tmp_path):
+    """M18: resolve_report_id must accept a direct file path."""
+    import json
+
+    from openagent_eval.cli.utils.helpers import resolve_report_id
+    from openagent_eval.reports.manager import ReportManager
+
+    report_data = {"report_id": "r1", "scores": {"f1": 0.9}}
+    report_file = tmp_path / "my_report.json"
+    report_file.write_text(json.dumps(report_data), encoding="utf-8")
+
+    result = resolve_report_id(
+        str(report_file),
+        output_dir=tmp_path,
+        manager=ReportManager(),
+    )
+    assert result["report_id"] == "r1"
+    assert result["scores"]["f1"] == 0.9

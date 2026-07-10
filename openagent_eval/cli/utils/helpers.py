@@ -36,11 +36,24 @@ def get_report_generator(format_name: str) -> object:
 def resolve_report_id(
     report_id: str, output_dir: Path, manager: object
 ) -> dict:
-    """Resolve report ID to report data. Handles 'latest' keyword."""
+    """Resolve report ID to report data. Handles 'latest' and file paths."""
+    import json
+
     from openagent_eval.reports.manager import ReportManager
 
     if not isinstance(manager, ReportManager):
         raise CommandError(message="Invalid manager", exit_code=1)
+
+    # A direct file path takes precedence over ID lookup.
+    candidate = Path(report_id)
+    if candidate.exists() and candidate.is_file():
+        try:
+            return json.loads(candidate.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            raise CommandError(
+                message=f"Could not read report file: {report_id} ({exc})",
+                exit_code=1,
+            ) from exc
 
     if report_id == "latest":
         reports = manager.list_reports(output_dir)

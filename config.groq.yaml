@@ -1,0 +1,35 @@
+# OpenAgent Eval Configuration - Groq + Mock Retriever
+# Uses Groq's Llama 3.3 70B for generation, mock retriever for offline testing
+
+dataset:
+  path: data/sample_questions.json
+
+llm:
+  provider: groq
+  model: llama-3.3-70b-versatile
+  temperature: 0.0
+
+retriever:
+  provider: mock
+
+metrics:
+  retrieval:
+    - context_precision
+    - context_recall
+    - mrr
+  generation:
+    - faithfulness
+    - answer_relevancy
+    - similarity
+  performance:
+    - latency
+  cost:
+    - token_count
+
+report:
+  output: terminal
+  output_dir: ./reports
+
+verbose: true
+parallel: false
+max_workers: 1

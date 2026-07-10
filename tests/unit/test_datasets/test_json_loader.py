@@ -132,3 +132,69 @@ class TestJSONDatasetLoader:
 
         assert dataset.metadata["format"] == "json"
         assert dataset.metadata["source"] == str(json_path)
+
+    def test_ground_truth_contexts_preserved(self, tmp_path: Path) -> None:
+        """H5: ground_truth_contexts must survive loading and serialization."""
+        data = [
+            {
+                "question": "What is Python?",
+                "ground_truth": "Python is a programming language.",
+                "ground_truth_contexts": [
+                    "Python is a high-level programming language.",
+                    "Python is interpreted.",
+                ],
+            }
+        ]
+        json_path = tmp_path / "gtc.json"
+        json_path.write_text(json.dumps(data), encoding="utf-8")
+
+        dataset = self.loader.load(json_path)
+
+        assert dataset[0].ground_truth_contexts == [
+            "Python is a high-level programming language.",
+            "Python is interpreted.",
+        ]
+        # And it must round-trip through to_dict() so the pipeline sees it.
+        assert dataset.to_dicts()[0]["ground_truth_contexts"] == [
+            "Python is a high-level programming language.",
+            "Python is interpreted.",
+        ]
+
+    # ------------------------------------------------------------------ #
+    # M11 regression tests                                                #
+    # ------------------------------------------------------------------ #
+    def test_factory_has_hf_format(self):
+        """M11: _FORMAT_MAP must include 'hf' -> HFDatasetLoader."""
+        from openagent_eval.datasets.factory import _FORMAT_MAP
+        from openagent_eval.datasets.hf_loader import HFDatasetLoader
+
+        assert "hf" in _FORMAT_MAP
+        assert _FORMAT_MAP["hf"] is HFDatasetLoader
+
+    def test_validator_skips_existence_check_for_hf(self, tmp_path: Path):
+        """M11: validate_config should not raise for a non-existent HF path."""
+        from openagent_eval.config.models import Config, DatasetConfig
+        from openagent_eval.config.validator import validate_config
+
+        config = Config(
+            dataset=DatasetConfig(
+                path="nonexistent-dataset-name",
+                format="hf",
+            ),
+            llm={"provider": "openai", "model": "gpt-4o"},
+        )
+        # Should not raise even though the local path does not exist.
+        warnings = validate_config(config)
+        assert isinstance(warnings, list)
+
+    # ------------------------------------------------------------------ #
+    # M12 regression test                                                 #
+    # ------------------------------------------------------------------ #
+    def test_load_empty_array_raises(self, tmp_path: Path):
+        """M12: Loading a JSON file with an empty array must raise."""
+        from openagent_eval.exceptions import DatasetValidationError
+
+        json_path = tmp_path / "empty.json"
+        json_path.write_text("[]", encoding="utf-8")
+        with pytest.raises(DatasetValidationError):
+            self.loader.load(json_path)

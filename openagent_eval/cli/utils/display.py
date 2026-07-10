@@ -17,6 +17,7 @@ def display_run_result(
     report_path: Path,
     output_dir: Path,
     verbose: bool,
+    format_file: Path | None = None,
 ) -> None:
     """Display the evaluation run result."""
     console.print("\n[green]OK[/green] Evaluation complete!")
@@ -28,6 +29,8 @@ def display_run_result(
         console.print(f"[dim]Items: {total} | Errors: {errors}[/dim]")
 
     console.print(f"[dim]Report saved to: {report_path}[/dim]")
+    if format_file is not None:
+        console.print(f"[dim]{format_name.capitalize()} report saved to: {format_file}[/dim]")
 
 
 def display_report_list(
