@@ -86,6 +86,7 @@ class Gemini(LLMProvider):
 
     def __init__(
         self,
+        config: Any | None = None,
         api_key: str | None = None,
         model: str = "gemini-2.5-flash",
         temperature: float = 0.0,
@@ -94,6 +95,7 @@ class Gemini(LLMProvider):
         """Initialize the Gemini provider.
 
         Args:
+            config: Optional LLMConfig (reads api_key, model, temperature, max_tokens).
             api_key: Google API key. If not provided, loaded from
                 GEMINI_API_KEY environment variable.
             model: Model identifier (e.g., "gemini-2.5-flash").
@@ -104,6 +106,20 @@ class Gemini(LLMProvider):
             ProviderConnectionError: If API key is not provided and
                 GEMINI_API_KEY environment variable is not set.
         """
+        if config is not None:
+            api_key = api_key or getattr(config, "api_key", None)
+            model = getattr(config, "model", model) or model
+            temperature = (
+                getattr(config, "temperature", temperature)
+                if getattr(config, "temperature", None) is not None
+                else temperature
+            )
+            max_tokens = (
+                getattr(config, "max_tokens", max_tokens)
+                if getattr(config, "max_tokens", None) is not None
+                else max_tokens
+            )
+
         resolved_api_key = api_key or os.environ.get("GEMINI_API_KEY")
         if not resolved_api_key:
             raise ProviderConnectionError(
@@ -134,8 +150,8 @@ class Gemini(LLMProvider):
                 original_error=exc,
             ) from exc
 
-    async def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
-        """Generate a response from the Gemini model.
+    async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
+        """Generate a response and return it with token usage and latency.
 
         Args:
             prompt: The input prompt to send to the model.
@@ -188,11 +204,15 @@ class Gemini(LLMProvider):
 
         elapsed_ms = (time.monotonic() - start_time) * 1000.0
 
-        usage = TokenUsage(
-            prompt_tokens=response.usage_metadata.prompt_token_count,
-            completion_tokens=response.usage_metadata.candidates_token_count,
-            total_tokens=response.usage_metadata.total_token_count,
-        )
+        # usage_metadata may be None when the API does not return token counts.
+        if response.usage_metadata is not None:
+            usage = TokenUsage(
+                prompt_tokens=response.usage_metadata.prompt_token_count,
+                completion_tokens=response.usage_metadata.candidates_token_count,
+                total_tokens=response.usage_metadata.total_token_count,
+            )
+        else:
+            usage = TokenUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
 
         return LLMResponse(
             content=response.text,
@@ -201,6 +221,23 @@ class Gemini(LLMProvider):
             provider=self.name,
             latency_ms=elapsed_ms,
         )
+
+    async def generate(self, prompt: str, **kwargs: Any) -> str:
+        """Generate a response from the Gemini model.
+
+        Args:
+            prompt: The input prompt to send to the model.
+            **kwargs: Optional overrides (see ``generate_with_usage``).
+
+        Returns:
+            The generated text response from the model.
+
+        Raises:
+            ProviderConnectionError: If connection to the API fails.
+            ProviderExecutionError: If the API returns an error.
+        """
+        response = await self.generate_with_usage(prompt, **kwargs)
+        return response.content
 
     async def get_token_count(self, text: str) -> int:
         """Count tokens in the given text using the Gemini tokenizer.

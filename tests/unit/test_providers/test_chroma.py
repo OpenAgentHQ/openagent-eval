@@ -175,6 +175,28 @@ class TestChromaRetrieve:
             include=["documents", "metadatas", "distances"],
         )
 
+    # --- M16 regression test ---
+    @pytest.mark.asyncio
+    async def test_retrieve_clamps_n_results(self, mock_chromadb):
+        """M16: n_results must be clamped to collection.count()."""
+        _, _, mock_collection = mock_chromadb
+        mock_collection.count.return_value = 2
+        mock_collection.query.return_value = {
+            "ids": [["d1", "d2"]],
+            "documents": [["A", "B"]],
+            "metadatas": [[{}, {}]],
+            "distances": [[0.1, 0.2]],
+        }
+        retriever = ChromaRetriever(collection_name="small")
+        docs = await retriever.retrieve("query", k=10)
+        assert len(docs) == 2
+        # The actual call should have n_results=2 (clamped), not 10.
+        mock_collection.query.assert_called_once_with(
+            query_texts=["query"],
+            n_results=2,
+            include=["documents", "metadatas", "distances"],
+        )
+
 
 # ---------------------------------------------------------------------------
 # Distance normalisation tests

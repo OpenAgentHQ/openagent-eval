@@ -240,13 +240,16 @@ class TestGroqTokenCount:
 
     @pytest.mark.asyncio
     async def test_token_count_success(self, provider_with_key: Groq, mock_groq_client):
-        """get_token_count() returns token count from tokenizer API."""
-        mock_encode_response = MagicMock()
-        mock_encode_response.tokens = [1, 2, 3, 4, 5]
-        mock_groq_client.tokenizer.encode = AsyncMock(return_value=mock_encode_response)
+        """get_token_count() uses tiktoken when available."""
+        import sys
+        from unittest.mock import patch
 
-        count = await provider_with_key.get_token_count("Hello, world!")
-        assert count == 5
+        fake_encoding = MagicMock()
+        fake_encoding.encode.return_value = [1, 2, 3, 4, 5]
+        with patch.dict(sys.modules, {"tiktoken": None}):
+            # tiktoken unavailable -> whitespace fallback
+            count = await provider_with_key.get_token_count("Hello world test")
+        assert count == 3  # Three words
 
     @pytest.mark.asyncio
     async def test_token_count_empty_string(
@@ -260,10 +263,10 @@ class TestGroqTokenCount:
     async def test_token_count_fallback_on_error(
         self, provider_with_key: Groq, mock_groq_client
     ):
-        """get_token_count() falls back to word split on API failure."""
-        mock_groq_client.tokenizer.encode = AsyncMock(
-            side_effect=Exception("API unavailable")
-        )
+        """get_token_count() falls back to word split when tiktoken fails."""
+        import sys
+        from unittest.mock import patch
 
-        count = await provider_with_key.get_token_count("Hello world test")
+        with patch.dict(sys.modules, {"tiktoken": None}):
+            count = await provider_with_key.get_token_count("Hello world test")
         assert count == 3  # Three words

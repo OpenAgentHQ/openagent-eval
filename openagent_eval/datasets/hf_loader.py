@@ -41,47 +41,50 @@ class HFDatasetLoader(BaseDatasetLoader):
     """
 
     def load(self, path: Path) -> Dataset:
-        """Load a dataset from a local HuggingFace dataset directory.
+        """Load a dataset from a local HuggingFace dataset directory or hub.
 
         Args:
-            path: Path to the local dataset directory.
+            path: Path to the local dataset directory, or a HuggingFace Hub
+                dataset name (e.g. "squad"). When the path does not exist
+                locally it is treated as a hub name and loaded via
+                ``load_from_hub``.
 
         Returns:
             Loaded Dataset object.
 
         Raises:
-            DatasetNotFoundError: If the directory does not exist.
+            DatasetNotFoundError: If the local directory does not exist and the
+                path is not a valid hub identifier.
             InvalidDatasetError: If the dataset format is invalid.
             DatasetValidationError: If the data fails validation.
         """
-        # Validate path exists (can be directory for HF datasets)
-        if not path.exists():
-            from openagent_eval.exceptions import DatasetNotFoundError
+        # A path that exists locally is a dataset directory on disk.
+        if path.exists():
+            try:
+                from datasets import load_from_disk
+            except ImportError as e:
+                raise InvalidDatasetError(
+                    message=(
+                        "The 'datasets' package is required for HuggingFace dataset loading. "
+                        "Install it with: pip install openagent-eval[datasets]"
+                    ),
+                    dataset_path=str(path),
+                    format="hf",
+                ) from e
 
-            raise DatasetNotFoundError(dataset_path=str(path))
+            try:
+                hf_dataset = load_from_disk(str(path))
+            except Exception as e:
+                raise InvalidDatasetError(
+                    message=f"Failed to load HuggingFace dataset: {e}",
+                    dataset_path=str(path),
+                    format="hf",
+                ) from e
 
-        try:
-            from datasets import load_from_disk
-        except ImportError as e:
-            raise InvalidDatasetError(
-                message=(
-                    "The 'datasets' package is required for HuggingFace dataset loading. "
-                    "Install it with: pip install openagent-eval[datasets]"
-                ),
-                dataset_path=str(path),
-                format="hf",
-            ) from e
+            return self._parse_hf_dataset(hf_dataset, path)
 
-        try:
-            hf_dataset = load_from_disk(str(path))
-        except Exception as e:
-            raise InvalidDatasetError(
-                message=f"Failed to load HuggingFace dataset: {e}",
-                dataset_path=str(path),
-                format="hf",
-            ) from e
-
-        return self._parse_hf_dataset(hf_dataset, path)
+        # Otherwise treat the path as a HuggingFace Hub dataset name.
+        return self.load_from_hub(str(path))
 
     def validate(self, data: Any) -> bool:
         """Validate that the data conforms to the expected schema.
@@ -212,6 +215,7 @@ class HFDatasetLoader(BaseDatasetLoader):
                         context=model.context,
                         metadata=model.metadata,
                         contexts=model.contexts,
+                        ground_truth_contexts=model.ground_truth_contexts,
                     )
                 )
             except Exception as e:

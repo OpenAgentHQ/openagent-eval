@@ -301,27 +301,28 @@ class Groq(LLMProvider):
     async def get_token_count(self, text: str) -> int:
         """Count the number of tokens in the given text.
 
-        Uses Groq's tokenizer API to count tokens accurately. Falls back
-        to a simple estimation if the tokenizer API is unavailable.
+        Uses ``tiktoken`` for accurate token counting when available, falling
+        back to a whitespace-based approximation otherwise. (The Groq SDK does
+        not expose a tokenizer endpoint, so the previous ``client.tokenizer``
+        call was dead code.)
 
         Args:
             text: The text to count tokens for.
 
         Returns:
             Number of tokens in the text.
-
-        Raises:
-            ProviderError: If token counting fails.
         """
         if not text:
             return 0
 
         try:
-            # Use Groq's tokenizer API for accurate token counting
-            response = await self.client.tokenizer.encode(text=text)
-            return len(response.tokens)
+            import tiktoken
+
+            try:
+                encoding = tiktoken.encoding_for_model(self.model)
+            except KeyError:
+                encoding = tiktoken.get_encoding("cl100k_base")
+            return len(encoding.encode(text))
         except Exception:
-            # Fall back to simple estimation if tokenizer API fails
-            # This is a rough approximation; for production, use a proper tokenizer
-            tokens = text.split()
-            return len(tokens)
+            # Fall back to a whitespace-based approximation.
+            return len(text.split())

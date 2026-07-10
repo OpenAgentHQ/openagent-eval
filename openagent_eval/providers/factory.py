@@ -29,11 +29,11 @@ from openagent_eval.providers.models import Document, LLMResponse, TokenUsage
 
 _LLM_PROVIDERS: dict[str, str] = {
     "openai": "openagent_eval.providers.llm.openai:OpenAIProvider",
-    "gemini": "openagent_eval.providers.llm.gemini:GeminiProvider",
-    "anthropic": "openagent_eval.providers.llm.anthropic:AnthropicProvider",
+    "gemini": "openagent_eval.providers.llm.gemini:Gemini",
+    "anthropic": "openagent_eval.providers.llm.anthropic:Anthropic",
     "groq": "openagent_eval.providers.llm.groq:Groq",
-    "openrouter": "openagent_eval.providers.llm.openrouter:OpenRouterProvider",
-    "ollama": "openagent_eval.providers.llm.ollama:OllamaProvider",
+    "openrouter": "openagent_eval.providers.llm.openrouter:OpenRouter",
+    "ollama": "openagent_eval.providers.llm.ollama:Ollama",
     "mock": "openagent_eval.providers.llm.mock:MockLLMProvider",
 }
 

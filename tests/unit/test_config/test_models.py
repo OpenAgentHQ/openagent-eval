@@ -146,3 +146,21 @@ class TestConfigLoader:
         assert "context_precision" in config.metrics.retrieval
         assert "context_recall" in config.metrics.retrieval
         assert "faithfulness" in config.metrics.generation
+
+    # --- M13 regression test ---
+    def test_load_config_warns_on_dropped_metrics(self, tmp_path: Path, caplog) -> None:
+        """M13: Unrecognised metric names in legacy list must produce a warning."""
+        import logging
+
+        config_dict = {
+            "dataset": {"path": "data.json"},
+            "llm": {"provider": "openai", "model": "gpt-4o"},
+            "metrics": ["precision", "totally_fake_metric"],
+        }
+        config_path = tmp_path / "dropped.yaml"
+        config_path.write_text(yaml.dump(config_dict), encoding="utf-8")
+
+        with caplog.at_level(logging.WARNING, logger="openagent_eval.config.loader"):
+            load_config(config_path)
+
+        assert "totally_fake_metric" in caplog.text

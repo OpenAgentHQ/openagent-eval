@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "engine": "openagent-eval",
+    "version": "0.1.0",
+    "timestamp": "2026-07-10T11:05:05.277093+00:00",
+    "title": "OpenAgent Eval Report"
+  },
+  "summary": {
+    "total_items": 2,
+    "successful_evaluations": 2,
+    "failed_evaluations": 0,
+    "metrics_summary": {
+      "faithfulness": 0.0,
+      "latency": 0.0
+    }
+  },
+  "results": [
+    {
+      "question": "What is Python?",
+      "answer": "",
+      "ground_truth": "Python is a programming language.",
+      "contexts": [
+        "Python is a high-level programming language."
+      ],
+      "metrics": {
+        "faithfulness": 0.0,
+        "latency": 0.0
+      },
+      "metadata": {
+        "latency_ms": null,
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null,
+        "metric_errors": {
+          "latency": "'<' not supported between instances of 'NoneType' and 'int'"
+        }
+      }
+    },
+    {
+      "question": "What ispytest?",
+      "answer": "",
+      "ground_truth": "pytest is a testing framework.",
+      "contexts": [
+        "pytest is a Python testing framework."
+      ],
+      "metrics": {
+        "faithfulness": 0.0,
+        "latency": 0.0
+      },
+      "metadata": {
+        "latency_ms": null,
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null,
+        "metric_errors": {
+          "latency": "'<' not supported between instances of 'NoneType' and 'int'"
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "configuration": {
+    "dataset": {
+      "path": "C:\\Users\\himan\\AppData\\Local\\Temp\\pytest-of-himan\\pytest-105\\test_run_with_output_override0\\data\\questions.json",
+      "format": null,
+      "limit": null
+    },
+    "llm": {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "temperature": 0.0
+    },
+    "retriever": {
+      "provider": "chroma",
+      "settings": {}
+    },
+    "report": {
+      "output": "json",
+      "output_dir": "./reports"
+    }
+  }
+}

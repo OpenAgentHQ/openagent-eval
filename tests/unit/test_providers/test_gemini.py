@@ -91,7 +91,7 @@ class TestGeminiGenerate:
 
     @pytest.mark.asyncio
     async def test_generate_success(self, provider_with_key, mock_genai):
-        """generate() returns LLMResponse on successful call."""
+        """generate() returns the generated text on a successful call."""
         _, _, mock_aclient = mock_genai
 
         mock_response = MagicMock()
@@ -103,9 +103,37 @@ class TestGeminiGenerate:
         mock_aclient.models.generate_content = AsyncMock(return_value=mock_response)
 
         result = await provider_with_key.generate("Test prompt")
+        assert result == "Gemini response"
+
+    async def test_generate_with_usage_success(self, provider_with_key, mock_genai):
+        """generate_with_usage() returns an LLMResponse with usage."""
+        _, _, mock_aclient = mock_genai
+
+        mock_response = MagicMock()
+        mock_response.text = "Gemini response"
+        mock_response.usage_metadata.prompt_token_count = 10
+        mock_response.usage_metadata.candidates_token_count = 20
+        mock_response.usage_metadata.total_token_count = 30
+
+        mock_aclient.models.generate_content = AsyncMock(return_value=mock_response)
+
+        result = await provider_with_key.generate_with_usage("Test prompt")
         assert result.content == "Gemini response"
         assert result.provider == "gemini"
         assert result.usage.total_tokens == 30
+
+    async def test_generate_usage_metadata_none(self, provider_with_key, mock_genai):
+        """H8: generate() must not crash when usage_metadata is None."""
+        _, _, mock_aclient = mock_genai
+
+        mock_response = MagicMock()
+        mock_response.text = "Gemini response"
+        mock_response.usage_metadata = None
+
+        mock_aclient.models.generate_content = AsyncMock(return_value=mock_response)
+
+        result = await provider_with_key.generate("Test prompt")
+        assert result == "Gemini response"
 
     @pytest.mark.asyncio
     async def test_generate_with_temperature_override(self, provider_with_key, mock_genai):
