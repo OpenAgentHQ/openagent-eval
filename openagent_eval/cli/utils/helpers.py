@@ -11,11 +11,21 @@ DEFAULT_OUTPUT_DIR = Path("./reports")
 
 
 def get_report_generator(format_name: str) -> object:
-    """Get report generator by format name."""
-    from openagent_eval.reports.terminal import TerminalReport
-    from openagent_eval.reports.markdown import MarkdownReport
+    """Get report generator by format name.
+
+    Args:
+        format_name: Name of the report format.
+
+    Returns:
+        Report generator instance.
+
+    Raises:
+        CommandError: If format name is unknown.
+    """
     from openagent_eval.reports.html import HTMLReport
     from openagent_eval.reports.json_report import JSONReport
+    from openagent_eval.reports.markdown import MarkdownReport
+    from openagent_eval.reports.terminal import TerminalReport
 
     generators = {
         "terminal": TerminalReport,
@@ -36,7 +46,21 @@ def get_report_generator(format_name: str) -> object:
 def resolve_report_id(
     report_id: str, output_dir: Path, manager: object
 ) -> dict:
-    """Resolve report ID to report data. Handles 'latest' and file paths."""
+    """Resolve report ID to report data.
+
+    Handles 'latest' keyword and direct file paths.
+
+    Args:
+        report_id: Report ID or 'latest'.
+        output_dir: Reports directory.
+        manager: Report manager instance.
+
+    Returns:
+        Report data dictionary.
+
+    Raises:
+        CommandError: If report not found.
+    """
     import json
 
     from openagent_eval.reports.manager import ReportManager
@@ -65,14 +89,24 @@ def resolve_report_id(
 
     try:
         return manager.load_report(report_id, output_dir)
-    except FileNotFoundError:
+    except FileNotFoundError as exc:
         raise CommandError(
             message=f"Report not found: {report_id}", exit_code=1
-        )
+        ) from exc
 
 
 def load_config_from_path(config_path: Path) -> object:
-    """Load configuration from a YAML file."""
+    """Load configuration from a YAML file.
+
+    Args:
+        config_path: Path to the YAML configuration file.
+
+    Returns:
+        Loaded configuration object.
+
+    Raises:
+        ConfigurationError: If configuration cannot be loaded.
+    """
     from openagent_eval.config.loader import load_config
 
     try:
@@ -81,21 +115,29 @@ def load_config_from_path(config_path: Path) -> object:
         raise ConfigurationError(
             message=f"Failed to load configuration: {e}",
             config_path=str(config_path),
-        )
+        ) from e
 
 
 def apply_output_override(config: object, output: str | None) -> None:
-    """Override output format in config if specified."""
+    """Override output format in config if specified.
+
+    Args:
+        config: Configuration object.
+        output: Output format to override with.
+
+    Raises:
+        ConfigurationError: If output format is invalid.
+    """
     if output:
         from openagent_eval.config.models import OutputFormat
 
         try:
             config.report.output = OutputFormat(output)
-        except ValueError:
+        except ValueError as exc:
             raise ConfigurationError(
                 message=f"Invalid output format: {output}",
                 config_path="",
-            )
+            ) from exc
 
 
 def load_dataset_for_run(config: object) -> list:
@@ -104,6 +146,15 @@ def load_dataset_for_run(config: object) -> list:
     Auto-detects the dataset format from the file extension (or the explicit
     ``format`` field in the configuration) and returns a list of item
     dictionaries suitable for the evaluation engine.
+
+    Args:
+        config: Configuration object.
+
+    Returns:
+        List of dataset items.
+
+    Raises:
+        ConfigurationError: If dataset cannot be loaded.
     """
     from openagent_eval.datasets.factory import load_dataset
 
@@ -113,12 +164,24 @@ def load_dataset_for_run(config: object) -> list:
         raise ConfigurationError(
             message=f"Failed to load dataset: {e}",
             config_path="",
-        )
+        ) from e
 
 
 def execute_evaluation(config: object, dataset_items: list) -> object:
-    """Execute the evaluation pipeline."""
+    """Execute the evaluation pipeline.
+
+    Args:
+        config: Configuration object.
+        dataset_items: List of dataset items to evaluate.
+
+    Returns:
+        Evaluation report.
+
+    Raises:
+        ConfigurationError: If evaluation fails.
+    """
     import asyncio
+
     from openagent_eval.core.engine import Engine
 
     try:
@@ -128,4 +191,4 @@ def execute_evaluation(config: object, dataset_items: list) -> object:
         raise ConfigurationError(
             message=f"Evaluation failed: {e}",
             config_path="",
-        )
+        ) from e

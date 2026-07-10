@@ -1,0 +1,106 @@
+{
+  "report_id": "ffeaa75f-9717-4502-92ee-4c91fdfb7e9c",
+  "created_at": "2026-07-10T11:53:57.961183+00:00",
+  "config": {
+    "dataset": {
+      "path": "C:\\Users\\himan\\AppData\\Local\\Temp\\pytest-of-himan\\pytest-112\\test_run_executes_pipeline0\\data\\questions.json",
+      "format": null,
+      "limit": null,
+      "shuffle": false
+    },
+    "llm": {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "api_key": null,
+      "temperature": 0.0,
+      "max_tokens": null
+    },
+    "retriever": {
+      "provider": "chroma",
+      "settings": {},
+      "embedder": null
+    },
+    "metrics": {
+      "retrieval": [],
+      "generation": [
+        "faithfulness"
+      ],
+      "performance": [
+        "latency"
+      ],
+      "cost": []
+    },
+    "report": {
+      "output": "terminal",
+      "output_dir": "./reports",
+      "include_examples": true,
+      "max_examples": 10
+    },
+    "verbose": false,
+    "parallel": true,
+    "max_workers": 4,
+    "timeout": 300.0
+  },
+  "summary": {
+    "total_items": 2,
+    "successful_evaluations": 2,
+    "failed_evaluations": 0,
+    "metrics_summary": {
+      "faithfulness": 0.0,
+      "latency": 0.0
+    },
+    "total_tokens": 0,
+    "average_latency_ms": null
+  },
+  "metadata": {
+    "version": "0.1.0",
+    "engine": "openagent-eval",
+    "llm_provider": null,
+    "retriever_provider": null
+  },
+  "results": [
+    {
+      "question": "What is Python?",
+      "answer": "",
+      "ground_truth": "Python is a programming language.",
+      "contexts": [
+        "Python is a high-level programming language."
+      ],
+      "metrics": {
+        "faithfulness": 0.0,
+        "latency": 0.0
+      },
+      "metadata": {
+        "latency_ms": null,
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null,
+        "metric_errors": {
+          "latency": "'<' not supported between instances of 'NoneType' and 'int'"
+        }
+      }
+    },
+    {
+      "question": "What ispytest?",
+      "answer": "",
+      "ground_truth": "pytest is a testing framework.",
+      "contexts": [
+        "pytest is a Python testing framework."
+      ],
+      "metrics": {
+        "faithfulness": 0.0,
+        "latency": 0.0
+      },
+      "metadata": {
+        "latency_ms": null,
+        "prompt_tokens": null,
+        "completion_tokens": null,
+        "total_tokens": null,
+        "metric_errors": {
+          "latency": "'<' not supported between instances of 'NoneType' and 'int'"
+        }
+      }
+    }
+  ],
+  "errors": []
+}

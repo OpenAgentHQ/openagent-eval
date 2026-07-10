@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from rich.console import Console
 from rich.table import Table
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 console = Console()
 
@@ -19,7 +21,16 @@ def display_run_result(
     verbose: bool,
     format_file: Path | None = None,
 ) -> None:
-    """Display the evaluation run result."""
+    """Display the evaluation run result.
+
+    Args:
+        report: Evaluation report object.
+        format_name: Output format name.
+        report_path: Path to saved report.
+        output_dir: Output directory.
+        verbose: Whether verbose output is enabled.
+        format_file: Path to format-specific output file.
+    """
     console.print("\n[green]OK[/green] Evaluation complete!")
 
     if hasattr(report, "summary"):
@@ -40,9 +51,15 @@ def display_report_list(
     output_dir: Path,
     manager: Any,
 ) -> None:
-    """Display a table of evaluation reports."""
-    from openagent_eval.reports.manager import ReportManager
+    """Display a table of evaluation reports.
 
+    Args:
+        reports: List of report dictionaries.
+        limit: Maximum number of reports to show.
+        output_filter: Filter by output format.
+        output_dir: Reports directory.
+        manager: Report manager instance.
+    """
     if not reports:
         console.print("[yellow]No evaluations found.[/yellow]")
         return
