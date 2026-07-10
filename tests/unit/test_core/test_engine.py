@@ -7,7 +7,7 @@ import pytest
 from openagent_eval.config.models import Config, DatasetConfig, LLMConfig
 from openagent_eval.core.engine import Engine
 from openagent_eval.core.executor import Executor
-from openagent_eval.core.pipeline import Pipeline, PipelineResult
+from openagent_eval.core.pipeline import EvaluationResult, Pipeline, PipelineResult
 from openagent_eval.core.registry import Registry
 from openagent_eval.exceptions import PluginNotFoundError
 
@@ -115,6 +115,29 @@ class TestPipeline:
         assert isinstance(result, PipelineResult)
         assert len(result.results) == 0
 
+    @pytest.mark.asyncio
+    async def test_item_error_records_error_type(self, sample_config: Config) -> None:
+        """C3: per-item failures must record the real exception type under
+        'error_type' (not the legacy 'type' key) so reports don't collapse to
+        'Unknown'."""
+        pipeline = Pipeline(sample_config)
+
+        class BoomError(Exception):
+            pass
+
+        async def _boom(*_: object, **__: object) -> object:
+            raise BoomError("retrieval failed")
+
+        pipeline._retrieve = _boom  # type: ignore[assignment]
+
+        result = PipelineResult()
+        await pipeline._evaluate_item({"question": "q"}, result)
+
+        assert len(result.errors) == 1
+        err = result.errors[0]
+        assert err["error_type"] == "BoomError"
+        assert "type" not in err
+
 
 class TestEngine:
     """Tests for the evaluation engine."""
@@ -134,4 +157,30 @@ class TestEngine:
         report = await engine.run(sample_dataset)
         assert report.config is sample_config
         assert report.summary["total_items"] == len(sample_dataset)
+        engine.shutdown()
+
+    @pytest.mark.asyncio
+    async def test_run_summary_counts_success_and_failure(
+        self, sample_config: Config, sample_dataset: list[dict], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """H10: successful_evaluations must not double-count failed items.
+
+        Inject a PipelineResult with 2 results and 1 error; the summary must
+        report 1 successful and 1 failed (not 2 successful + 1 failed).
+        """
+        injected = PipelineResult(
+            results=[EvaluationResult(question="q", answer="a") for _ in range(2)],
+            errors=[{"item": {}, "error": "boom", "error_type": "Boom"}],
+        )
+
+        async def _fake_execute(self: Pipeline, dataset: list[dict]) -> PipelineResult:
+            return injected
+
+        monkeypatch.setattr(Pipeline, "execute", _fake_execute)
+
+        engine = Engine(sample_config)
+        report = await engine.run(sample_dataset)
+        assert report.summary["total_items"] == len(sample_dataset)
+        assert report.summary["successful_evaluations"] == 1
+        assert report.summary["failed_evaluations"] == 1
         engine.shutdown()

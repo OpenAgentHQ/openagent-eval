@@ -288,3 +288,88 @@ class TestNDCG:
             ground_truth_contexts=["ctx1"],
         )
         assert result.score == 0.0
+
+    def test_ndcg_penalizes_missed_relevant_docs(self):
+        """H7: when retrieval misses many relevant docs, NDCG must be < 1.
+
+        k=5, only 1 of 10 relevant docs retrieved. The ideal ranking places 5
+        relevant docs in the top-5, so NDCG should be well below 1.0 (the old
+        code built the ideal from the retrieved set and reported 1.0).
+        """
+        ground_truth = [f"r{i}" for i in range(1, 11)]
+        result = self.metric.evaluate(
+            retrieved_contexts=["r1", "x", "x", "x", "x"],
+            ground_truth_contexts=ground_truth,
+            k=5,
+        )
+        assert result.score < 1.0
+        assert result.score > 0.0
+
+
+# ------------------------------------------------------------------ #
+# L20 regression: RecallAtK uses distinct ground truth count           #
+# ------------------------------------------------------------------ #
+class TestRecallAtKRegression:
+    """Regression tests for RecallAtK metric."""
+
+    def setup_method(self):
+        self.metric = RecallAtK()
+
+    def test_duplicate_ground_truth_uses_distinct_count(self):
+        """L20: Duplicate items in ground_truth_contexts should be counted
+        once each for the denominator."""
+        result = self.metric.evaluate(
+            retrieved_contexts=["ctx1", "ctx_x"],
+            ground_truth_contexts=["ctx1", "ctx1"],  # duplicate
+            k=2,
+        )
+        # 1 distinct relevant in top-2, 1 distinct relevant total -> 1.0
+        # (old code: denominator was len(set(retrieved) & set(gt)) which
+        # would be 1/1=1.0 anyway, but the real bug was when gt had dupes
+        # and retrieved missed one — denominator was len(retrieved) not
+        # len(set(gt)).)
+        assert result.score == 1.0
+        assert result.metadata["relevant_total"] == 1
+
+
+# ------------------------------------------------------------------ #
+# L21 regression: retrieval metrics normalise whitespace               #
+# ------------------------------------------------------------------ #
+class TestRetrievalNormalization:
+    """L21: Whitespace-normalised matching for retrieval metrics."""
+
+    def test_context_precision_whitespace_insensitive(self):
+        """L21: ContextPrecision matches on normalised content."""
+        metric = ContextPrecision()
+        result = metric.evaluate(
+            retrieved_contexts=["  hello   world  "],
+            ground_truth_contexts=["hello world"],
+        )
+        assert result.score == 1.0
+
+    def test_context_recall_whitespace_insensitive(self):
+        """L21: ContextRecall matches on normalised content."""
+        metric = ContextRecall()
+        result = metric.evaluate(
+            retrieved_contexts=["hello   world"],
+            ground_truth_contexts=["  hello world  "],
+        )
+        assert result.score == 1.0
+
+    def test_hit_rate_whitespace_insensitive(self):
+        """L21: HitRate matches on normalised content."""
+        metric = HitRate()
+        result = metric.evaluate(
+            retrieved_contexts=["doc_a", "  hello  world  "],
+            ground_truth_contexts=["hello world"],
+        )
+        assert result.score == 1.0
+
+    def test_mrr_whitespace_insensitive(self):
+        """L21: MRR matches on normalised content."""
+        metric = MRR()
+        result = metric.evaluate(
+            retrieved_contexts=["irrelevant", " hello  world "],
+            ground_truth_contexts=["hello world"],
+        )
+        assert result.score == 0.5

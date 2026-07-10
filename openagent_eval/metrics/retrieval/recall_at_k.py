@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
+from openagent_eval.metrics.retrieval._normalize import normalize_context
 
 
 class RecallAtK(BaseMetric):
@@ -33,8 +34,8 @@ class RecallAtK(BaseMetric):
         Returns:
             MetricResult with the recall@k score in [0, 1].
         """
-        retrieved = kwargs.get("retrieved_contexts", [])
-        ground_truth = kwargs.get("ground_truth_contexts", [])
+        retrieved = [normalize_context(c) for c in kwargs.get("retrieved_contexts", [])]
+        ground_truth = [normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])]
         k = kwargs.get("k", len(retrieved))
 
         if not ground_truth:
@@ -51,17 +52,29 @@ class RecallAtK(BaseMetric):
                 metadata={"k": k, "relevant_total": len(ground_truth), "relevant_in_top_k": 0},
             )
 
+        if k <= 0:
+            return MetricResult(
+                score=0.0,
+                reason=f"K is {k} (no contexts considered)",
+                metadata={"k": k, "relevant_total": len(ground_truth), "relevant_in_top_k": 0},
+            )
+
         top_k = retrieved[:k]
         retrieved_set = set(top_k)
-        relevant_in_top_k = sum(1 for ctx in ground_truth if ctx in retrieved_set)
-        score = relevant_in_top_k / len(ground_truth)
+        # Count only *distinct* relevant contexts found, so duplicate gold
+        # entries do not inflate the numerator above the denominator.
+        relevant_in_top_k = len(set(ground_truth) & retrieved_set)
+        # Denominator is the number of *distinct* relevant contexts, so duplicate
+        # gold entries cannot make a perfect recall impossible.
+        num_relevant = len(set(ground_truth))
+        score = relevant_in_top_k / num_relevant if num_relevant else 0.0
 
         return MetricResult(
             score=score,
-            reason=f"{relevant_in_top_k}/{len(ground_truth)} relevant contexts in top-{k}",
+            reason=f"{relevant_in_top_k}/{num_relevant} relevant contexts in top-{k}",
             metadata={
                 "k": k,
-                "relevant_total": len(ground_truth),
+                "relevant_total": num_relevant,
                 "relevant_in_top_k": relevant_in_top_k,
             },
         )

@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
+from openagent_eval.metrics.retrieval._normalize import normalize_context
 
 
 class ContextRecall(BaseMetric):
@@ -31,8 +32,8 @@ class ContextRecall(BaseMetric):
         Returns:
             MetricResult with recall score.
         """
-        retrieved = kwargs.get("retrieved_contexts", [])
-        ground_truth = kwargs.get("ground_truth_contexts", [])
+        retrieved = [normalize_context(c) for c in kwargs.get("retrieved_contexts", [])]
+        ground_truth = [normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])]
 
         if not ground_truth:
             return MetricResult(

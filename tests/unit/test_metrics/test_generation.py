@@ -93,6 +93,18 @@ class TestF1Score:
         result = self.metric.evaluate(answer="", ground_truth="")
         assert result.score == 1.0
 
+    # --- L19 regression: F1 uses Counter (multiset) not set ---
+    def test_repeated_words_counted(self):
+        """L19: Repeated words are counted, not deduplicated."""
+        result = self.metric.evaluate(
+            answer="cat cat cat",
+            ground_truth="cat cat",
+        )
+        # With Counter: overlap=2, answer_len=3, gt_len=2
+        # precision=2/3, recall=2/2=1.0, f1=2*(2/3*1)/(2/3+1)=0.8
+        # With set: overlap=1, answer_len=1, gt_len=1, f1=1.0 (wrong)
+        assert result.score == pytest.approx(0.8)
+
 
 class TestBLEU:
     """Tests for BLEU metric."""
@@ -313,3 +325,92 @@ class TestBERTScore:
             ground_truth="The cat sat on the mat",
         )
         assert result.score < 0.6
+
+
+# ------------------------------------------------------------------ #
+# L22 regression: cosine clamp/rescale for SemanticSimilarity         #
+# ------------------------------------------------------------------ #
+class TestSimilarityCosineClamp:
+    """L22: SemanticSimilarity must clamp/rescale cosine into [0, 1]."""
+
+    def test_negative_cosine_returns_non_negative(self):
+        """L22: Even with negative cosine similarity, score must be >= 0."""
+        import sys
+        from unittest.mock import MagicMock, patch
+        import numpy as np
+
+        metric = SemanticSimilarity()
+        # Clear any cached model so the lazy import path is taken
+        if hasattr(metric, "_cached_model"):
+            delattr(metric, "_cached_model")
+
+        # Mock the SentenceTransformer so it returns controlled embeddings
+        mock_st = MagicMock()
+        mock_st.return_value.encode.return_value = np.array([[1.0, 0.0], [-1.0, 0.0]])
+        # Mock cosine_similarity to return -1.0
+        mock_sklearn = MagicMock()
+        mock_sklearn.cosine_similarity.return_value = np.array([[-1.0]])
+
+        with patch.dict(sys.modules, {
+            "sentence_transformers": mock_st,
+            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+            "sklearn.metrics.pairwise": mock_sklearn,
+        }):
+            result = metric.evaluate(answer="a", ground_truth="b")
+
+        assert result.score >= 0.0
+        assert result.score <= 1.0
+
+    def test_zero_cosine_returns_half(self):
+        """L22: Cosine of 0.0 maps to 0.5 after rescaling."""
+        import sys
+        from unittest.mock import MagicMock, patch
+        import numpy as np
+
+        metric = SemanticSimilarity()
+        if hasattr(metric, "_cached_model"):
+            delattr(metric, "_cached_model")
+
+        mock_st = MagicMock()
+        mock_st.return_value.encode.return_value = np.array([[1.0, 0.0], [0.0, 1.0]])
+        mock_sklearn = MagicMock()
+        mock_sklearn.cosine_similarity.return_value = np.array([[0.0]])
+
+        with patch.dict(sys.modules, {
+            "sentence_transformers": mock_st,
+            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+            "sklearn.metrics.pairwise": mock_sklearn,
+        }):
+            result = metric.evaluate(answer="a", ground_truth="b")
+
+        assert result.score == pytest.approx(0.5)
+
+
+class TestBERTScoreCosineClamp:
+    """L22: BERTScore must clamp F1 into [0, 1]."""
+
+    def test_negative_f1_clamped_to_zero(self):
+        """L22: Even if BERTScore returns negative F1, score must be >= 0."""
+        from unittest.mock import patch, MagicMock
+
+        metric = BERTScore()
+        mock_precision = MagicMock()
+        mock_precision.item.return_value = -0.1
+        mock_recall = MagicMock()
+        mock_recall.item.return_value = -0.2
+        mock_f1 = MagicMock()
+        mock_f1.item.return_value = -0.15
+
+        # Mock the bert_score module so `from bert_score import score` works.
+        mock_bert_score_module = MagicMock()
+        mock_bert_score_module.score.return_value = (
+            mock_precision,
+            mock_recall,
+            mock_f1,
+        )
+        with patch.dict("sys.modules", {"bert_score": mock_bert_score_module}):
+            result = metric.evaluate(answer="a", ground_truth="b")
+        assert result.score >= 0.0
+        assert result.score <= 1.0

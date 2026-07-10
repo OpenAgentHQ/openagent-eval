@@ -145,7 +145,7 @@ class Pipeline:
                 {
                     "item": {k: v for k, v in item.items() if k != "metadata"},
                     "error": str(e),
-                    "type": type(e).__name__,
+                    "error_type": type(e).__name__,
                 }
             )
             return EvaluationResult(

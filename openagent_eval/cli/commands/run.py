@@ -14,6 +14,7 @@ from openagent_eval.reports.manager import ReportManager
 from openagent_eval.cli.utils.helpers import (
     apply_output_override,
     execute_evaluation,
+    get_report_generator,
     load_config_from_path,
     load_dataset_for_run,
 )
@@ -72,6 +73,16 @@ def run_command(
         output_dir = Path(config.report.output_dir)
         report_path = manager.save_report(report, output_dir)
 
+        # Also emit the requested report format to disk (terminal only prints).
+        format_file: Path | None = None
+        if format_name != "terminal":
+            generator = get_report_generator(format_name)
+            ext = {"markdown": ".md", "html": ".html", "json": ".json"}.get(
+                format_name, ".txt"
+            )
+            format_file = output_dir / f"{report_path.stem}{ext}"
+            generator.generate_to_file(report, format_file)
+
         progress.update(task, description="Complete!", completed=True)
 
-    display_run_result(report, format_name, report_path, output_dir, verbose)
+    display_run_result(report, format_name, report_path, output_dir, verbose, format_file)

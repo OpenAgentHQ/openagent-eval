@@ -5,6 +5,7 @@ Measures word-level F1 score between answer and ground truth.
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
@@ -50,8 +51,8 @@ class F1Score(BaseMetric):
                 metadata={"precision": 0.0, "recall": 0.0},
             )
 
-        answer_words = set(answer.lower().split())
-        truth_words = set(ground_truth.lower().split())
+        answer_words = Counter(answer.lower().split())
+        truth_words = Counter(ground_truth.lower().split())
 
         if not answer_words and not truth_words:
             return MetricResult(
@@ -60,10 +61,12 @@ class F1Score(BaseMetric):
                 metadata={"precision": 1.0, "recall": 1.0},
             )
 
-        common = answer_words & truth_words
+        # Count overlapping tokens by multiplicity (not set membership), so
+        # repeated words are weighted correctly.
+        common = sum((answer_words & truth_words).values())
 
-        precision = len(common) / len(answer_words) if answer_words else 0.0
-        recall = len(common) / len(truth_words) if truth_words else 0.0
+        precision = common / sum(answer_words.values()) if answer_words else 0.0
+        recall = common / sum(truth_words.values()) if truth_words else 0.0
 
         if precision + recall == 0:
             f1 = 0.0

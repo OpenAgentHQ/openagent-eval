@@ -143,11 +143,16 @@ class CSVDatasetLoader(BaseDatasetLoader):
                 if "context" in row and row["context"]:
                     item_data["context"] = row["context"].strip()
                 if "metadata" in row and row["metadata"]:
-                    # Try to parse metadata as JSON
+                    # Try to parse metadata as JSON. A valid JSON value that is
+                    # not an object (e.g. a number, array, or bool) must be kept
+                    # rather than crashing the whole row.
                     import json
 
                     try:
-                        item_data["metadata"] = json.loads(row["metadata"])
+                        parsed = json.loads(row["metadata"])
+                        item_data["metadata"] = (
+                            parsed if isinstance(parsed, dict) else {"raw": row["metadata"]}
+                        )
                     except (json.JSONDecodeError, TypeError):
                         item_data["metadata"] = {"raw": row["metadata"]}
 
@@ -159,6 +164,7 @@ class CSVDatasetLoader(BaseDatasetLoader):
                         context=model.context,
                         metadata=model.metadata,
                         contexts=model.contexts,
+                        ground_truth_contexts=model.ground_truth_contexts,
                     )
                 )
             except Exception as e:

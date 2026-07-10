@@ -205,11 +205,11 @@ class TestOllamaTokenCount:
 
     @pytest.mark.asyncio
     async def test_token_count_success(self, provider: Ollama):
-        """get_token_count() returns token count from tokenizer endpoint."""
+        """get_token_count() returns the token count from the tokens list."""
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.raise_for_status = MagicMock()
-        mock_response.json.return_value = {"token_count": 5}
+        mock_response.json.return_value = {"tokens": [1, 2, 3, 4, 5]}
 
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
@@ -217,6 +217,10 @@ class TestOllamaTokenCount:
 
         count = await provider.get_token_count("Hello, world!")
         assert count == 5
+        # The request must be sent as JSON, not raw bytes.
+        mock_client.post.assert_called_once()
+        _, call_kwargs = mock_client.post.call_args
+        assert call_kwargs.get("json") is not None
 
     @pytest.mark.asyncio
     async def test_token_count_fallback_on_error(self, provider: Ollama):

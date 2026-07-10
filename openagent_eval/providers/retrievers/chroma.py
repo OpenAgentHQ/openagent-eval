@@ -135,10 +135,15 @@ class ChromaRetriever(Retriever):
         """
         self.validate_inputs(query=query, k=k)
 
+        # ChromaDB raises if n_results exceeds the number of documents in the
+        # collection, which is common for small eval fixtures. Clamp it.
+        collection_count = self._collection.count()
+        safe_k = min(k, collection_count) if collection_count > 0 else k
+
         try:
             results = self._collection.query(
                 query_texts=[query],
-                n_results=k,
+                n_results=safe_k,
                 include=["documents", "metadatas", "distances"],
             )
         except Exception as exc:

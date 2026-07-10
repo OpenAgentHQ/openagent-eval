@@ -63,7 +63,7 @@ class TestAnthropicInit:
         assert provider.name == "anthropic"
         assert provider.model == "claude-sonnet-4-20250514"
         assert provider.temperature == 0.0
-        assert provider.max_tokens is None
+        assert provider.max_tokens == 4096
 
     def test_init_from_env_var(self, mock_anthropic_env, mock_anthropic_client):
         """Provider initializes from ANTHROPIC_API_KEY env var."""
@@ -112,6 +112,25 @@ class TestAnthropicGenerate:
 
         result = await provider_with_key.generate("Test prompt")
         assert result == "Claude response"
+
+    @pytest.mark.asyncio
+    async def test_generate_sends_max_tokens(self, provider_with_key: Anthropic, mock_anthropic_client):
+        """H9: generate() must always send max_tokens (required by the API)."""
+        mock_text_block = MagicMock()
+        mock_text_block.type = "text"
+        mock_text_block.text = "Claude response"
+
+        mock_response = MagicMock()
+        mock_response.content = [mock_text_block]
+        mock_response.model = "claude-sonnet-4-20250514"
+        mock_response.usage.input_tokens = 10
+        mock_response.usage.output_tokens = 20
+
+        mock_anthropic_client.messages.create = AsyncMock(return_value=mock_response)
+
+        await provider_with_key.generate("Test prompt")
+        call_kwargs = mock_anthropic_client.messages.create.call_args.kwargs
+        assert call_kwargs["max_tokens"] == 4096
 
     @pytest.mark.asyncio
     async def test_generate_with_model_override(

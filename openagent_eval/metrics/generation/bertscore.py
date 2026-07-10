@@ -86,8 +86,12 @@ class BERTScore(BaseMetric):
             [answer], [ground_truth], lang="en", verbose=False
         )
 
+        # BERTScore F1 can dip slightly below 0 for very dissimilar texts;
+        # clamp into MetricResult's required [0, 1] range.
+        score = max(0.0, min(1.0, float(f1.item())))
+
         return MetricResult(
-            score=f1.item(),
+            score=score,
             reason=f"BERTScore F1: {f1.item():.4f}",
             metadata={
                 "method": "bert_score",

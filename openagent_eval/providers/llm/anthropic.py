@@ -76,25 +76,42 @@ class Anthropic(LLMProvider):
 
     def __init__(
         self,
+        config: Any | None = None,
         api_key: str | None = None,
         model: str = "claude-sonnet-4-20250514",
         temperature: float = 0.0,
-        max_tokens: int | None = None,
+        max_tokens: int = 4096,
     ) -> None:
         """Initialize the Anthropic provider.
 
         Args:
+            config: Optional LLMConfig (reads api_key, model, temperature, max_tokens).
             api_key: Anthropic API key. If not provided, falls back to
                 ANTHROPIC_API_KEY environment variable.
             model: Model identifier for generation.
                 Defaults to "claude-sonnet-4-20250514".
             temperature: Temperature for generation (0.0-1.0). Defaults to 0.0.
-            max_tokens: Maximum tokens to generate. Defaults to None (model default).
+            max_tokens: Maximum tokens to generate. The Anthropic Messages API
+                requires this field, so it defaults to 4096 (not None).
 
         Raises:
             ProviderConnectionError: If API key is not provided or found
                 in environment.
         """
+        if config is not None:
+            api_key = api_key or getattr(config, "api_key", None)
+            model = getattr(config, "model", model) or model
+            temperature = (
+                getattr(config, "temperature", temperature)
+                if getattr(config, "temperature", None) is not None
+                else temperature
+            )
+            max_tokens = (
+                getattr(config, "max_tokens", max_tokens)
+                if getattr(config, "max_tokens", None) is not None
+                else max_tokens
+            )
+
         if api_key is None:
             api_key = os.environ.get("ANTHROPIC_API_KEY")
             if api_key is None:

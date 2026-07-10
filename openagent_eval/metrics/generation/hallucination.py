@@ -81,8 +81,10 @@ class HallucinationDetection(BaseMetric):
         metric.measure(test_case)
         score = metric.score
 
-        # Invert so 0 = no hallucination, 1 = all hallucinated
-        hallucination_score = 1.0 - score
+        # DeepEval's HallucinationMetric already reports 0.0 = no hallucination
+        # and 1.0 = fully hallucinated (lower is better), matching this metric's
+        # contract and the simple fallback below. Do NOT invert.
+        hallucination_score = float(score)
 
         return MetricResult(
             score=hallucination_score,

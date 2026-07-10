@@ -73,8 +73,13 @@ class SemanticSimilarity(BaseMetric):
             embeddings[1].reshape(1, -1),
         )[0][0]
 
+        # Cosine similarity lives in [-1, 1]; rescale to [0, 1] and clamp so it
+        # satisfies MetricResult's 0..1 contract (otherwise a negative cosine
+        # for dissimilar texts would raise ValueError).
+        score = max(0.0, min(1.0, (float(similarity) + 1.0) / 2.0))
+
         return MetricResult(
-            score=float(similarity),
+            score=score,
             reason=f"Cosine similarity: {similarity:.4f}",
             metadata={"method": "sentence_transformers"},
         )

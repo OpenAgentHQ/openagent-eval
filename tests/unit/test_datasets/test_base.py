@@ -166,3 +166,9 @@ class TestDataset:
         assert dicts[0]["ground_truth"] == "A1"
         assert dicts[1]["question"] == "Q2"
         assert "ground_truth" not in dicts[1]
+
+    # --- L25 regression test ---
+    def test_has_ground_truth_empty_dataset(self):
+        """L25: Empty dataset must return False, not crash with TypeError."""
+        dataset = Dataset(items=[])
+        assert dataset.has_ground_truth is False

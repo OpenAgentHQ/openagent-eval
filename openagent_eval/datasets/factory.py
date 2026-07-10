@@ -11,6 +11,7 @@ from typing import Any
 from openagent_eval.config.models import DatasetConfig
 from openagent_eval.datasets.base import BaseDatasetLoader
 from openagent_eval.datasets.csv_loader import CSVDatasetLoader
+from openagent_eval.datasets.hf_loader import HFDatasetLoader
 from openagent_eval.datasets.json_loader import JSONDatasetLoader
 from openagent_eval.datasets.jsonl_loader import JSONLDatasetLoader
 from openagent_eval.datasets.pdf_loader import PDFDatasetLoader
@@ -30,6 +31,7 @@ _FORMAT_MAP: dict[str, type[BaseDatasetLoader]] = {
     "jsonl": JSONLDatasetLoader,
     "csv": CSVDatasetLoader,
     "pdf": PDFDatasetLoader,
+    "hf": HFDatasetLoader,
 }
 
 
