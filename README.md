@@ -2,12 +2,9 @@
 
 **Open-source CLI framework for evaluating RAG systems and AI Agents.**
 
-[![CI](https://github.com/OpenAgentHQ/openagent-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenAgentHQ/openagent-eval/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/OpenAgentHQ/openagent-eval/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenAgentHQ/openagent-eval)
 [![PyPI Version](https://img.shields.io/pypi/v/openagent-eval.svg)](https://pypi.org/project/openagent-eval/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/openagent-eval.svg)](https://pypi.org/project/openagent-eval/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![CodeQL](https://github.com/OpenAgentHQ/openagent-eval/actions/workflows/codeql.yml/badge.svg)](https://github.com/OpenAgentHQ/openagent-eval/actions/workflows/codeql.yml)
 
 ---
 
@@ -234,29 +231,6 @@ uv run pytest tests/unit/test_exceptions.py
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
-
-## Roadmap
-
-### v1.0 (Current)
-- RAG evaluation
-- CLI + SDK interfaces
-- Plugin architecture
-- Multiple report formats
-
-### v2.0 (Planned)
-- AI Agent evaluation
-- Tool-call evaluation
-- Planning evaluation
-- Memory evaluation
-- Multi-agent evaluation
-
-### v3.0 (Future)
-- CI/CD integration
-- GitHub Action
-- Cloud synchronization
-- Hosted evaluation platform
 
 ---
 
