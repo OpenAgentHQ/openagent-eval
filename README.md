@@ -94,6 +94,16 @@ oaeval report latest
 
 ---
 
+## Tutorials
+
+| Tutorial | Description | Link |
+|----------|-------------|------|
+| **RAG Evaluation Tutorial** | Complete end-to-end guide: build a RAG pipeline, evaluate with all 18 metrics, interpret results, and apply best practices | [`examples/rag_evaluation_tutorial.ipynb`](examples/rag_evaluation_tutorial.ipynb) |
+
+> **Note**: The tutorial runs entirely offline using mock providers — no API keys required!
+
+---
+
 ## CLI Commands
 
 | Command | Description |
@@ -112,12 +122,14 @@ oaeval report latest
 Use OpenAgent Eval as a Python library:
 
 ```python
-from openagent_eval import Evaluator
+from openagent_eval.core import Engine
+from openagent_eval.config import load_config
 
-evaluator = Evaluator(config_path="config.yaml")
-result = evaluator.evaluate(dataset)
+config = load_config("config.yaml")
+engine = Engine(config)
+report = await engine.run(dataset)
 
-print(result.summary)
+print(report.summary)
 ```
 
 ---
