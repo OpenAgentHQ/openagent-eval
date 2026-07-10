@@ -1,4 +1,4 @@
 """OpenAgent Eval - Open-source CLI framework for evaluating RAG systems and AI Agents."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "OpenAgent Eval Contributors"

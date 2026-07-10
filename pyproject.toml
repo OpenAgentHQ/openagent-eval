@@ -1,6 +1,6 @@
 [project]
 name = "openagent-eval"
-version = "0.1.0"
+version = "0.1.1"
 description = "Open-source CLI framework for evaluating RAG systems and AI Agents"
 readme = "README.md"
 license = {text = "Apache-2.0"}
