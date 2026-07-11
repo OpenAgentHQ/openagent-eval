@@ -84,12 +84,8 @@ faiss = ["faiss-cpu>=1.7.0"]
 pgvector = ["psycopg[binary]>=3.1.0", "pgvector>=0.2.0"]
 elasticsearch = ["elasticsearch>=8.0.0"]
 bm25 = ["rank-bm25>=0.2.0"]
-ui = [
-    "textual>=0.40.0",
-    "pyfiglet>=1.0.0",
-]
 all = [
-    "openagent-eval[dev,evaluation,corpus,nli,datasets,pdf,providers,qdrant,pinecone,weaviate,faiss,pgvector,elasticsearch,bm25,ui]",
+    "openagent-eval[dev,evaluation,corpus,nli,datasets,pdf,providers,qdrant,pinecone,weaviate,faiss,pgvector,elasticsearch,bm25]",
 ]
 
 [project.scripts]

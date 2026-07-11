@@ -20,7 +20,6 @@ from openagent_eval.cli.commands.synth import synth_command
 from openagent_eval.cli.commands.test import test_command
 from openagent_eval.cli.commands.validate import validate_command
 from openagent_eval.cli.commands.audit import audit_command
-from openagent_eval.cli.commands.ui import ui_command
 from openagent_eval.cli.context import CLIContext, set_context
 from openagent_eval.cli.utils.callbacks import version_callback
 from openagent_eval.exceptions import OpenAgentEvalError
@@ -132,7 +131,6 @@ app.command(name="diagnose")(diagnose_command)
 app.command(name="audit")(audit_command)
 app.command(name="synth")(synth_command)
 app.command(name="test")(test_command)
-app.command(name="ui")(ui_command)
 
 
 # Shell completion command
@@ -180,7 +178,7 @@ _oaeval_completion() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="init run report compare list doctor validate delete diagnose audit synth test ui completion"
+    commands="init run report compare list doctor validate delete diagnose audit synth test completion"
 
     if [[ ${cur} == -* ]]; then
         COMPREPLY=( $(compgen -W "--help --version --quiet --json --no-color --verbose" -- ${cur}) )
@@ -250,7 +248,6 @@ _oaeval() {
         'diagnose:Diagnose evaluation failures and attribute blame'
         'audit:Audit corpus health'
         'test:Run evaluation as CI/CD test with threshold gating'
-        'ui:Launch interactive TUI dashboard'
         'completion:Generate shell completion script'
     )
 
@@ -344,11 +341,6 @@ _oaeval() {
                         '--json[Output JSON]' \\
                         '--help[Show help]'
                     ;;
-                ui)
-                    _arguments \\
-                        '--config[Configuration file]:config:' \\
-                        '--help[Show help]'
-                    ;;
                 completion)
                     _arguments \\
                         '1:shell:(bash zsh fish)'
@@ -402,7 +394,6 @@ complete -c oaeval -n __oaeval_no_subcommand -a delete -d 'Delete evaluation rep
 complete -c oaeval -n __oaeval_no_subcommand -a diagnose -d 'Diagnose evaluation failures and attribute blame'
 complete -c oaeval -n __oaeval_no_subcommand -a audit -d 'Audit corpus health'
 complete -c oaeval -n __oaeval_no_subcommand -a test -d 'Run evaluation as CI/CD test with threshold gating'
-complete -c oaeval -n __oaeval_no_subcommand -a ui -d 'Launch interactive TUI dashboard'
 complete -c oaeval -n __oaeval_no_subcommand -a completion -d 'Generate shell completion script'
 
 # run command options
@@ -456,9 +447,6 @@ complete -c oaeval -n __oaeval_using_command -a test -l no-fail-on-error -d 'Do 
 complete -c oaeval -n __oaeval_using_command -a test -l timeout -d 'Timeout in seconds' -r
 complete -c oaeval -n __oaeval_using_command -a test -l verbose -s v -d 'Enable verbose output'
 complete -c oaeval -n __oaeval_using_command -a test -l json -d 'Output JSON'
-
-# ui command options
-complete -c oaeval -n __oaeval_using_command -a ui -l config -d 'Configuration file' -r
 
 # completion command options
 complete -c oaeval -n __oaeval_using_command -a completion -a 'bash zsh fish' -d 'Shell'
