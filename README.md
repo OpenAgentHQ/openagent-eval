@@ -3,9 +3,11 @@
 **Open-source CLI framework for evaluating RAG systems and AI Agents.**
 
 [![PyPI Version](https://img.shields.io/pypi/v/openagent-eval.svg)](https://pypi.org/project/openagent-eval/)
+
 [![Python Versions](https://img.shields.io/pypi/pyversions/openagent-eval.svg)](https://pypi.org/project/openagent-eval/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/openagent-eval?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/openagent-eval)
 ---
 
 ## Overview
