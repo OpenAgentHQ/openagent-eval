@@ -24,7 +24,7 @@ class BannerWidget(Widget):
 
     DEFAULT_CSS = """
     BannerWidget {
-        height: 9;
+        height: 10;
         content-align: center middle;
         padding: 0 1;
         background: $surface;
@@ -38,13 +38,14 @@ class BannerWidget(Widget):
 
     def compose(self) -> ComposeResult:
         yield Static(
-            "[bold cyan]  ___   ___  ___    ___  [/bold cyan]\n"
-            "[bold cyan] / __| / __|/ _ \\  / __| [/bold cyan]\n"
-            "[bold bright_cyan]| (__  \\__ \\ (_) || (__  [/bold bright_cyan]\n"
-            "[bold bright_blue] \\___| |___/\\___/  \\___| [/bold bright_blue]\n"
+            "[bold cyan]██████╗  █████╗ ███████╗██╗   ██╗ █████╗ ██╗[/bold cyan]\n"
+            "[bold cyan]██╔═══██╗██╔══██╗██╔════╝██║   ██║██╔══██╗██║[/bold cyan]\n"
+            "[bold cyan]██║   ██║███████║█████╗  ██║   ██║███████║██║[/bold cyan]\n"
+            "[bold bright_cyan]██║   ██║██╔══██║██╔══╝  ╚██╗ ██╔╝██╔══██║██║[/bold bright_cyan]\n"
+            "[bold bright_blue]╚██████╔╝██║  ██║███████╗ ╚████╔╝ ██║  ██║███████╗[/bold bright_blue]\n"
+            "[bold bright_blue] ╚═════╝ ╚═╝  ╚═╝╚══════╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝[/bold bright_blue]\n"
             "\n"
-            "[italic bright_blue]   RAG Evaluation Framework[/italic bright_blue]\n"
-            "[dim]   Open-source CLI for evaluating RAG systems[/dim]"
+            "[italic bright_blue]      OpenAgent Eval • Production-Ready RAG Evaluation[/italic bright_blue]"
         )
 
 

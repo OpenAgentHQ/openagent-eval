@@ -31,7 +31,7 @@ class TestBannerModule:
         with patch.dict("sys.modules", {"pyfiglet": None}):
             result = _generate_ascii_art("test")
             assert isinstance(result, str)
-            assert "___" in result
+            assert "OAEVAL" in result or "██" in result
 
     def test_get_version_returns_string(self):
         """Test that version retrieval returns a string."""

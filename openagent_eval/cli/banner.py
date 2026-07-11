@@ -12,30 +12,19 @@ from rich.text import Text
 
 
 def _generate_ascii_art(text: str = "oaeval") -> str:
-    """Generate ASCII art text using pyfiglet.
-
-    Falls back to a simple box if pyfiglet is not installed.
-
-    Args:
-        text: The text to render as ASCII art.
+    """Generate ASCII art for OAEVAL banner.
 
     Returns:
         ASCII art string.
     """
-    try:
-        import pyfiglet
-
-        # Use a clean, modern font
-        return pyfiglet.figlet_format(text, font="small")
-    except ImportError:
-        # Fallback when pyfiglet is not installed
-        return (
-            " ___   ___  ___    ___  \n"
-            "/ __| / __|/ _ \\  / __| \n"
-            "| (__  \\__ \\ (_) || (__  \n"
-            " \\___| |___/\\___/  \\___| \n"
-            "                          "
-        )
+    return (
+        "██████╗  █████╗ ███████╗██╗   ██╗ █████╗ ██╗\n"
+        "██╔═══██╗██╔══██╗██╔════╝██║   ██║██╔══██╗██║\n"
+        "██║   ██║███████║█████╗  ██║   ██║███████║██║\n"
+        "██║   ██║██╔══██║██╔══╝  ╚██╗ ██╔╝██╔══██║██║\n"
+        "╚██████╔╝██║  ██║███████╗ ╚████╔╝ ██║  ██║███████╗\n"
+        " ╚═════╝ ╚═╝  ╚═╝╚══════╝  ╚═══╝  ╚═╝  ╚═╝╚══════╝"
+    )
 
 
 def _get_version() -> str:
@@ -60,14 +49,14 @@ def create_banner(console: Console | None = None, show_version: bool = False) ->
     if console is None:
         console = Console()
 
-    ascii_art = _generate_ascii_art("oaeval")
+    ascii_art = _generate_ascii_art()
 
     # Create gradient-styled ASCII art
     lines = ascii_art.split("\n")
     gradient_art = Text()
 
     # Color gradient from cyan to blue
-    colors = ["bold cyan", "bold cyan", "bold bright_cyan", "bold bright_blue", "bold blue"]
+    colors = ["bold cyan", "bold cyan", "bold bright_cyan", "bold bright_blue", "bold bright_blue", "bold blue"]
 
     for i, line in enumerate(lines):
         if line.strip():  # Only color non-empty lines
@@ -78,9 +67,7 @@ def create_banner(console: Console | None = None, show_version: bool = False) ->
 
     # Add tagline
     gradient_art.append("\n", style="default")
-    gradient_art.append("  RAG Evaluation Framework", style="italic bright_blue")
-    gradient_art.append("\n  ", style="default")
-    gradient_art.append("Open-source CLI for evaluating RAG systems", style="dim")
+    gradient_art.append("      OpenAgent Eval • Production-Ready RAG Evaluation", style="italic bright_blue")
 
     # Create a beautiful panel
     panel = Panel(
@@ -111,7 +98,7 @@ def create_mini_banner(console: Console | None = None) -> None:
     banner.add_column("name", style="bold cyan")
     banner.add_column("tagline", style="italic bright_blue")
 
-    banner.add_row("oaeval", "RAG Evaluation Framework")
+    banner.add_row("OAEVAL", "Production-Ready RAG Evaluation")
 
     console.print(banner)
     console.print()
@@ -128,9 +115,9 @@ def create_rich_banner(console: Console | None = None) -> None:
 
     # Create the main banner text
     banner_text = Text()
-    banner_text.append("  oaeval  ", style="bold cyan")
-    banner_text.append("  -  ", style="dim")
-    banner_text.append("RAG Evaluation Framework", style="italic bright_blue")
+    banner_text.append("  OAEVAL  ", style="bold cyan")
+    banner_text.append("  •  ", style="dim")
+    banner_text.append("Production-Ready RAG Evaluation", style="italic bright_blue")
 
     # Create feature highlights as text
     features_text = Text()
@@ -152,7 +139,7 @@ def create_rich_banner(console: Console | None = None) -> None:
         padding=(1, 2),
         expand=False,
         title="[bold bright_blue]OpenAgent Eval[/bold bright_blue]",
-        subtitle="[dim]Production-Grade RAG Evaluation[/dim]",
+        subtitle="[dim]Production-Ready RAG Evaluation[/dim]",
     )
 
     console.print()
