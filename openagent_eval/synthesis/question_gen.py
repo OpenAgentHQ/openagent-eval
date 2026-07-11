@@ -142,97 +142,101 @@ class QuestionGenerator:
         Raises:
             SynthesisExecutionError: If parsing fails.
         """
-        try:
-            import re as _re
+        import re as _re
 
-            # Extract JSON from response (handle markdown code blocks)
+        test_cases: list[TestCase] = []
+
+        # Strategy 1: Try to extract JSON array and parse it
+        try:
             text = raw_response.strip()
             if text.startswith("```"):
-                # Remove markdown code fence
                 lines = text.split("\n")
                 text = "\n".join(lines[1:-1])
 
-            # Try to find JSON array in the response
-            # Look for the first [ and last ] to extract the JSON array
             start_idx = text.find("[")
             end_idx = text.rfind("]")
             if start_idx != -1 and end_idx > start_idx:
                 text = text[start_idx : end_idx + 1]
 
-            # Fix common JSON issues from LLM output
-            # Remove trailing commas before ] or }
+            # Clean the JSON
             text = _re.sub(r",\s*([}\]])", r"\1", text)
-            # Replace single quotes with double quotes for JSON keys/values
-            # (only if the text doesn't already use double quotes properly)
-            if "'" in text and '"' not in text:
-                text = text.replace("'", '"')
-            # Remove any control characters except newlines in strings
             text = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", text)
-            # Fix unescaped newlines in strings (between quotes)
-            text = _re.sub(r'(?<!\\)\n(?=([^"]*"[^"]*")*[^"]*$)', '\\n', text)
 
             data = json.loads(text)
 
-            if not isinstance(data, list):
-                raise SynthesisExecutionError(
-                    message="Expected JSON array from LLM",
-                    details={"response_type": type(data).__name__},
+            if isinstance(data, list):
+                for item in data:
+                    if isinstance(item, dict):
+                        question = item.get("question", "").strip()
+                        answer = item.get("answer", "").strip()
+                        if question and answer:
+                            test_cases.append(
+                                TestCase(
+                                    question=question,
+                                    ground_truth=answer,
+                                    context=context,
+                                    test_type=TestCaseType.STANDARD,
+                                    source_document=source_document,
+                                    chunk_index=chunk_index,
+                                )
+                            )
+                if test_cases:
+                    return test_cases
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        # Strategy 2: Extract question-answer pairs using regex
+        qa_pattern = _re.compile(
+            r'\{\s*"question"\s*:\s*"([^"]+)"\s*,\s*"answer"\s*:\s*"([^"]+)"\s*\}',
+            _re.IGNORECASE,
+        )
+        matches = qa_pattern.findall(raw_response)
+
+        for question, answer in matches:
+            question = question.strip()
+            answer = answer.strip()
+            if question and answer:
+                test_cases.append(
+                    TestCase(
+                        question=question,
+                        ground_truth=answer,
+                        context=context,
+                        test_type=TestCaseType.STANDARD,
+                        source_document=source_document,
+                        chunk_index=chunk_index,
+                    )
                 )
 
-            test_cases: list[TestCase] = []
-            for item in data:
-                if not isinstance(item, dict):
-                    continue
-                question = item.get("question", "").strip()
-                answer = item.get("answer", "").strip()
-                if question and answer:
-                    test_cases.append(
-                        TestCase(
-                            question=question,
-                            ground_truth=answer,
-                            context=context,
-                            test_type=TestCaseType.STANDARD,
-                            source_document=source_document,
-                            chunk_index=chunk_index,
-                        )
-                    )
-
+        if test_cases:
             return test_cases
 
-        except json.JSONDecodeError:
-            # Fallback: extract question-answer pairs using regex
-            import re as _re
+        # Strategy 3: Try to find any question-answer patterns
+        question_pattern = _re.compile(r'"question"\s*:\s*"([^"]+)"', _re.IGNORECASE)
+        answer_pattern = _re.compile(r'"answer"\s*:\s*"([^"]+)"', _re.IGNORECASE)
 
-            test_cases: list[TestCase] = []
+        questions = question_pattern.findall(raw_response)
+        answers = answer_pattern.findall(raw_response)
 
-            # Try to find question-answer pairs in the response
-            # Pattern: {"question": "...", "answer": "..."}
-            qa_pattern = _re.compile(
-                r'\{\s*"question"\s*:\s*"([^"]+)"\s*,\s*"answer"\s*:\s*"([^"]+)"\s*\}',
-                _re.IGNORECASE,
-            )
-            matches = qa_pattern.findall(raw_response)
-
-            for question, answer in matches:
-                question = question.strip()
-                answer = answer.strip()
-                if question and answer:
-                    test_cases.append(
-                        TestCase(
-                            question=question,
-                            ground_truth=answer,
-                            context=context,
-                            test_type=TestCaseType.STANDARD,
-                            source_document=source_document,
-                            chunk_index=chunk_index,
-                        )
+        for q, a in zip(questions, answers):
+            q = q.strip()
+            a = a.strip()
+            if q and a:
+                test_cases.append(
+                    TestCase(
+                        question=q,
+                        ground_truth=a,
+                        context=context,
+                        test_type=TestCaseType.STANDARD,
+                        source_document=source_document,
+                        chunk_index=chunk_index,
                     )
+                )
 
-            if test_cases:
-                return test_cases
+        if test_cases:
+            return test_cases
 
-            # If regex also failed, raise the original error
-            raise SynthesisExecutionError(
-                message="Failed to parse LLM response",
-                details={"response_preview": raw_response[:200]},
-            )
+        # All strategies failed
+        raise SynthesisExecutionError(
+            message="Failed to parse LLM response",
+            details={"response_preview": raw_response[:200]},
+        )
