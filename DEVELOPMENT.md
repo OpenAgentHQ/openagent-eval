@@ -82,22 +82,6 @@ openagent-eval/
 │   ├── integrations/        # External integrations
 │   ├── exceptions/          # Custom exceptions
 │   ├── types/               # Type definitions
-│   ├── ui/                  # TUI dashboard (Textual)
-│   │   ├── app.py          # Main app with ChatScreen
-│   │   ├── screens.py      # Dashboard screens
-│   │   ├── widgets.py      # Custom widgets
-│   │   ├── styles.tcss     # Textual CSS
-│   │   ├── theme.py        # Theme system (70+ tokens)
-│   │   ├── streaming.py    # Streaming manager
-│   │   ├── components/     # Reusable components
-│   │   │   ├── spinner.py  # Animated spinner
-│   │   │   ├── footer.py   # Status footer
-│   │   │   ├── message_list.py  # Virtual scrolling
-│   │   │   └── command_input.py # Rich input
-│   │   └── tools/          # Tool renderers
-│   │       ├── eval.py     # Eval results
-│   │       ├── audit.py    # Audit results
-│   │       └── diagnose.py # Diagnose results
 │   └── utils/               # Utility functions
 ├── tests/                   # Test suite
 │   ├── unit/               # Unit tests
@@ -106,100 +90,6 @@ openagent-eval/
 │   └── sample_data/        # Sample datasets
 ├── pyproject.toml           # Project configuration
 └── README.md
-```
-
-## TUI Development
-
-### Overview
-
-The TUI dashboard is built with [Textual](https://textual.textualize.io/) and provides a Claude Code-inspired interface for interacting with OpenAgent Eval.
-
-### Key Components
-
-| Component | File | Description |
-|-----------|------|-------------|
-| Theme System | `ui/theme.py` | 70+ semantic color tokens |
-| Streaming Manager | `ui/streaming.py` | 6-state machine for streaming output |
-| Spinner Widget | `ui/components/spinner.py` | Animated spinner with rotating tips |
-| Status Footer | `ui/components/footer.py` | Model, cost, time, tokens display |
-| Message List | `ui/components/message_list.py` | Virtual scrolling (O(visible)) |
-| Command Input | `ui/components/command_input.py` | Autocomplete, vim mode, history |
-| Tool Renderers | `ui/tools/` | Eval, audit, diagnose panels |
-
-### Running the TUI
-
-```bash
-# Launch the TUI dashboard
-oaeval ui
-
-# Launch with config file
-oaeval ui --config config.yaml
-```
-
-### TUI Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| `1` | Dashboard |
-| `2` | Evaluate |
-| `3` | Audit |
-| `4` | Diagnose |
-| `5` | Chat |
-| `D` | Toggle dark mode |
-| `F1` | Help |
-| `Ctrl+P` | Command palette |
-| `Ctrl+L` | Clear messages |
-| `Escape` | Back/Quit |
-
-### Testing TUI Components
-
-```bash
-# Run TUI-specific tests
-uv run pytest tests/unit/test_cli/test_phase14_redesign.py -v
-
-# Run all tests
-uv run pytest
-```
-
-### TUI Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│  Header                                         │
-├─────────────────────────────────────────────────┤
-│                                                 │
-│  MessageList (Virtual Scrolling)                │
-│  ┌─────────────────────────────────────────┐   │
-│  │ > User message                          │   │
-│  │ ✓ Assistant response                    │   │
-│  │ [tool] Tool result                      │   │
-│  └─────────────────────────────────────────┘   │
-│                                                 │
-├─────────────────────────────────────────────────┤
-│  StatusFooter │ Model │ Cost │ Time │ Tokens   │
-└─────────────────────────────────────────────────┘
-```
-
-### Adding New Components
-
-1. Create component in `ui/components/`
-2. Add CSS styles in `ui/styles.tcss`
-3. Write tests in `tests/unit/test_cli/test_phase14_redesign.py`
-4. Export in `ui/components/__init__.py`
-
-### Theme Customization
-
-The theme system uses frozen dataclasses with 70+ semantic tokens:
-
-```python
-from openagent_eval.ui.theme import get_theme, ThemeName
-
-# Get dark theme
-theme = get_theme(ThemeName.DARK)
-
-# Access tokens
-print(theme.brand)  # "rgb(79,140,255)"
-print(theme.metric_excellent)  # "rgb(80,200,120)"
 ```
 
 ## Development Workflow
@@ -327,24 +217,6 @@ uv run pytest -m integration
 2. **mypy errors**: Run `uv run mypy openagent_eval/` to see all type errors
 3. **Ruff errors**: Run `uv run ruff check .` to see all lint issues
 4. **Test collection errors**: Check that test files follow `test_*.py` naming convention
-
-### TUI-Specific Issues
-
-1. **"No module named 'textual'"**: Install Textual in your virtual environment:
-   ```bash
-   uv pip install textual
-   ```
-
-2. **CSS syntax errors**: Textual CSS doesn't support `:dark`/`:light` pseudo-selectors. Use default theme colors instead.
-
-3. **`Rule()` errors**: Textual 8.x doesn't support `style` parameter. Use `Rule()` without arguments.
-
-4. **`register_screen()` errors**: Textual 8.x doesn't have `register_screen()`. Use `push_screen()` with screen instances.
-
-5. **UI not launching**: Run tests first to verify components:
-   ```bash
-   uv run pytest tests/unit/test_cli/test_phase14_redesign.py -v
-   ```
 
 ### Using loguru for Debugging
 

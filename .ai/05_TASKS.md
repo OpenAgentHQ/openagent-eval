@@ -74,18 +74,6 @@
 - [x] Write documentation for CI/CD integration
 - [x] Add GitHub Actions workflow example
 
-### Phase 14: Hybrid CLI UI — COMPLETE
-- [x] 14.1 Add `pyfiglet` and `textual` to optional dependencies
-- [x] 14.2 Create `openagent_eval/cli/banner.py` — ASCII art banner with Rich
-- [x] 14.3 Update existing CLI commands to display banner
-- [x] 14.4 Create `openagent_eval/ui/` module structure
-- [x] 14.5 Implement Textual dashboard app (`app.py`)
-- [x] 14.6 Create dashboard screens (main, audit, evaluate, diagnose)
-- [x] 14.7 Add custom widgets (banner, results table, progress bars)
-- [x] 14.8 Wire up `oaeval ui` command
-- [x] 14.9 Add keyboard shortcuts and navigation
-- [x] 14.10 Test and polish (15 tests passing)
-
 ---
 
 ## IN PROGRESS
@@ -96,17 +84,8 @@
 
 ## COMPLETED
 
-### Phase 14: Hybrid CLI UI
-- [x] Add `pyfiglet` and `textual` to optional dependencies
-- [x] Create `openagent_eval/cli/banner.py` — ASCII art banner with Rich
-- [x] Update existing CLI commands to display banner
-- [x] Create `openagent_eval/ui/` module structure
-- [x] Implement Textual dashboard app (`app.py`)
-- [x] Create dashboard screens (main, audit, evaluate, diagnose)
-- [x] Add custom widgets (banner, results table, progress bars)
-- [x] Wire up `oaeval ui` command
-- [x] Add keyboard shortcuts and navigation
-- [x] Test and polish (15 tests passing)
+### Phase 14: Hybrid CLI UI — REMOVED
+- [x] TUI removed from codebase, CLI-only interface retained
 
 ### Phase 13: CI/CD Integration
 - [x] Implement pytest plugin for RAG evaluation
@@ -252,8 +231,6 @@ Phase 11 (Diagnosis) ← depends on Phase 3 (uses metric results)
 Phase 12 (Synthetic Data) ← depends on Phase 5 (uses LLM providers)
     ↓
 Phase 13 (CI/CD) ← depends on Phases 7, 9-12
-    ↓
-Phase 14 (Hybrid CLI UI) ← depends on Phase 1 (new module, independent)
 ```
 
 ---
@@ -265,7 +242,7 @@ Phase 14 (Hybrid CLI UI) ← depends on Phase 1 (new module, independent)
 - Phase 6 requires interfaces from Phases 2-5
 - Phase 7 is complete - CLI works and the evaluation pipeline is now functional
 - Phase 8 can start early and run in parallel
-- **Phase 9-14 are NEW** — Production-grade RAG evaluation features + Hybrid CLI UI
+- **Phase 9-14 are NEW** — Production-grade RAG evaluation features
 - Exception hierarchy is part of Phase 1 (required foundation)
 - Core module (engine, pipeline, executor, registry) is part of Phase 1
 - CORRECTION: the earlier "all phases complete / 517+ passing" claim was inaccurate;
@@ -276,8 +253,7 @@ Phase 14 (Hybrid CLI UI) ← depends on Phase 1 (new module, independent)
 - Phase 11 (Diagnosis) solves the "where did it fail" problem
 - Phase 12 (Synthetic Data) solves the "not enough test cases" problem
 - Phase 13 (CI/CD) enables regression gating in pipelines
-- Phase 14 (Hybrid CLI UI) adds beautiful Rich banner + optional Textual TUI dashboard
-- **Phase 14 is COMPLETE** — Hybrid CLI UI implemented (Rich banner, Textual TUI dashboard)
+- **Phase 14 is COMPLETE** — TUI removed, CLI-only interface retained
 
 ---
 
@@ -295,6 +271,7 @@ Phase 14 (Hybrid CLI UI) ← depends on Phase 1 (new module, independent)
 
 | Date | Change |
 |------|--------|
+| 2026-07-12 | **TUI REMOVED** — Textual TUI dashboard removed, CLI-only interface retained |
 | 2026-07-11 | **Phase 14 COMPLETE** — Hybrid CLI UI implemented (Rich banner, Textual TUI dashboard, 15 tests) |
 | 2026-07-11 | **Phase 13 COMPLETE** — CI/CD Integration implemented (pytest plugin, threshold gating, `oaeval test` command) |
 | 2026-07-11 | **Phase 12 COMPLETE** — Synthetic Test Data generator implemented (56 tests) |

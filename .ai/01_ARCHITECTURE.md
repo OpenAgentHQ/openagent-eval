@@ -72,18 +72,10 @@ openagent_eval/
 │   │   ├── doctor.py      # oaeval doctor
 │   │   ├── audit.py       # oaeval audit (NEW - corpus health)
 │   │   ├── diagnose.py    # oaeval diagnose (NEW - blame attribution)
-│   │   ├── synth.py       # oaeval synth (NEW - synthetic data)
-│   │   └── ui.py          # oaeval ui (NEW - Textual TUI)
+│   │   └── synth.py       # oaeval synth (NEW - synthetic data)
 │   └── utils/             # CLI utilities
 │       ├── __init__.py
 │       └── display.py     # Rich display helpers
-│
-├── ui/                     # Textual TUI application (NEW)
-│   ├── __init__.py
-│   ├── app.py             # Main Textual App class
-│   ├── screens.py         # Dashboard screens (main, audit, evaluate, diagnose)
-│   ├── widgets.py         # Custom widgets (banner, results table, progress bars)
-│   └── styles.tcss        # Textual CSS for layout
 │
 ├── config/                 # Configuration management
 │   ├── __init__.py
@@ -266,47 +258,7 @@ def run(config_path: str):
     display_results(result)
 ```
 
-### 2. UI Layer (`ui/`) — NEW
-
-**Responsibility:** Interactive Textual TUI dashboard for power users.
-
-**Key insight:** Standard CLI commands use Rich for beautiful output. `oaeval ui` launches a full Textual dashboard for interactive exploration.
-
-**Components:**
-
-| File | Responsibility |
-|------|----------------|
-| `app.py` | Main Textual App class |
-| `screens.py` | Dashboard screens (main, audit, evaluate, diagnose) |
-| `widgets.py` | Custom widgets (banner, results table, progress bars) |
-| `styles.tcss` | Textual CSS for layout |
-
-**Example:**
-```python
-from textual.app import App
-
-class OAEvalDashboard(App):
-    """Interactive evaluation dashboard."""
-    
-    def compose(self):
-        yield Header()
-        yield DashboardScreen()
-        yield Footer()
-    
-    BINDINGS = [
-        ("1", "run_evaluation", "Run Eval"),
-        ("2", "audit_corpus", "Audit Corpus"),
-        ("q", "quit", "Quit"),
-    ]
-```
-
-**Rules:**
-- TUI is opt-in via `oaeval ui` command
-- Standard CLI commands remain unchanged
-- No business logic in UI layer
-- Display-only (delegates to core modules)
-
-### 3. Core Orchestration (`core/`)
+### 2. Core Orchestration (`core/`)
 
 **Responsibility:** Orchestrate the evaluation pipeline.
 
@@ -553,13 +505,11 @@ cli/ → core/ → datasets/
              → corpus/      (NEW)
              → diagnosis/   (NEW)
              → synthesis/   (NEW)
-ui/ → core/  (same dependencies as cli/)
 ```
 
 **Rules:**
 1. `cli/` depends on everything
-2. `ui/` depends on `core/` (same as `cli/`)
-3. `core/` depends on `datasets/`, `metrics/`, `providers/`, `reports/`, `corpus/`, `diagnosis/`, `synthesis/`
+2. `core/` depends on `datasets/`, `metrics/`, `providers/`, `reports/`, `corpus/`, `diagnosis/`, `synthesis/`
 3. `metrics/`, `providers/`, `reports/` depend only on `utils/` and `types/`
 4. `corpus/` depends on `providers/` (for LLM-as-Judge) and `utils/`
 5. `diagnosis/` depends on `metrics/` (for metric results) and `utils/`

@@ -525,45 +525,6 @@ class MetricResult:
 
 ---
 
-## Hybrid CLI Architecture (Implemented - Phase 14)
-
-### Design Principle
-
-- **Standard CLI:** All existing commands (`oaeval evaluate`, `oaeval audit`, etc.) use Rich for beautiful output
-- **Interactive TUI:** `oaeval ui` launches Textual dashboard for power users
-- **Zero Breaking Changes:** Existing workflows continue to work unchanged
-
-### Tech Stack Additions
-
-| Component | Technology | Reason |
-|-----------|------------|--------|
-| ASCII Art Banner | pyfiglet | Professional CLI branding |
-| Interactive TUI | Textual | Full keyboard-driven dashboard |
-
-### Dependencies
-
-```toml
-[project.optional-dependencies]
-ui = ["textual>=0.40", "pyfiglet>=1.0"]
-```
-
-### UI Module Structure
-
-```
-openagent_eval/
-├── cli/
-│   ├── banner.py        # ASCII art banner with Rich
-│   └── commands/
-├── ui/                  # Textual TUI application
-│   ├── __init__.py
-│   ├── app.py           # Main Textual App class
-│   ├── screens.py       # Dashboard screens (main, audit, evaluate, diagnose)
-│   ├── widgets.py       # Custom widgets (banner, results table, progress bars)
-│   └── styles.tcss      # Textual CSS for layout
-```
-
----
-
 ## Development Phases
 
 ### Phase 1: Foundation ✅
@@ -656,15 +617,6 @@ openagent_eval/
 - [x] Add `oaeval test` CLI command
 - [x] Write documentation for CI/CD integration
 - [x] Add GitHub Actions workflow example
-
-### Phase 14: Hybrid CLI UI ✅
-- [x] Add `pyfiglet` and `textual` to optional dependencies
-- [x] Create `openagent_eval/cli/banner.py` — ASCII art banner with Rich
-- [x] Create `openagent_eval/ui/` module structure
-- [x] Implement Textual dashboard app
-- [x] Create dashboard screens (main, audit, evaluate, diagnose)
-- [x] Add custom widgets (banner, results table, progress bars)
-- [x] Wire up `oaeval ui` command
 
 ---
 

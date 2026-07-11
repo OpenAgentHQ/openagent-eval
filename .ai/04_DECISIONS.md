@@ -590,35 +590,6 @@
 
 ---
 
-### D022: Hybrid CLI UI Architecture
-
-**Date:** 2026-07-11
-**Status:** Accepted
-**Context:** Need beautiful CLI output without breaking existing workflows. Users want both quick CLI evaluations and optional interactive dashboards.
-
-**Decision:** Hybrid approach — Rich banner for all commands, Textual TUI via `oaeval ui`.
-
-**Rationale:**
-- Zero breaking changes to existing CLI workflows
-- Opt-in interactivity for power users
-- Beautiful ASCII art banner for professional branding
-- Full Textual dashboard for interactive exploration
-- Best of both worlds: simple CLI + powerful TUI
-
-**Consequences:**
-- New `ui/` module for Textual application
-- New `cli/banner.py` for ASCII art banner
-- New optional dependencies: `textual`, `pyfiglet`
-- Standard CLI commands remain unchanged
-- `oaeval ui` launches interactive dashboard
-
-**Alternatives Considered:**
-- Replace entire CLI with Textual: Rejected, breaking change, higher complexity
-- Rich formatting only: Rejected, no interactive mode
-- Textual for all commands: Rejected, overkill for simple evaluations
-
----
-
 ## Pending Decisions
 
 None at this time.

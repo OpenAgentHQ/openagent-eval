@@ -9,11 +9,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Phase** | Phase 14 Complete - Hybrid CLI UI |
-| **Status** | v1.0 complete; production-grade features in progress |
-| **Last Updated** | 2026-07-11 |
+| **Phase** | Phase 14 Complete - TUI Removed |
+| **Status** | v1.0 complete; CLI-only interface |
+| **Last Updated** | 2026-07-12 |
 | **Next Action** | Another feature or v1.0 release |
-| **Current Branch** | feature/hybrid-cli-ui |
+| **Current Branch** | docs/remove-tui-references |
 | **Remote** | https://github.com/OpenAgentHQ/openagent-eval.git |
 
 ---
@@ -224,6 +224,7 @@ SDK (openagent_eval - Core Evaluation API)
 - [x] Wire up `oaeval ui` command
 - [x] Add keyboard shortcuts and navigation
 - [x] Test and polish (15 tests passing)
+- [x] **REMOVED:** TUI removed from codebase, CLI-only interface retained
 
 ---
 
@@ -292,7 +293,7 @@ chore/{description}        # Maintenance tasks
 - Phase 8 is pending - Documentation
 - **Phase 9-13 are NEW** — Production-grade RAG evaluation features
 - **Phase 13 is COMPLETE** — CI/CD Integration (pytest plugin, threshold gating, `oaeval test` command)
-- **Phase 14 is COMPLETE** — Hybrid CLI UI (Rich banner, Textual TUI dashboard, 15 tests)
+- **Phase 14 is COMPLETE** — TUI removed, CLI-only interface retained
 - **Phase 12 is COMPLETE** — Synthetic Test Data generator implemented (56 tests)
 - CORRECTION: earlier "517+ passing / all phases complete" status was inaccurate —
   the core pipeline did not actually evaluate. That gap is closed.
@@ -309,25 +310,6 @@ chore/{description}        # Maintenance tasks
 3. **NLI-based Scoring** — Word overlap is insufficient for production use
 4. **Synthetic Test Data** — Bootstrap evaluation from your corpus
 5. **CLI-first, Local-first** — No cloud services, no dashboards, no authentication
-6. **Hybrid CLI UI** — Beautiful Rich output + optional Textual TUI dashboard (IMPLEMENTED)
-
----
-
-## CLI UI Research Findings
-
-**Key technologies discovered:**
-
-| Technology | Purpose | Integration |
-|------------|---------|-------------|
-| pyfiglet | ASCII art banners | CLI banner generation |
-| Rich Layout | Rows/columns, Panels, Tables | Standard CLI output |
-| Textual | Full TUI framework | `oaeval ui` command |
-| rich.live.Live | Real-time dashboards | Live updating displays |
-
-**Architecture decision:**
-- Hybrid approach: Rich for all commands, Textual for `oaeval ui`
-- Zero breaking changes to existing CLI
-- Opt-in interactivity for power users
 
 ---
 
@@ -335,10 +317,10 @@ chore/{description}        # Maintenance tasks
 
 | Date | Change |
 |------|--------|
+| 2026-07-12 | **TUI REMOVED** — Textual TUI dashboard removed, CLI-only interface retained |
 | 2026-07-11 | **Phase 14 COMPLETE** — Hybrid CLI UI implemented (Rich banner, Textual TUI dashboard, 15 tests) |
 | 2026-07-11 | **Phase 13 COMPLETE** — CI/CD Integration implemented (pytest plugin, threshold gating, `oaeval test` command) |
 | 2026-07-11 | **Phase 12 COMPLETE** — Synthetic Test Data generator implemented (56 tests) |
-| 2026-07-11 | Added Phase 14: Hybrid CLI UI (Rich banner + Textual TUI dashboard) |
 | 2026-07-11 | Added CLI UI research findings to context |
 | 2026-07-11 | Added Phase 9-13 (production-grade RAG eval): Corpus Auditor, LLM-as-Judge, Diagnosis, Synthetic Data, CI/CD |
 | 2026-07-11 | Updated 00_PROJECT.md with production-grade vision and feature matrix |

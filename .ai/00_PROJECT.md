@@ -622,22 +622,6 @@ Run evaluation with multiple thresholds and JSON output.
 
 ---
 
-```bash
-oaeval ui
-```
-
-Launch interactive TUI dashboard (Textual).
-
----
-
-```bash
-oaeval ui --config config.yaml
-```
-
-Launch TUI with specific configuration.
-
----
-
 # Configuration
 
 The framework should use YAML configuration.
@@ -745,7 +729,6 @@ Avoid tightly coupling metrics, providers, and report generators.
 Version 1.0 (Stable Release):
 
 * Generic LLM-as-Judge for custom criteria
-* **Hybrid CLI UI** (Rich banner + Textual TUI dashboard)
 
 Version 2.0:
 
@@ -1111,52 +1094,3 @@ result = evaluator.evaluate(...)
 ```
 
 without maintaining two separate codebases. This architecture is scalable and aligns well with the long-term OpenAgentHQ ecosystem.
-
----
-
-# Hybrid CLI UI (v1.0 Planned)
-
-## Design Principle
-
-- **Standard CLI:** All existing commands (`oaeval evaluate`, `oaeval audit`, etc.) use Rich for beautiful output
-- **Interactive TUI:** `oaeval ui` launches Textual dashboard for power users
-- **Zero Breaking Changes:** Existing workflows continue to work unchanged
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  oaeval evaluate  →  Beautiful Rich output (no TUI)         │
-│  oaeval audit     →  Beautiful Rich output (no TUI)         │
-│  oaeval ui        →  Full Textual interactive dashboard     │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Tech Stack Additions
-
-| Component | Technology | Reason |
-|-----------|------------|--------|
-| ASCII Art Banner | pyfiglet | Professional CLI branding |
-| Interactive TUI | Textual | Full keyboard-driven dashboard |
-
-## Dependencies
-
-```toml
-[project.optional-dependencies]
-ui = ["textual>=0.40", "pyfiglet>=1.0"]
-```
-
-## UI Module Structure
-
-```
-openagent_eval/
-├── cli/
-│   ├── banner.py        # ASCII art banner with Rich (NEW)
-│   └── commands/
-├── ui/                  # Textual TUI application (NEW)
-│   ├── __init__.py
-│   ├── app.py           # Main Textual App class
-│   ├── screens.py       # Dashboard screens (main, audit, evaluate, diagnose)
-│   ├── widgets.py       # Custom widgets (banner, results table, progress bars)
-│   └── styles.tcss      # Textual CSS for layout
-```

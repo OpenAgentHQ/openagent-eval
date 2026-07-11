@@ -431,6 +431,5 @@ oaeval test config.yaml -t faithfulness:gte:0.8 -v --json
 
 ## Further Reading
 
-- [Configuration Guide](./03_configuration.md)
-- [Metrics Reference](./07_metric_system.md)
 - [CLI Reference](./06_cli_spec.md)
+- [Metrics Reference](./07_metric_system.md)
