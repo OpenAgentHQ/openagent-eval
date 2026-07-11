@@ -8,8 +8,8 @@ OpenAgent Eval is an open-source CLI framework for evaluating RAG systems and AI
 
 ## Current Status
 
-**Version:** 0.1.0 (Development)
-**Phase:** Phase 8 - Documentation
+**Version:** 0.3.0 (Development)
+**Phase:** Phase 12 - Advanced Providers & NLI Metrics (Complete)
 **Status:** Active Development
 
 ---
@@ -30,8 +30,8 @@ OpenAgent Eval is an open-source CLI framework for evaluating RAG systems and AI
 - [x] Experiment comparison
 - [x] Failure analysis
 - [x] Plugin system
-- [ ] CLI commands (init, run, report, compare, list, doctor)
-- [ ] Comprehensive documentation
+- [x] CLI commands (init, run, report, compare, list, doctor, validate, delete, diagnose, audit, synth)
+- [x] Comprehensive documentation
 
 ### Supported Providers
 
@@ -45,6 +45,59 @@ OpenAgent Eval is an open-source CLI framework for evaluating RAG systems and AI
 ### Supported Retrievers
 
 - ChromaDB
+- Qdrant
+- Pinecone
+- Weaviate
+- FAISS
+- pgvector
+- Elasticsearch
+- BM25
+- Memory
+- HTTP
+- Mock
+
+---
+
+## Version 1.1 - Production-Grade RAG Evaluation
+
+**Target:** Q3 2026 (after v1.0)
+
+### Corpus Health Auditor (THE DIFFERENTIATOR)
+
+- [x] Cross-document contradiction detection
+- [x] Unmarked obsolescence detection
+- [x] Divergent duplicate detection
+- [x] Thematic coverage analysis
+- [x] `oaeval audit` CLI command
+- [x] Corpus health reports
+
+### LLM-as-Judge Metrics
+
+- [x] NLI-based faithfulness scoring (DeBERTa)
+- [x] NLI-based answer relevancy scoring
+- [x] Claim extraction for atomic verification
+- [x] Evidence finding for claim support
+- [ ] Generic LLM-as-Judge for custom criteria
+
+### Component Diagnosis
+
+- [x] Blame attribution (retrieval vs generation vs chunking)
+- [x] 8 failure mode detection
+- [x] Actionable recommendations
+- [x] `oaeval diagnose` CLI command
+
+### Synthetic Test Data
+
+- [x] Question generation from documents
+- [x] Adversarial test case generation
+- [x] Dataset augmentation
+- [x] `oaeval synth` CLI command
+
+### CI/CD Integration
+
+- [ ] Pytest plugin for RAG evaluation
+- [ ] Threshold-based test gating
+- [ ] GitHub Actions workflow example
 
 ---
 
@@ -62,6 +115,7 @@ OpenAgent Eval is an open-source CLI framework for evaluating RAG systems and AI
 - [ ] Dataset generators
 - [ ] Custom report templates
 - [ ] Webhook notifications
+- [ ] Production monitoring (live traffic sampling)
 
 ---
 
@@ -142,8 +196,8 @@ We welcome community contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for d
 
 ### Priority Areas
 
-1. **CLI Commands** - Help implement Phase 7
-2. **Documentation** - Improve existing docs
+1. **CI/CD Integration** - Pytest plugin, GitHub Actions workflow
+2. **Generic LLM-as-Judge** - Custom criteria evaluation
 3. **Tests** - Increase test coverage
 4. **Providers** - Add new LLM/retriever adapters
 5. **Metrics** - Add new evaluation metrics
@@ -154,9 +208,11 @@ We welcome community contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for d
 
 | Version | Target Date | Focus |
 |---------|-------------|-------|
-| v1.0 | Q3 2026 | RAG Evaluation Core |
-| v1.1 | Q4 2026 | Additional Providers & Metrics |
-| v1.2 | Q1 2027 | Advanced Reporting |
+| v0.1.0 | 2026-07-08 | Foundation, Data, Metrics, Reports, Providers, Plugins |
+| v0.2.0 | 2026-07-10 | CLI Commands, Documentation |
+| v0.3.0 | 2026-07-11 | Corpus Health, Diagnosis, Synthesis, Advanced Providers, NLI |
+| v1.0 | Q3 2026 | RAG Evaluation Core (stable) |
+| v1.1 | Q4 2026 | CI/CD Integration, Generic LLM-as-Judge |
 | v2.0 | Q2 2027 | Agent Evaluation |
 | v3.0 | Q4 2027 | Enterprise Features |
 | v4.0 | 2028 | AI-Native Evaluation |
@@ -168,5 +224,5 @@ We welcome community contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for d
 ## Follow Us
 
 - **GitHub:** [OpenAgentHQ/openagent-eval](https://github.com/OpenAgentHQ/openagent-eval)
-- **Twitter:** @OpenAgentHQ
+- **Twitter:** @OpenAgentdev
 - **Discord:** [Join our community](https://discord.gg/openagent-eval)

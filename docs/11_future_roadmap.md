@@ -10,7 +10,7 @@ OpenAgent Eval is designed to evolve over time. This roadmap outlines planned fe
 
 **Focus:** RAG Evaluation Core
 
-### Current (v1.0)
+### Current (v0.3.0)
 
 - ✅ RAG evaluation pipeline
 - ✅ Retrieval metrics (precision, recall, MRR, NDCG, hit rate)
@@ -22,15 +22,27 @@ OpenAgent Eval is designed to evolve over time. This roadmap outlines planned fe
 - ✅ Experiment comparison
 - ✅ Failure analysis
 - ✅ Plugin system
+- ✅ CLI commands (init, run, report, compare, list, doctor, validate, delete, diagnose, audit, synth)
+- ✅ Shell completion (bash, zsh, fish)
+- ✅ Corpus Health Auditor (contradiction, staleness, duplicates, coverage)
+- ✅ Component Diagnosis (blame attribution, failure modes)
+- ✅ Synthetic Test Data (question generation, adversarial cases)
+- ✅ NLI-based metrics (DeBERTa faithfulness, relevancy scoring)
+- ✅ 11 retriever providers (Chroma, Qdrant, Pinecone, Weaviate, FAISS, pgvector, Elasticsearch, BM25, HTTP, Memory, Mock)
+- ✅ Embedder abstraction (Sentence Transformers, Mock)
+- ✅ PDF dataset loader
 
-### Planned (v1.x)
+### Planned (v1.0 stable)
 
+- [ ] Generic LLM-as-Judge for custom criteria
+- [ ] Pytest plugin for RAG evaluation
+- [ ] Threshold-based test gating
+- [ ] GitHub Actions workflow example
 - [ ] Additional LLM providers
 - [ ] More retrieval metrics
 - [ ] Streaming support
 - [ ] Batch evaluation mode
 - [ ] Configuration templates
-- [ ] Dataset generators
 - [ ] Custom report templates
 - [ ] Webhook notifications
 
@@ -189,9 +201,11 @@ Features are prioritized based on:
 
 | Version | Target Date | Focus |
 |---------|-------------|-------|
-| v1.0 | Q3 2026 | RAG Evaluation Core |
-| v1.1 | Q4 2026 | Additional Providers & Metrics |
-| v1.2 | Q1 2027 | Advanced Reporting |
+| v0.1.0 | 2026-07-08 | Foundation, Data, Metrics, Reports, Providers, Plugins |
+| v0.2.0 | 2026-07-10 | CLI Commands, Documentation |
+| v0.3.0 | 2026-07-11 | Corpus Health, Diagnosis, Synthesis, Advanced Providers, NLI |
+| v1.0 | Q3 2026 | RAG Evaluation Core (stable) |
+| v1.1 | Q4 2026 | CI/CD Integration, Generic LLM-as-Judge |
 | v2.0 | Q2 2027 | Agent Evaluation |
 | v3.0 | Q4 2027 | Enterprise Features |
 | v4.0 | 2028 | AI-Native Evaluation |

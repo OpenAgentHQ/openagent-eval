@@ -12,6 +12,94 @@ No changes yet.
 
 ---
 
+## [0.3.0] - 2026-07-11
+
+### Added
+
+- **Phase 7: CLI Commands (Complete)**
+  - `oaeval init` — interactive wizard for provider/model selection
+  - `oaeval run` — evaluation pipeline with dry-run mode and metrics override
+  - `oaeval report` — view evaluation reports
+  - `oaeval compare` — compare two experiments
+  - `oaeval list` — list evaluations with sorting (date/score/cost) and search filtering
+  - `oaeval doctor` — environment check with API connectivity tests
+  - `oaeval validate` — config validation without running evaluation
+  - `oaeval delete` — remove old reports
+  - `oaeval diagnose` — diagnose failures and attribute blame
+  - `oaeval audit` — audit corpus health
+  - `oaeval synth` — generate synthetic test cases
+  - Shell completion for bash, zsh, and fish
+  - Global flags: `--quiet`, `--json`, `--no-color`, `--verbose`
+  - Config auto-discovery (config.yaml/oaeval.yaml in cwd, OAEVAL_CONFIG env var)
+
+- **Phase 8: Documentation (Complete)**
+  - Vision documentation (docs/01_vision.md)
+  - Problem statement (docs/02_problem_statement.md)
+  - Product requirements (docs/03_product_requirements.md)
+  - Architecture documentation (docs/04_architecture.md)
+  - Project structure (docs/05_project_structure.md)
+  - CLI specification (docs/06_cli_spec.md)
+  - Metric system documentation (docs/07_metric_system.md)
+  - Plugin system documentation (docs/08_plugin_system.md)
+  - Coding guidelines (docs/09_coding_guidelines.md)
+  - Development plan (docs/10_development_plan.md)
+  - Future roadmap (docs/11_future_roadmap.md)
+  - Retriever providers documentation (docs/12_retrievers.md)
+  - CONTRIBUTING.md, ROADMAP.md, CHANGELOG.md
+  - CODE_OF_CONDUCT.md, SECURITY.md, SUPPORT.md, DEVELOPMENT.md
+  - GitHub issue templates (bug report, feature request)
+  - GitHub pull request template
+
+- **Phase 9: Corpus Health Auditor**
+  - `CorpusAuditor` — orchestrates all corpus health analyzers
+  - `ContradictionDetector` — cross-document contradiction detection
+  - `StalenessDetector` — unmarked obsolescence detection
+  - `DuplicateDetector` — divergent duplicate detection
+  - `CoverageAnalyzer` — thematic coverage analysis
+  - `CorpusIssue`, `AuditReport`, `IssueType`, `IssueSeverity` models
+  - `oaeval audit` CLI command with configurable checks
+  - Unit and integration tests
+
+- **Phase 10: Component Diagnosis**
+  - `DiagnosisAnalyzer` — orchestrates failure diagnosis
+  - `BlameAttribution` — blame attribution engine (retrieval vs generation vs chunking)
+  - `ChunkingQualityAnalyzer` — chunking quality analysis
+  - 8 failure mode detection
+  - Actionable recommendations
+  - `BlameResult`, `BlameTarget`, `ChunkingIssue`, `ComponentScores` models
+  - `DiagnosisReport`, `FailureInstance`, `FailureMode` models
+  - `oaeval diagnose` CLI command
+  - Unit and integration tests
+
+- **Phase 11: Synthetic Test Data**
+  - `SyntheticDataGenerator` — main generator orchestrator
+  - `QuestionGenerator` — question generation from documents
+  - `AdversarialTestCaseGenerator` — adversarial test case generation
+  - `SyntheticDataset`, `TestCase`, `TestCaseType` models
+  - `oaeval synth` CLI command
+  - Unit and integration tests
+
+- **Phase 12: Advanced Providers & NLI Metrics**
+  - **Retriever Providers (11 total):**
+    - ChromaDB, Qdrant, Pinecone, Weaviate, FAISS, pgvector
+    - Elasticsearch, BM25 (lexical), HTTP (generic REST), Memory (in-memory), Mock
+  - **Embedder Abstraction:**
+    - `Embedder` base interface
+    - Sentence Transformers embedder (all-MiniLM-L6-v2)
+    - Mock embedder for offline testing
+  - **Score Normalization:**
+    - `normalize_distance`, `minmax_normalize`, `rank_based_normalize` helpers
+    - Unified `[0.0, 1.0]` score range across all backends
+  - **NLI Metrics:**
+    - `NLIJudge` — DeBERTa-based NLI scoring
+    - `ClaimExtractor` — split answers into atomic claims
+    - `EvidenceFinder` — match claims to supporting context via NLI
+  - **PDF Dataset Loader** — PDF document loading support
+  - Provider factory with lazy loading
+  - Unit tests for all providers and embedders
+
+---
+
 ## [0.2.0] - 2026-07-10
 
 ### Added
@@ -199,6 +287,7 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ## Links
 
-[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/openagenthq/openagent-eval/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/openagenthq/openagent-eval/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/openagenthq/openagent-eval/releases/tag/v0.1.0

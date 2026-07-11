@@ -27,6 +27,13 @@ OpenAgent Eval is a local-first, developer-friendly evaluation framework that ru
 - **Failure Analysis** - Identify why evaluations fail, not just that they failed
 - **Developer Experience** - Shell completion, config auto-discovery, dry-run mode, and more
 
+### Production-Grade Features (v0.3.0)
+
+- **Corpus Health Auditor** - Detect contradictions, staleness, and duplicates BEFORE connecting to RAG
+- **LLM-as-Judge Metrics** - NLI-based scoring for faithfulness and relevancy (not just word overlap)
+- **Component Diagnosis** - Blame attribution when things fail (retrieval vs generation vs chunking)
+- **Synthetic Test Data** - Auto-generate test cases from your knowledge base
+
 ---
 
 ## Installation
@@ -118,6 +125,14 @@ oaeval report latest
 | `oaeval validate <config>` | Validate configuration |
 | `oaeval delete <id>` | Delete evaluation reports |
 | `oaeval completion <shell>` | Generate shell completion scripts |
+
+### Production-Grade Commands (v0.3.0)
+
+| Command | Description |
+|---------|-------------|
+| `oaeval audit --corpus <path>` | Audit corpus for contradictions, staleness, duplicates |
+| `oaeval diagnose --report <id>` | Diagnose failures and attribute blame |
+| `oaeval synth --corpus <path>` | Generate synthetic test cases |
 
 ### Global Flags
 
@@ -347,6 +362,12 @@ print(report.summary)
 
 ## Evaluation Metrics
 
+### Corpus-Level (NEW)
+- Cross-document contradiction detection
+- Stale document detection
+- Divergent duplicate detection
+- Thematic coverage analysis
+
 ### Retrieval
 - Context Precision
 - Context Recall
@@ -357,8 +378,8 @@ print(report.summary)
 - Normalized Discounted Cumulative Gain (NDCG)
 
 ### Generation
-- Faithfulness
-- Answer Relevancy
+- Faithfulness (NLI-based)
+- Answer Relevancy (NLI-based)
 - Hallucination Detection
 - Semantic Similarity
 - Exact Match
@@ -366,6 +387,7 @@ print(report.summary)
 - BLEU
 - ROUGE
 - BERTScore
+- LLM-as-Judge (custom criteria)
 
 ### Performance
 - Latency (embedding, retrieval, LLM stages)
@@ -373,6 +395,11 @@ print(report.summary)
 ### Cost
 - Token counting (prompt, completion, total)
 - Cost estimation per provider
+
+### Diagnosis (NEW)
+- Blame attribution (retrieval vs generation vs chunking)
+- 8 failure mode detection
+- Actionable recommendations
 
 ---
 
@@ -406,13 +433,18 @@ print(report.summary)
 openagent-eval/
 ├── openagent_eval/          # Main package
 │   ├── cli/                 # CLI commands (Typer)
-│   │   ├── commands/        # Command implementations
-│   │   ├── utils/           # CLI utilities
-│   │   └── context.py       # Global CLI context
 │   ├── config/              # Configuration system (Pydantic)
 │   ├── core/                # Core orchestration
 │   ├── datasets/            # Dataset loaders
 │   ├── metrics/             # Evaluation metrics
+│   │   ├── retrieval/       # Retrieval metrics
+│   │   ├── generation/      # Generation metrics
+│   │   ├── nli/             # NLI-based scoring (NEW)
+│   │   ├── performance/     # Performance metrics
+│   │   └── cost/            # Cost metrics
+│   ├── corpus/              # Corpus Health Auditor (NEW)
+│   ├── diagnosis/           # Component Diagnosis (NEW)
+│   ├── synthesis/           # Synthetic Test Data (NEW)
 │   ├── providers/           # LLM/Retriever adapters
 │   ├── reports/             # Report generators
 │   ├── plugins/             # Plugin system

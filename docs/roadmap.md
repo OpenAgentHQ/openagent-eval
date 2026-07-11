@@ -3,13 +3,26 @@
 OpenAgent Eval is evolving from a RAG evaluation tool into a full AI agent evaluation framework.
 The roadmap below reflects our current plans — priorities may shift based on community feedback.
 
-## v1.0 — Current
+## v0.3.0 — Current
 
 - [x] RAG evaluation pipeline
 - [x] CLI (`oaeval`) and Python SDK
 - [x] Plugin architecture
 - [x] Multiple report formats (terminal, markdown, html, json)
 - [x] Retrieval, generation, performance, and cost metrics
+- [x] 11 retriever providers (Chroma, Qdrant, Pinecone, Weaviate, FAISS, pgvector, Elasticsearch, BM25, HTTP, Memory, Mock)
+- [x] Corpus Health Auditor (contradiction, staleness, duplicates, coverage)
+- [x] Component Diagnosis (blame attribution, failure modes)
+- [x] Synthetic Test Data (question generation, adversarial cases)
+- [x] NLI-based metrics (DeBERTa faithfulness, relevancy scoring)
+- [x] Comprehensive documentation
+
+## v1.0 — Stable Release (planned)
+
+- [ ] Generic LLM-as-Judge for custom criteria
+- [ ] Pytest plugin for RAG evaluation
+- [ ] Threshold-based test gating
+- [ ] GitHub Actions workflow example
 - [ ] Documentation site (this site) and GitHub Pages deployment
 
 ## v2.0 — AI Agent Evaluation (planned)
@@ -18,7 +31,6 @@ The roadmap below reflects our current plans — priorities may shift based on c
 - [ ] Planning / reasoning evaluation
 - [ ] Memory evaluation
 - [ ] Multi-agent evaluation
-- [ ] Additional retriever providers (FAISS, Weaviate, Pinecone)
 - [ ] Dataset versioning and experiment tracking
 
 ## v3.0 — Platform & Integration (future)
