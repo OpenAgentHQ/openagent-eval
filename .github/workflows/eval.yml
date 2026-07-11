@@ -1,0 +1,336 @@
+# GitHub Actions Workflow for OpenAgent Eval
+# This workflow runs RAG evaluations on push and pull requests
+
+name: RAG Evaluation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run daily at 2 AM UTC to catch regressions
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Job 1: Corpus Health Audit
+  corpus-audit:
+    name: Corpus Health Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openagent-eval[corpus]
+
+      - name: Run corpus audit
+        run: |
+          oaeval audit \
+            --corpus ./knowledge_base/ \
+            --checks contradiction,staleness,duplicate,coverage \
+            --output json > corpus-audit.json
+
+      - name: Check corpus health
+        run: |
+          python -c "
+          import json
+          import sys
+          
+          with open('corpus-audit.json') as f:
+              report = json.load(f)
+          
+          health_score = report.get('health_score', 0)
+          critical_issues = report.get('critical_issues', 0)
+          
+          print(f'Corpus Health Score: {health_score:.2f}')
+          print(f'Critical Issues: {critical_issues}')
+          
+          if critical_issues > 0:
+              print('❌ Corpus has critical issues that must be resolved')
+              sys.exit(1)
+          
+          if health_score < 0.7:
+              print('⚠️ Corpus health is below recommended threshold (0.7)')
+              # Don't fail, just warn
+          
+          print('✅ Corpus audit passed')
+          "
+
+      - name: Upload corpus audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-audit-results
+          path: corpus-audit.json
+
+  # Job 2: RAG Evaluation
+  evaluate:
+    name: RAG Evaluation
+    runs-on: ubuntu-latest
+    needs: corpus-audit
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache HuggingFace models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: ${{ runner.os }}-hf-models-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-hf-models-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openagent-eval[evaluation,nli]
+
+      - name: Run RAG evaluation
+        run: |
+          oaeval test config.yaml \
+            -t faithfulness:gte:0.85 \
+            -t answer_relevancy:gte:0.75 \
+            -t hallucination:lt:0.05 \
+            -t context_precision:gte:0.7 \
+            -t context_recall:gte:0.7 \
+            --timeout 600 \
+            --json > eval-results.json
+
+      - name: Display results summary
+        if: always()
+        run: |
+          python -c "
+          import json
+          
+          with open('eval-results.json') as f:
+              result = json.load(f)
+          
+          status = '✅ Passed' if result['status'] == 'passed' else '❌ Failed'
+          print(f'## RAG Evaluation {status}')
+          print()
+          
+          if 'summary' in result:
+              summary = result['summary']
+              print(f\"Duration: {summary.get('duration_seconds', 0):.2f}s\")
+              print()
+          
+          print('### Threshold Results')
+          for gate in result.get('gates', []):
+              print(f\"\\n**{gate['name']}**\")
+              for t in gate.get('thresholds', []):
+                  icon = '✅' if t['passed'] else '❌'
+                  print(f\"{icon} {t['message']}\")
+          
+          if result['status'] == 'failed':
+              print()
+              print('### Failed Thresholds')
+              for gate in result.get('gates', []):
+                  for reason in gate.get('failure_reasons', []):
+                      print(f\"- {reason}\")
+          "
+
+      - name: Upload evaluation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-results
+          path: eval-results.json
+
+  # Job 3: Generate Report
+  report:
+    name: Generate Report
+    runs-on: ubuntu-latest
+    needs: evaluate
+    if: always()
+    
+    steps:
+      - name: Download evaluation results
+        uses: actions/download-artifact@v4
+        with:
+          name: evaluation-results
+
+      - name: Download corpus audit results
+        uses: actions/download-artifact@v4
+        with:
+          name: corpus-audit-results
+        continue-on-error: true
+
+      - name: Generate summary report
+        run: |
+          python -c "
+          import json
+          import os
+          
+          # Load evaluation results
+          with open('eval-results.json') as f:
+              eval_result = json.load(f)
+          
+          # Build summary
+          lines = []
+          lines.append('# RAG Evaluation Report')
+          lines.append('')
+          
+          # Overall status
+          status = '✅ PASSED' if eval_result['status'] == 'passed' else '❌ FAILED'
+          lines.append(f'## Overall Status: {status}')
+          lines.append('')
+          
+          # Evaluation summary
+          if 'summary' in eval_result:
+              summary = eval_result['summary']
+              lines.append('## Summary')
+              lines.append(f\"- Duration: {summary.get('duration_seconds', 0):.2f}s\")
+              lines.append(f\"- Total Gates: {summary.get('total_gates', 0)}\")
+              lines.append(f\"- Passed Gates: {summary.get('passed_gates', 0)}\")
+              lines.append(f\"- Failed Gates: {summary.get('failed_gates', 0)}\")
+              lines.append('')
+          
+          # Threshold details
+          lines.append('## Threshold Results')
+          lines.append('')
+          for gate in eval_result.get('gates', []):
+              lines.append(f\"### {gate['name']}\")
+              for t in gate.get('thresholds', []):
+                  icon = '✅' if t['passed'] else '❌'
+                  lines.append(f\"{icon} {t['message']}\")
+              lines.append('')
+          
+          # Corpus audit (if available)
+          if os.path.exists('corpus-audit.json'):
+              with open('corpus-audit.json') as f:
+                  corpus_result = json.load(f)
+              
+              lines.append('## Corpus Health')
+              lines.append(f\"- Health Score: {corpus_result.get('health_score', 'N/A')}\")
+              lines.append(f\"- Critical Issues: {corpus_result.get('critical_issues', 0)}\")
+              lines.append('')
+          
+          # Write report
+          with open('REPORT.md', 'w') as f:
+              f.write('\\n'.join(lines))
+          
+          print('\\n'.join(lines))
+          "
+
+      - name: Upload summary report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-report
+          path: REPORT.md
+
+  # Job 4: Comment on PR (only for PRs)
+  comment-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    needs: evaluate
+    if: github.event_name == 'pull_request'
+    
+    permissions:
+      pull-requests: write
+    
+    steps:
+      - name: Download evaluation results
+        uses: actions/download-artifact@v4
+        with:
+          name: evaluation-results
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read evaluation results
+            const results = JSON.parse(fs.readFileSync('eval-results.json', 'utf8'));
+            
+            // Build comment
+            const status = results.status === 'passed' ? '✅ PASSED' : '❌ FAILED';
+            let body = `## RAG Evaluation ${status}\n\n`;
+            
+            // Summary
+            if (results.summary) {
+              body += `**Duration:** ${results.summary.duration_seconds?.toFixed(2) || 0}s\n\n`;
+            }
+            
+            // Threshold results
+            body += '### Threshold Results\n\n';
+            for (const gate of results.gates || []) {
+              for (const t of gate.thresholds || []) {
+                const icon = t.passed ? '✅' : '❌';
+                body += `${icon} ${t.message}\n`;
+              }
+            }
+            
+            // Failed thresholds
+            if (results.status === 'failed') {
+              body += '\n### Failed Thresholds\n\n';
+              for (const gate of results.gates || []) {
+                for (const reason of gate.failure_reasons || []) {
+                  body += `- ${reason}\n`;
+                }
+              }
+            }
+            
+            // Create or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && c.body.includes('RAG Evaluation')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }

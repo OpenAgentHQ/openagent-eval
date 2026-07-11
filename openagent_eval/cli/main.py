@@ -16,6 +16,7 @@ from openagent_eval.cli.commands.list_evaluations import list_command
 from openagent_eval.cli.commands.report import report_command
 from openagent_eval.cli.commands.run import run_command
 from openagent_eval.cli.commands.synth import synth_command
+from openagent_eval.cli.commands.test import test_command
 from openagent_eval.cli.commands.validate import validate_command
 from openagent_eval.cli.commands.audit import audit_command
 from openagent_eval.cli.context import CLIContext, set_context
@@ -118,6 +119,7 @@ app.command(name="delete")(delete_command)
 app.command(name="diagnose")(diagnose_command)
 app.command(name="audit")(audit_command)
 app.command(name="synth")(synth_command)
+app.command(name="test")(test_command)
 
 
 # Shell completion command
@@ -165,7 +167,7 @@ _oaeval_completion() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="init run report compare list doctor validate delete diagnose audit completion"
+    commands="init run report compare list doctor validate delete diagnose audit test completion"
 
     if [[ ${cur} == -* ]]; then
         COMPREPLY=( $(compgen -W "--help --version --quiet --json --no-color --verbose" -- ${cur}) )
@@ -234,6 +236,7 @@ _oaeval() {
         'delete:Delete evaluation reports'
         'diagnose:Diagnose evaluation failures and attribute blame'
         'audit:Audit corpus health'
+        'test:Run evaluation as CI/CD test with threshold gating'
         'completion:Generate shell completion script'
     )
 
@@ -317,6 +320,16 @@ _oaeval() {
                         '--verbose[Enable verbose output]' \\
                         '--help[Show help]'
                     ;;
+                test)
+                    _arguments \\
+                        '--threshold[Threshold gate]:threshold:' \\
+                        '--fail-on-error[Fail on error]' \\
+                        '--no-fail-on-error[Do not fail on error]' \\
+                        '--timeout[Timeout in seconds]:timeout:' \\
+                        '--verbose[Enable verbose output]' \\
+                        '--json[Output JSON]' \\
+                        '--help[Show help]'
+                    ;;
                 completion)
                     _arguments \\
                         '1:shell:(bash zsh fish)'
@@ -369,6 +382,7 @@ complete -c oaeval -n __oaeval_no_subcommand -a validate -d 'Validate configurat
 complete -c oaeval -n __oaeval_no_subcommand -a delete -d 'Delete evaluation reports'
 complete -c oaeval -n __oaeval_no_subcommand -a diagnose -d 'Diagnose evaluation failures and attribute blame'
 complete -c oaeval -n __oaeval_no_subcommand -a audit -d 'Audit corpus health'
+complete -c oaeval -n __oaeval_no_subcommand -a test -d 'Run evaluation as CI/CD test with threshold gating'
 complete -c oaeval -n __oaeval_no_subcommand -a completion -d 'Generate shell completion script'
 
 # run command options
@@ -414,6 +428,14 @@ complete -c oaeval -n __oaeval_using_command -a audit -l similarity-threshold -d
 complete -c oaeval -n __oaeval_using_command -a audit -l max-documents -d 'Max documents' -r
 complete -c oaeval -n __oaeval_using_command -a audit -l output -s o -d 'Output format' -r
 complete -c oaeval -n __oaeval_using_command -a audit -l verbose -s v -d 'Enable verbose output'
+
+# test command options
+complete -c oaeval -n __oaeval_using_command -a test -l threshold -s t -d 'Threshold gate' -r
+complete -c oaeval -n __oaeval_using_command -a test -l fail-on-error -d 'Fail on error'
+complete -c oaeval -n __oaeval_using_command -a test -l no-fail-on-error -d 'Do not fail on error'
+complete -c oaeval -n __oaeval_using_command -a test -l timeout -d 'Timeout in seconds' -r
+complete -c oaeval -n __oaeval_using_command -a test -l verbose -s v -d 'Enable verbose output'
+complete -c oaeval -n __oaeval_using_command -a test -l json -d 'Output JSON'
 
 # completion command options
 complete -c oaeval -n __oaeval_using_command -a completion -a 'bash zsh fish' -d 'Shell'

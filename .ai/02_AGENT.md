@@ -14,7 +14,7 @@
 | **Package** | openagent_eval |
 | **CLI** | oaeval |
 | **Purpose** | Open-source CLI framework for evaluating RAG systems and AI Agents |
-| **Phase** | v0.3.0 - Phases 1-12 Complete |
+| **Phase** | v0.3.0 - Phases 1-13 Complete |
 | **Status** | Active Development |
 | **Source of Truth** | PROJECT.md |
 
@@ -520,6 +520,7 @@ class MetricResult:
 | `oaeval audit --corpus ./kb/` | Audit corpus for contradictions, staleness |
 | `oaeval diagnose --report report.json` | Diagnose failures and attribute blame |
 | `oaeval synth --corpus ./kb/ --count 100` | Generate synthetic test cases |
+| `oaeval test config.yaml -t faithfulness:gte:0.8` | Run evaluation as CI/CD test with threshold gating |
 | `oaeval completion <shell>` | Generate shell completion (bash, zsh, fish) |
 
 ---
@@ -649,7 +650,14 @@ openagent_eval/
 - NLI metrics (NLIJudge, ClaimExtractor, EvidenceFinder)
 - PDF dataset loader
 
-### Phase 13: Hybrid CLI UI (Planned)
+### Phase 13: CI/CD Integration ✅
+- [x] Implement pytest plugin for RAG evaluation
+- [x] Add threshold-based test gating
+- [x] Add `oaeval test` CLI command
+- [x] Write documentation for CI/CD integration
+- [x] Add GitHub Actions workflow example
+
+### Phase 14: Hybrid CLI UI (Planned)
 - [ ] Add `pyfiglet` and `textual` to optional dependencies
 - [ ] Create `openagent_eval/cli/banner.py` — ASCII art banner with Rich
 - [ ] Create `openagent_eval/ui/` module structure

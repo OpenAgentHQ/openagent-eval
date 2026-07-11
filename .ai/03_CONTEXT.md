@@ -9,11 +9,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Phase** | Phase 12 Complete — Synthetic Test Data |
+| **Phase** | Phase 13 Complete — CI/CD Integration |
 | **Status** | v1.0 complete; production-grade features in progress |
 | **Last Updated** | 2026-07-11 |
-| **Next Action** | Phase 13 (CI/CD Integration) or another feature |
-| **Current Branch** | feature/synthetic-test-data |
+| **Next Action** | Phase 14 (Hybrid CLI UI) or another feature |
+| **Current Branch** | feature/cicd-integration |
 | **Remote** | https://github.com/OpenAgentHQ/openagent-eval.git |
 
 ---
@@ -206,11 +206,12 @@ SDK (openagent_eval - Core Evaluation API)
 - [x] Write unit tests for synthetic generation (49 tests)
 - [x] Write integration test for synthetic data pipeline (7 tests)
 
-### Milestone 13: CI/CD Integration (NEW)
-- [ ] Implement pytest plugin for RAG evaluation
-- [ ] Add threshold-based test gating
-- [ ] Add `oaeval test` CLI command
-- [ ] Write documentation for CI/CD integration
+### Milestone 13: CI/CD Integration (NEW) — COMPLETE
+- [x] Implement pytest plugin for RAG evaluation
+- [x] Add threshold-based test gating
+- [x] Add `oaeval test` CLI command
+- [x] Write documentation for CI/CD integration
+- [x] Add GitHub Actions workflow example
 
 ---
 
@@ -278,12 +279,13 @@ chore/{description}        # Maintenance tasks
 - Phase 7 is complete - Evaluation pipeline is now functional (was a stub)
 - Phase 8 is pending - Documentation
 - **Phase 9-13 are NEW** — Production-grade RAG evaluation features
+- **Phase 13 is COMPLETE** — CI/CD Integration (pytest plugin, threshold gating, `oaeval test` command)
 - **Phase 12 is COMPLETE** — Synthetic Test Data generator implemented (56 tests)
 - CORRECTION: earlier "517+ passing / all phases complete" status was inaccurate —
   the core pipeline did not actually evaluate. That gap is closed.
 - `oaeval run` now produces real answers, computed metrics, token usage, and latency.
 - Offline dry-run works via `llm.provider: mock` + `retriever.provider: mock`.
-- Ready to proceed with Phase 8 (Documentation), Phase 9 (Corpus Auditor), or Phase 13 (CI/CD).
+- Ready to proceed with Phase 8 (Documentation), Phase 9 (Corpus Auditor), or Phase 14 (Hybrid CLI UI).
 
 ## Competitive Advantage
 
@@ -320,6 +322,7 @@ chore/{description}        # Maintenance tasks
 
 | Date | Change |
 |------|--------|
+| 2026-07-11 | **Phase 13 COMPLETE** — CI/CD Integration implemented (pytest plugin, threshold gating, `oaeval test` command) |
 | 2026-07-11 | **Phase 12 COMPLETE** — Synthetic Test Data generator implemented (56 tests) |
 | 2026-07-11 | Added Phase 14: Hybrid CLI UI (Rich banner + Textual TUI dashboard) |
 | 2026-07-11 | Added CLI UI research findings to context |
