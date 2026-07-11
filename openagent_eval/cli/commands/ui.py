@@ -32,10 +32,11 @@ def ui_command(
         from openagent_eval.ui.app import run_ui
 
         run_ui(config_path=config_path)
-    except ImportError:
+    except ImportError as e:
         console = Console(stderr=True)
         console.print(
-            "[red]Error:[/red] Textual is required for the TUI dashboard.\n\n"
+            f"[red]Error:[/red] Textual is required for the TUI dashboard.\n\n"
+            f"Import error: {e}\n\n"
             "Install it with:\n"
             "  [bold]pip install openagent-eval[ui][/bold]\n"
             "  or\n"
