@@ -1,12 +1,15 @@
 """Answer Relevancy metric.
 
 Measures whether the generated answer addresses the original question.
-Uses Ragas answer_relevancy score when available, falls back to simple heuristics.
+Uses Ragas answer_relevancy score when available, falls back to NLI-based
+scoring, and finally to simple heuristics.
 """
 
 from __future__ import annotations
 
 from typing import Any
+
+from loguru import logger
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 
@@ -14,9 +17,14 @@ from openagent_eval.metrics.base import BaseMetric, MetricResult
 class AnswerRelevancy(BaseMetric):
     """Measures relevancy of answer to the question.
 
-    Answer Relevancy = |question words in answer| / |total question words|
+    Answer Relevancy = |question concepts covered by answer| / |total question concepts|
 
     A score of 1.0 means the answer fully addresses the question.
+
+    Scoring priority:
+    1. Ragas (if available) — most accurate
+    2. NLI-based (if transformers available) — checks if answer entails question
+    3. Simple word overlap — fast fallback
     """
 
     name = "answer_relevancy"
@@ -28,6 +36,7 @@ class AnswerRelevancy(BaseMetric):
         Args:
             question: The original question.
             answer: The generated answer.
+            contexts: Optional context strings (unused, for API consistency).
 
         Returns:
             MetricResult with relevancy score.
@@ -54,6 +63,12 @@ class AnswerRelevancy(BaseMetric):
             return self._evaluate_with_ragas(question, answer)
         except ImportError:
             pass
+
+        # Try NLI-based scoring if available
+        try:
+            return self._evaluate_with_nli(question, answer)
+        except (ImportError, Exception) as e:
+            logger.debug("NLI scoring unavailable, using simple overlap: {}", e)
 
         # Fallback: simple word overlap
         return self._evaluate_simple(question, answer)
@@ -87,6 +102,35 @@ class AnswerRelevancy(BaseMetric):
             score=score,
             reason=f"Ragas answer relevancy: {score:.4f}",
             metadata={"method": "ragas"},
+        )
+
+    def _evaluate_with_nli(
+        self, question: str, answer: str
+    ) -> MetricResult:
+        """Evaluate using NLI: check if answer entails the question.
+
+        For relevancy, we check if the answer is relevant to the question
+        by evaluating whether the question's key information is addressed.
+        """
+        from openagent_eval.metrics.nli import NLIJudge
+
+        judge = NLIJudge()
+
+        # Check if answer is relevant to question
+        # Premise: answer, Hypothesis: question (does answer support the question?)
+        result = judge.evaluate(premise=answer, hypothesis=question)
+
+        # High entailment means answer is relevant to question
+        score = result.entailed_score
+
+        return MetricResult(
+            score=score,
+            reason=f"NLI relevancy: {result.label.value} (score: {score:.4f})",
+            metadata={
+                "method": "nli",
+                "label": result.label.value,
+                "model": judge._model_name,
+            },
         )
 
     def _evaluate_simple(self, question: str, answer: str) -> MetricResult:

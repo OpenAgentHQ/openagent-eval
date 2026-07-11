@@ -1,12 +1,15 @@
 """Faithfulness metric.
 
 Measures whether the generated answer is grounded in the provided contexts.
-Uses Ragas faithfulness score when available, falls back to simple overlap.
+Uses Ragas faithfulness score when available, falls back to NLI-based scoring,
+and finally to simple word overlap as last resort.
 """
 
 from __future__ import annotations
 
 from typing import Any
+
+from loguru import logger
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 
@@ -17,6 +20,11 @@ class Faithfulness(BaseMetric):
     Faithfulness = |claims supported by context| / |total claims|
 
     A score of 1.0 means all claims in the answer are supported by contexts.
+
+    Scoring priority:
+    1. Ragas (if available) — most accurate
+    2. NLI-based (if transformers available) — accurate claim verification
+    3. Simple word overlap — fast fallback
     """
 
     name = "faithfulness"
@@ -55,6 +63,12 @@ class Faithfulness(BaseMetric):
         except ImportError:
             pass
 
+        # Try NLI-based scoring if available
+        try:
+            return self._evaluate_with_nli(answer, contexts)
+        except (ImportError, Exception) as e:
+            logger.debug("NLI scoring unavailable, using simple overlap: {}", e)
+
         # Fallback: simple word overlap
         return self._evaluate_simple(answer, contexts)
 
@@ -87,6 +101,42 @@ class Faithfulness(BaseMetric):
             score=score,
             reason=f"Ragas faithfulness: {score:.4f}",
             metadata={"method": "ragas"},
+        )
+
+    def _evaluate_with_nli(
+        self, answer: str, contexts: list[str]
+    ) -> MetricResult:
+        """Evaluate using NLI-based claim verification."""
+        from openagent_eval.metrics.nli import ClaimExtractor, EvidenceFinder, NLIJudge
+
+        judge = NLIJudge()
+        extractor = ClaimExtractor()
+        finder = EvidenceFinder(judge)
+
+        claims = extractor.extract(answer)
+        if not claims:
+            return MetricResult(
+                score=1.0,
+                reason="No claims to verify (empty or unstructured answer)",
+                metadata={"method": "nli", "claims_total": 0, "claims_supported": 0},
+            )
+
+        score, matches = finder.score_faithfulness(claims, contexts)
+
+        supported = sum(
+            1 for m in matches
+            if m is not None and m.nli_result.entailed_score >= 0.5
+        )
+
+        return MetricResult(
+            score=score,
+            reason=f"NLI faithfulness: {supported}/{len(claims)} claims supported",
+            metadata={
+                "method": "nli",
+                "claims_total": len(claims),
+                "claims_supported": supported,
+                "model": judge._model_name,
+            },
         )
 
     def _evaluate_simple(

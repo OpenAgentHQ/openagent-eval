@@ -3,6 +3,7 @@
 This package provides all evaluation metrics organized by category:
 - Retrieval metrics: Context precision, recall, MRR, NDCG, etc.
 - Generation metrics: Faithfulness, relevancy, hallucination, BLEU, ROUGE, etc.
+- NLI metrics: NLI-based scoring for faithfulness and relevancy
 - Performance metrics: Latency tracking
 - Cost metrics: Token counting and cost estimation
 
@@ -19,8 +20,20 @@ from openagent_eval.metrics.generation import (
     F1Score,
     Faithfulness,
     HallucinationDetection,
+    LLMJudgeMetric,
+    AsyncLLMJudgeMetric,
+    JudgeCriteria,
     ROUGE,
     SemanticSimilarity,
+)
+from openagent_eval.metrics.nli import (
+    NLIJudge,
+    NLIResult,
+    NLILabel,
+    ClaimExtractor,
+    Claim,
+    EvidenceFinder,
+    EvidenceMatch,
 )
 from openagent_eval.metrics.performance import LatencyMetric
 from openagent_eval.metrics.retrieval import (
@@ -53,8 +66,19 @@ __all__ = [
     "F1Score",
     "Faithfulness",
     "HallucinationDetection",
+    "LLMJudgeMetric",
+    "AsyncLLMJudgeMetric",
+    "JudgeCriteria",
     "ROUGE",
     "SemanticSimilarity",
+    # NLI
+    "NLIJudge",
+    "NLIResult",
+    "NLILabel",
+    "ClaimExtractor",
+    "Claim",
+    "EvidenceFinder",
+    "EvidenceMatch",
     # Performance
     "LatencyMetric",
     # Cost
