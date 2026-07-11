@@ -166,6 +166,10 @@ class QuestionGenerator:
             # (only if the text doesn't already use double quotes properly)
             if "'" in text and '"' not in text:
                 text = text.replace("'", '"')
+            # Remove any control characters
+            text = _re.sub(r"[\x00-\x1f\x7f-\x9f]", "", text)
+            # Fix unescaped newlines in strings
+            text = _re.sub(r'(?<!\\)\n', '\\n', text)
 
             data = json.loads(text)
 
