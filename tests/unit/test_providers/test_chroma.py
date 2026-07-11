@@ -14,6 +14,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.models import Document
+from openagent_eval.providers.retrievers._scoring import normalize_distance
 from openagent_eval.providers.retrievers.chroma import ChromaRetriever
 
 
@@ -28,6 +29,7 @@ def mock_chromadb():
         mock_collection = MagicMock()
         mock_chroma.Client.return_value = mock_client
         mock_client.get_or_create_collection.return_value = mock_collection
+        mock_collection.count.return_value = 10  # Default count for most tests
         yield mock_chroma, mock_client, mock_collection
 
 
@@ -202,23 +204,20 @@ class TestChromaRetrieve:
 # Distance normalisation tests
 # ---------------------------------------------------------------------------
 class TestChromaNormaliseDistance:
-    """Tests for ChromaRetriever._normalise_distance()."""
+    """Tests for normalize_distance() from _scoring module."""
 
-    def test_cosine_normalisation(self, mock_chromadb):
+    def test_cosine_normalisation(self):
         """Cosine distance is divided by 2."""
-        retriever = ChromaRetriever(collection_name="test", distance_fn="cosine")
-        assert retriever._normalise_distance(0.0) == 0.0
-        assert retriever._normalise_distance(1.0) == 0.5
-        assert retriever._normalise_distance(2.0) == 1.0
+        assert normalize_distance(0.0, space="cosine") == 0.0
+        assert normalize_distance(1.0, space="cosine") == 0.5
+        assert normalize_distance(2.0, space="cosine") == 1.0
 
-    def test_l2_normalisation_clamped(self, mock_chromadb):
+    def test_l2_normalisation_clamped(self):
         """L2 distance is clamped to 0-1."""
-        retriever = ChromaRetriever(collection_name="test", distance_fn="l2")
-        assert retriever._normalise_distance(0.0) == 0.0
-        assert retriever._normalise_distance(0.5) == 0.5
-        assert retriever._normalise_distance(1.5) == 1.0
+        assert normalize_distance(0.0, space="l2") == 0.0
+        assert normalize_distance(0.5, space="l2") == 0.5
+        assert normalize_distance(1.5, space="l2") == 1.0
 
-    def test_negative_distance_clamped(self, mock_chromadb):
+    def test_negative_distance_clamped(self):
         """Negative distances are clamped to 0."""
-        retriever = ChromaRetriever(collection_name="test", distance_fn="cosine")
-        assert retriever._normalise_distance(-1.0) == 0.0
+        assert normalize_distance(-1.0, space="cosine") == 0.0
