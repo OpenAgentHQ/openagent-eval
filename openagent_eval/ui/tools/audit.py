@@ -47,7 +47,7 @@ class AuditResultPanel(Widget):
     def compose(self) -> ComposeResult:
         """Compose the panel."""
         yield Static(f"[bold magenta]{self._title}[/bold magenta]", classes="panel-header")
-        yield Rule(style="dim")
+        yield Rule()
 
         if self._issues:
             table = DataTable()

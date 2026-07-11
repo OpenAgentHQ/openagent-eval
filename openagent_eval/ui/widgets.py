@@ -117,7 +117,7 @@ class MetricsSummaryWidget(Widget):
 
     def compose(self) -> ComposeResult:
         yield Static(f"[bold bright_blue]{self._title}[/bold bright_blue]", classes="title")
-        yield Rule(style="dim")
+        yield Rule()
         if self.metrics:
             for name, score in self.metrics.items():
                 # Color based on score quality
@@ -253,7 +253,7 @@ class InfoPanel(Widget):
 
     def compose(self) -> ComposeResult:
         yield Static(f"[bold bright_blue]{self._title}[/bold bright_blue]", classes="panel-title")
-        yield Rule(style="dim")
+        yield Rule()
         for label, value in self._rows:
             yield Label(f"  [dim]{label}:[/dim] [bright_white]{value}[/bright_white]", classes="panel-row")
 
@@ -296,7 +296,7 @@ class QuickActions(Widget):
 
     def compose(self) -> ComposeResult:
         yield Static("[bold bright_blue]Quick Actions[/bold bright_blue]", classes="actions-title")
-        yield Rule(style="dim")
+        yield Rule()
         for key, action, color in self._actions:
             # Build the markup string to avoid f-string issues with Rich tags
             key_markup = f"[bold {color}][{key}][/bold {color}]"

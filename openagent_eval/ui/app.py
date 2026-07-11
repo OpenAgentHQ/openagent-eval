@@ -156,40 +156,32 @@ class OAEvalDashboard(App):
 
     def on_mount(self) -> None:
         """Called when the app is mounted."""
-        # Register all screens
-        self.register_screen("main", MainDashboard())
-        self.register_screen("evaluate", EvaluateScreen())
-        self.register_screen("audit", AuditScreen())
-        self.register_screen("diagnose", DiagnoseScreen())
-        self.register_screen("help", HelpScreen())
-        self.register_screen("chat", ChatScreen(config_path=self.config_path))
-
         # Show main dashboard
-        self.push_screen("main")
+        self.push_screen(MainDashboard())
 
     def action_show_help(self) -> None:
         """Show help screen."""
-        self.push_screen("help")
+        self.push_screen(HelpScreen())
 
     def action_show_dashboard(self) -> None:
         """Show main dashboard."""
-        self.push_screen("main")
+        self.push_screen(MainDashboard())
 
     def action_show_evaluate(self) -> None:
         """Show evaluate screen."""
-        self.push_screen("evaluate")
+        self.push_screen(EvaluateScreen())
 
     def action_show_audit(self) -> None:
         """Show audit screen."""
-        self.push_screen("audit")
+        self.push_screen(AuditScreen())
 
     def action_show_diagnose(self) -> None:
         """Show diagnose screen."""
-        self.push_screen("diagnose")
+        self.push_screen(DiagnoseScreen())
 
     def action_show_chat(self) -> None:
         """Show chat screen."""
-        self.push_screen("chat")
+        self.push_screen(ChatScreen(config_path=self.config_path))
 
     def action_toggle_dark(self) -> None:
         """Toggle dark mode."""

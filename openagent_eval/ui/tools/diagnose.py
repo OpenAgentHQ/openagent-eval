@@ -47,7 +47,7 @@ class DiagnoseResultPanel(Widget):
     def compose(self) -> ComposeResult:
         """Compose the panel."""
         yield Static(f"[bold yellow]{self._title}[/bold yellow]", classes="panel-header")
-        yield Rule(style="dim")
+        yield Rule()
 
         if self._components:
             table = DataTable()

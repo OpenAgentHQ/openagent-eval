@@ -71,7 +71,7 @@ class MainDashboard(Screen):
         with Vertical(id="top-section"):
             yield BannerWidget()
             yield StatusWidget(id="status")
-            yield Rule(style="dim")
+            yield Rule()
 
         # Middle section: Main content grid
         with Vertical(id="middle-section"):
@@ -112,19 +112,19 @@ class MainDashboard(Screen):
 
     def action_run_evaluation(self) -> None:
         """Switch to evaluation screen."""
-        self.app.push_screen("evaluate")
+        self.app.push_screen(EvaluateScreen())
 
     def action_audit_corpus(self) -> None:
         """Switch to audit screen."""
-        self.app.push_screen("audit")
+        self.app.push_screen(AuditScreen())
 
     def action_diagnose(self) -> None:
         """Switch to diagnose screen."""
-        self.app.push_screen("diagnose")
+        self.app.push_screen(DiagnoseScreen())
 
     def action_help(self) -> None:
         """Show help screen."""
-        self.app.push_screen("help")
+        self.app.push_screen(HelpScreen())
 
 
 class EvaluateScreen(Screen):
@@ -184,12 +184,12 @@ class EvaluateScreen(Screen):
         # Screen header
         with Vertical(id="screen-header"):
             yield Static("[bold bright_blue]Evaluation Runner[/bold bright_blue]")
-            yield Rule(style="dim")
+            yield Rule()
 
         # Configuration panel
         with Vertical(id="config-section"):
             yield Static("[bold bright_blue]Configuration[/bold bright_blue]")
-            yield Rule(style="dim")
+            yield Rule()
             with Horizontal(classes="config-grid"):
                 yield Label("[dim]Config:[/dim] [bright_white]config.yaml[/bright_white]", classes="config-item")
                 yield Label("[dim]Metrics:[/dim] [bright_white]faithfulness, relevancy[/bright_white]", classes="config-item")
@@ -276,12 +276,12 @@ class AuditScreen(Screen):
         # Screen header
         with Vertical(id="screen-header"):
             yield Static("[bold bright_blue]Corpus Health Audit[/bold bright_blue]")
-            yield Rule(style="dim")
+            yield Rule()
 
         # Configuration panel
         with Vertical(id="audit-config"):
             yield Static("[bold bright_blue]Audit Configuration[/bold bright_blue]")
-            yield Rule(style="dim")
+            yield Rule()
             with Horizontal(classes="config-grid"):
                 yield Label("[dim]Corpus:[/dim] [bright_white]./knowledge_base/[/bright_white]", classes="config-item")
                 yield Label("[dim]Checks:[/dim] [bright_white]contradiction, staleness, duplicate, coverage[/bright_white]", classes="config-item")
@@ -374,12 +374,12 @@ class DiagnoseScreen(Screen):
         # Screen header
         with Vertical(id="screen-header"):
             yield Static("[bold bright_blue]Component Diagnosis[/bold bright_blue]")
-            yield Rule(style="dim")
+            yield Rule()
 
         # Configuration panel
         with Vertical(id="diag-config"):
             yield Static("[bold bright_blue]Diagnosis Configuration[/bold bright_blue]")
-            yield Rule(style="dim")
+            yield Rule()
             with Horizontal(classes="config-grid"):
                 yield Label("[dim]Report:[/dim] [bright_white]reports/latest.json[/bright_white]", classes="config-item")
                 yield Label("[dim]Threshold:[/dim] [bright_white]0.5[/bright_white]", classes="config-item")
@@ -455,34 +455,34 @@ class HelpScreen(Screen):
 
         with Vertical(id="help-content"):
             yield Static("[bold bright_blue]OpenAgent Eval TUI - Keyboard Shortcuts[/bold bright_blue]", classes="section-title")
-            yield Rule(style="dim")
+            yield Rule()
 
             yield Static("[bold bright_blue]Global[/bold bright_blue]", classes="section-title")
             yield Label("  [bold cyan]q[/bold cyan] / [bold cyan]ctrl+c[/bold cyan]    Quit the application", classes="shortcut-row")
             yield Label("  [bold cyan]escape[/bold cyan]         Go back / Close screen", classes="shortcut-row")
             yield Label("  [bold cyan]h[/bold cyan]              Show this help", classes="shortcut-row")
-            yield Rule(style="dim", classes="divider")
+            yield Rule(classes="divider")
 
             yield Static("[bold bright_blue]Main Dashboard[/bold bright_blue]", classes="section-title")
             yield Label("  [bold cyan]1[/bold cyan]              Run Evaluation", classes="shortcut-row")
             yield Label("  [bold cyan]2[/bold cyan]              Audit Corpus", classes="shortcut-row")
             yield Label("  [bold cyan]3[/bold cyan]              Diagnose", classes="shortcut-row")
-            yield Rule(style="dim", classes="divider")
+            yield Rule(classes="divider")
 
             yield Static("[bold bright_blue]Evaluate Screen[/bold bright_blue]", classes="section-title")
             yield Label("  [bold cyan]r[/bold cyan]              Run evaluation", classes="shortcut-row")
             yield Label("  [bold cyan]escape[/bold cyan]         Back to dashboard", classes="shortcut-row")
-            yield Rule(style="dim", classes="divider")
+            yield Rule(classes="divider")
 
             yield Static("[bold bright_blue]Audit Screen[/bold bright_blue]", classes="section-title")
             yield Label("  [bold cyan]r[/bold cyan]              Run audit", classes="shortcut-row")
             yield Label("  [bold cyan]escape[/bold cyan]         Back to dashboard", classes="shortcut-row")
-            yield Rule(style="dim", classes="divider")
+            yield Rule(classes="divider")
 
             yield Static("[bold bright_blue]Diagnose Screen[/bold bright_blue]", classes="section-title")
             yield Label("  [bold cyan]r[/bold cyan]              Run diagnosis", classes="shortcut-row")
             yield Label("  [bold cyan]escape[/bold cyan]         Back to dashboard", classes="shortcut-row")
-            yield Rule(style="dim", classes="divider")
+            yield Rule(classes="divider")
 
             yield Label("[dim]Press escape or q to close this help[/dim]")
 
