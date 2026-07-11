@@ -334,7 +334,41 @@ class AdversarialTestCaseGenerator:
         except (json.JSONDecodeError, ValueError):
             pass
 
-        # Strategy 2: Extract question-answer pairs using regex
+        # Strategy 2: Extract individual JSON objects and parse them
+        try:
+            # Find all JSON objects in the response
+            obj_pattern = _re.compile(r'\{[^{}]+\}', _re.DOTALL)
+            objects = obj_pattern.findall(raw_response)
+
+            for obj_str in objects:
+                try:
+                    # Clean the object
+                    obj_str = _re.sub(r",\s*([}\]])", r"\1", obj_str)
+                    obj_str = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", obj_str)
+
+                    item = json.loads(obj_str)
+                    question = item.get("question", "").strip()
+                    answer = item.get("answer", "").strip()
+                    if question:
+                        test_cases.append(
+                            TestCase(
+                                question=question,
+                                ground_truth=answer,
+                                context=context,
+                                test_type=test_type,
+                                source_document=source_document,
+                                chunk_index=chunk_index,
+                            )
+                        )
+                except (json.JSONDecodeError, ValueError):
+                    continue
+
+            if test_cases:
+                return test_cases
+        except Exception:
+            pass
+
+        # Strategy 3: Extract question-answer pairs using regex
         qa_pattern = _re.compile(
             r'\{\s*"question"\s*:\s*"([^"]+)"\s*,\s*"answer"\s*:\s*"([^"]+)"\s*\}',
             _re.IGNORECASE,
@@ -359,7 +393,7 @@ class AdversarialTestCaseGenerator:
         if test_cases:
             return test_cases
 
-        # Strategy 3: Try to find any question-answer patterns
+        # Strategy 4: Try to find any question-answer patterns
         question_pattern = _re.compile(r'"question"\s*:\s*"([^"]+)"', _re.IGNORECASE)
         answer_pattern = _re.compile(r'"answer"\s*:\s*"([^"]+)"', _re.IGNORECASE)
 
