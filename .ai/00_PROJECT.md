@@ -262,8 +262,8 @@ This means:
 | Test Data | Manual datasets only | ✅ Synthetic generation |
 | Retriever Providers | ChromaDB only | ✅ 11 providers (Chroma, Qdrant, Pinecone, Weaviate, FAISS, pgvector, Elasticsearch, BM25, HTTP, Memory, Mock) |
 | NLI Metrics | None | ✅ DeBERTa-based faithfulness, relevancy scoring |
-| CLI Commands | init, run, report, compare, list, doctor | ✅ + validate, delete, diagnose, audit, synth, completion |
-| CI/CD Integration | None | Pytest plugin (planned) |
+| CLI Commands | init, run, report, compare, list, doctor | ✅ + validate, delete, diagnose, audit, synth, test, completion |
+| CI/CD Integration | None | ✅ Pytest plugin, threshold gating, GitHub Actions workflow |
 | Production Monitoring | None | Live traffic sampling (planned) |
 
 ---
@@ -607,6 +607,22 @@ Generate adversarial test cases.
 ---
 
 ```bash
+oaeval test config.yaml -t faithfulness:gte:0.8
+```
+
+Run evaluation as CI/CD test with threshold gating.
+
+---
+
+```bash
+oaeval test config.yaml -t faithfulness:gte:0.8 -t answer_relevancy:gte:0.7 --json
+```
+
+Run evaluation with multiple thresholds and JSON output.
+
+---
+
+```bash
 oaeval ui
 ```
 
@@ -729,8 +745,6 @@ Avoid tightly coupling metrics, providers, and report generators.
 Version 1.0 (Stable Release):
 
 * Generic LLM-as-Judge for custom criteria
-* CI/CD Pytest Plugin
-* GitHub Actions workflow example
 * **Hybrid CLI UI** (Rich banner + Textual TUI dashboard)
 
 Version 2.0:
@@ -745,7 +759,6 @@ Version 2.0:
 
 Version 3.0:
 
-* CI/CD integration
 * GitHub Action
 * Cloud synchronization
 * Hosted evaluation platform

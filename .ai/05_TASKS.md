@@ -67,12 +67,12 @@
 - [x] Write unit tests for synthetic generation (49 tests)
 - [x] Write integration test for synthetic data pipeline (7 tests)
 
-### Phase 13: CI/CD Integration
-- [ ] Implement pytest plugin for RAG evaluation
-- [ ] Add threshold-based test gating
-- [ ] Add `oaeval test` CLI command
-- [ ] Write documentation for CI/CD integration
-- [ ] Add GitHub Actions workflow example
+### Phase 13: CI/CD Integration — COMPLETE
+- [x] Implement pytest plugin for RAG evaluation
+- [x] Add threshold-based test gating
+- [x] Add `oaeval test` CLI command
+- [x] Write documentation for CI/CD integration
+- [x] Add GitHub Actions workflow example
 
 ### Phase 14: Hybrid CLI UI
 - [ ] 14.1 Add `pyfiglet` and `textual` to optional dependencies
@@ -95,6 +95,13 @@
 ---
 
 ## COMPLETED
+
+### Phase 13: CI/CD Integration
+- [x] Implement pytest plugin for RAG evaluation
+- [x] Add threshold-based test gating
+- [x] Add `oaeval test` CLI command
+- [x] Write documentation for CI/CD integration
+- [x] Add GitHub Actions workflow example
 
 ### Phase 12: Synthetic Test Data
 - [x] Implement `QuestionGenerator` (generate questions from documents)
@@ -275,6 +282,7 @@ Phase 14 (Hybrid CLI UI) ← depends on Phase 1 (new module, independent)
 
 | Date | Change |
 |------|--------|
+| 2026-07-11 | **Phase 13 COMPLETE** — CI/CD Integration implemented (pytest plugin, threshold gating, `oaeval test` command) |
 | 2026-07-11 | **Phase 12 COMPLETE** — Synthetic Test Data generator implemented (56 tests) |
 | 2026-07-11 | Added Phase 14: Hybrid CLI UI (Rich banner + Textual TUI dashboard) |
 | 2026-07-11 | Added Phase 9-13: Corpus Auditor, LLM-as-Judge, Diagnosis, Synthetic Data, CI/CD |
