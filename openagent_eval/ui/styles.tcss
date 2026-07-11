@@ -348,6 +348,115 @@ HelpScreen .divider {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+   Spinner Widget
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+SpinnerWidget {
+    height: 5;
+    padding: 0 1;
+    background: $surface;
+}
+
+SpinnerWidget .spinner-line {
+    height: 1;
+}
+
+SpinnerWidget .tip-line {
+    height: 1;
+    padding: 0 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Status Footer Widget
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+StatusFooter {
+    height: 1;
+    dock: bottom;
+    padding: 0 1;
+    background: $surface;
+    layer: footer;
+}
+
+StatusFooter Label {
+    width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Eval Result Panel
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+EvalResultPanel {
+    height: auto;
+    min-height: 10;
+    padding: 1;
+    border: solid $primary;
+    background: $surface;
+}
+
+EvalResultPanel .panel-header {
+    height: 1;
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+EvalResultPanel .metric-row {
+    height: 1;
+    padding: 0 2;
+}
+
+EvalResultPanel DataTable {
+    height: auto;
+    max-height: 12;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Audit Result Panel
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+AuditResultPanel {
+    height: auto;
+    min-height: 10;
+    padding: 1;
+    border: solid $secondary;
+    background: $surface;
+}
+
+AuditResultPanel .panel-header {
+    height: 1;
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+AuditResultPanel DataTable {
+    height: auto;
+    max-height: 12;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Diagnose Result Panel
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+DiagnoseResultPanel {
+    height: auto;
+    min-height: 10;
+    padding: 1;
+    border: solid $accent;
+    background: $surface;
+}
+
+DiagnoseResultPanel .panel-header {
+    height: 1;
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+DiagnoseResultPanel DataTable {
+    height: auto;
+    max-height: 12;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
    Color Overrides (Dark Theme Support)
    ═══════════════════════════════════════════════════════════════════════════════ */
 
@@ -371,6 +480,26 @@ HelpScreen .divider {
     QuickActions {
         background: $surface-darken-1;
     }
+
+    SpinnerWidget {
+        background: $surface-darken-1;
+    }
+
+    StatusFooter {
+        background: $surface-darken-1;
+    }
+
+    EvalResultPanel {
+        background: $surface-darken-1;
+    }
+
+    AuditResultPanel {
+        background: $surface-darken-1;
+    }
+
+    DiagnoseResultPanel {
+        background: $surface-darken-1;
+    }
 }
 
 :light {
@@ -391,6 +520,26 @@ HelpScreen .divider {
     }
 
     QuickActions {
+        background: $surface-lighten-1;
+    }
+
+    SpinnerWidget {
+        background: $surface-lighten-1;
+    }
+
+    StatusFooter {
+        background: $surface-lighten-1;
+    }
+
+    EvalResultPanel {
+        background: $surface-lighten-1;
+    }
+
+    AuditResultPanel {
+        background: $surface-lighten-1;
+    }
+
+    DiagnoseResultPanel {
         background: $surface-lighten-1;
     }
 }
