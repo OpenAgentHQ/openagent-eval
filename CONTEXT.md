@@ -74,12 +74,13 @@ SDK (openagent_eval - Core Evaluation API)
 
 | File | Purpose |
 |------|---------|
-| `.ai/00_PROJECT.md` | Single source of truth (Product Specification) |
-| `.ai/02_AGENT.md` | Engineering handbook (coding standards, architecture rules) |
-| `.ai/03_CONTEXT.md` | This file (working memory, progress tracking) |
-| `.ai/04_DECISIONS.md` | Architectural decisions with rationale |
-| `.ai/05_TASKS.md` | Project task list and progress tracking |
-| `.ai/01_ARCHITECTURE.md` | System architecture and design |
+| `PROJECT.md` | Single source of truth (Product Specification) |
+| `AGENT.md` | Engineering handbook (coding standards, architecture rules) |
+| `CONTEXT.md` | This file (working memory, progress tracking) |
+| `DECISIONS.md` | Architectural decisions with rationale |
+| `05_TASKS.md` | Project task list and progress tracking |
+| `ARCHITECTURE.md` | System architecture and design |
+| `INSTRUCTIONS.md` | Writing rules for all GitHub content (issues, PRs, releases, etc.) |
 
 ---
 
@@ -94,7 +95,7 @@ SDK (openagent_eval - Core Evaluation API)
 - [x] Architecture analysis and improvements
 - [x] Apply architecture decisions (D011-D016)
 - [x] Update all project files
-- [x] Create .ai/ directory structure
+- [x] Create project documentation files
 
 ### Milestone 1: Project Foundation
 - [x] Initialize project with uv
@@ -317,6 +318,7 @@ chore/{description}        # Maintenance tasks
 
 | Date | Change |
 |------|--------|
+| 2026-07-15 | **INSTRUCTIONS.md created** — Writing rules for all GitHub content (issues, PRs, releases, etc.) |
 | 2026-07-12 | **TUI REMOVED** — Textual TUI dashboard removed, CLI-only interface retained |
 | 2026-07-11 | **Phase 14 COMPLETE** — Hybrid CLI UI implemented (Rich banner, Textual TUI dashboard, 15 tests) |
 | 2026-07-11 | **Phase 13 COMPLETE** — CI/CD Integration implemented (pytest plugin, threshold gating, `oaeval test` command) |
@@ -334,8 +336,8 @@ chore/{description}        # Maintenance tasks
 | 2026-07-08 | Applied architecture decisions D011-D016 |
 | 2026-07-08 | Updated with project identity (repository, package, CLI) |
 | 2026-07-08 | Added ARCHITECTURE.md to key files |
-| 2026-07-08 | Created .ai/ directory structure |
-| 2026-07-08 | Moved all project files to .ai/ |
+| 2026-07-08 | Created project documentation files |
+| 2026-07-08 | Project files moved to root directory |
 | 2026-07-08 | Connected to GitHub repository |
 | 2026-07-08 | Applied Git workflow rules (GitHub Flow) |
 | 2026-07-08 | Corrected all dates from 2025 to 2026 |

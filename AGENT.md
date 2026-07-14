@@ -663,6 +663,27 @@ class MetricResult:
 
 ---
 
+## Writing & GitHub Content Standards
+
+All generated GitHub content — issues, pull requests, PR reviews, comments, discussions, release notes, changelogs, commit messages, documentation, README updates, and wiki pages — must follow the rules in `INSTRUCTIONS.md` at the project root.
+
+### Quick Reference
+
+- **Markdown**: Always use GitHub Flavored Markdown (GFM)
+- **File paths**: Forward slashes only, wrapped in backticks: `openagent_eval/diagnosis/chunking.py`
+- **Code**: Fenced code blocks with language identifiers
+- **Commands**: Fenced bash blocks
+- **Headings**: Proper Markdown headings (`##`), never bold text as headings
+- **Checklists**: GitHub task lists (`- [ ]`)
+- **Tone**: Professional maintainer, clear, concise, technically accurate
+- **Emoji**: At most one per section, avoid unnecessary emojis
+
+### Required Templates
+
+See `INSTRUCTIONS.md` for authoritative templates for issues, pull requests, release notes, and comments.
+
+---
+
 ## Git Workflow Rules (MANDATORY)
 
 GitHub Flow must be followed throughout the project.

@@ -618,6 +618,6 @@ None at this time.
 
 ## Related Documents
 
-- `.ai/00_PROJECT.md` - Product specification
-- `.ai/02_AGENT.md` - Engineering handbook
-- `.ai/03_CONTEXT.md` - Working memory
+- `PROJECT.md` - Product specification
+- `AGENT.md` - Engineering handbook
+- `CONTEXT.md` - Working memory

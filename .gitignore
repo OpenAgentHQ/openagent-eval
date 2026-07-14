@@ -224,3 +224,6 @@ __marimo__/
 
 # Release guide (local-only)
 Release_Guide.md
+
+# Task tracking (local-only)
+/05_TASKS.md
