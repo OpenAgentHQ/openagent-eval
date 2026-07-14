@@ -3,11 +3,20 @@
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 
 from typer.testing import CliRunner
 
+from openagent_eval.cli.context import (
+    CLIContext,
+    get_context,
+    reset_context,
+    set_context,
+)
 from openagent_eval.cli.main import app
-from openagent_eval.cli.context import CLIContext, get_context, set_context, reset_context
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 runner = CliRunner()
 
@@ -167,6 +176,22 @@ class TestRunCommandImprovements:
         """Test dry-run with missing config."""
         result = runner.invoke(app, ["run", "--dry-run", "nonexistent.yaml"])
         assert result.exit_code == 2
+
+    def test_run_dry_run_interpolates_timeout_warning(
+        self, sample_config_path: Path
+    ) -> None:
+        """Dry-run warnings should display the configured timeout value."""
+        sample_config_path.write_text(
+            f"{sample_config_path.read_text()}\ntimeout: 30\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(app, ["run", "--dry-run", str(sample_config_path)])
+
+        assert result.exit_code == 0
+        output = strip_ansi(result.output)
+        assert "Timeout is low (30.0s)" in output
+        assert "{config.timeout}" not in output
 
 
 class TestDoctorCommandImprovements:

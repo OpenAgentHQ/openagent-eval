@@ -240,7 +240,9 @@ def _run_dry_run(config: object, config_path: Path) -> None:
     # Show warnings
     console.print("\n[bold]Warnings:[/bold]")
     if config.timeout < 60:
-        console.print("  [yellow]Timeout is low ({config.timeout}s) - evaluations may time out[/yellow]")
+        console.print(
+            f"  [yellow]Timeout is low ({config.timeout}s) - evaluations may time out[/yellow]"
+        )
     if len(config.metrics.generation) > 5:
         console.print(f"  [yellow]Running {len(config.metrics.generation)} generation metrics may be slow[/yellow]")
 
