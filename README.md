@@ -11,6 +11,7 @@
 [![Code Style](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![GitHub Stars](https://img.shields.io/github/stars/OpenAgentHQ/openagent-eval?style=social)](https://github.com/OpenAgentHQ/openagent-eval/stargazers)
+[![Forks](https://img.shields.io/github/forks/OpenAgentHQ/openagent-eval?style=social)](https://github.com/OpenAgentHQ/openagent-eval/network/members)
 [![Contributors](https://img.shields.io/github/contributors/OpenAgentHQ/openagent-eval?style=social)](https://github.com/OpenAgentHQ/openagent-eval/graphs/contributors)
 [![Issues](https://img.shields.io/github/issues/OpenAgentHQ/openagent-eval)](https://github.com/OpenAgentHQ/openagent-eval/issues)
 
