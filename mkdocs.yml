@@ -179,6 +179,7 @@ nav:
       - Architecture: architecture.md
       - CLI Reference: cli.md
       - API Reference: api.md
+      - Report Output Formats: reports-output-formats.md
   - Examples:
       - examples/index.md
   - Community:

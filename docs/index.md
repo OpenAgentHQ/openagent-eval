@@ -47,7 +47,7 @@ hide:
 - :material-chart-box: **Comprehensive Metrics**
   Retrieval, generation, performance, and cost metrics in one consistent interface.
 
-- :material-file-document-multiple: **Beautiful Reports**
+- :material-file-document-multiple: **[Beautiful Reports](reports-output-formats.md)**
   Terminal, Markdown, HTML, and JSON reports with built-in failure analysis.
 
 </div>
