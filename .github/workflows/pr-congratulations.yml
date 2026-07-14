@@ -1,0 +1,174 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PR Congratulations Workflow for OpenAgentHQ
+# ─────────────────────────────────────────────────────────────────────────────
+# Automatically posts a congratulatory comment on merged Pull Requests.
+#
+# Features:
+#   - First-contribution detection via GitHub API
+#   - Label-based enhancements (first contribution, good first issue)
+#   - Bot author filtering (skips automated accounts)
+#   - Structured logging for audit trail
+#
+# Trigger: pull_request_target → closed (only merged PRs targeting main)
+# Permissions: pull-requests: write, contents: read (least privilege)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: PR Congratulations
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  congratulate:
+    name: Post Congratulations
+    runs-on: ubuntu-latest
+
+    # Only run when the PR was actually merged (not just closed)
+    # and targets the main branch
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main'
+
+    steps:
+      # ─────────────────────────────────────────────────────────────────────
+      # Step 1: Detect first contribution and build comment
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Detect first contribution and build comment
+        id: build-comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // ── Extract PR metadata ──────────────────────────────────────
+            const pr = context.payload.pull_request;
+            const prNumber = pr.number;
+            const prTitle = pr.title;
+            const author = pr.user.login;
+            const authorType = pr.user.type;
+            const mergeCommitSha = pr.merge_commit_sha;
+            const labels = pr.labels.map(l => l.name);
+
+            // ── Skip bot authors ─────────────────────────────────────────
+            // GitHub marks bot accounts with type "Bot" or login ending in [bot]
+            if (authorType === 'Bot' || author.endsWith('[bot]')) {
+              core.info(`⏭️  Skipping bot author: ${author}`);
+              core.setOutput('action_taken', 'skipped_bot');
+              return;
+            }
+
+            core.info(`📋 PR #${prNumber}: "${prTitle}"`);
+            core.info(`👤 Author: ${author}`);
+            core.info(`🔀 Merge SHA: ${mergeCommitSha}`);
+
+            // ── Detect first contribution ────────────────────────────────
+            // Query merged PRs by this author targeting main.
+            // If count is 0 or 1 (this PR), it's their first contribution.
+            let isFirstContribution = false;
+            try {
+              const { data: mergedPRs } = await github.rest.search.issuesAndPullRequests({
+                q: `is:pr is:merged author:${author} base:main repo:${context.repo.owner}/${context.repo.repo}`,
+                per_page: 1,
+              });
+              // If 0 results, this is their first merged PR (the current one
+              // may not appear in search index yet). If exactly 1, it's this PR.
+              isFirstContribution = mergedPRs.total_count <= 1;
+              core.info(`🔍 Merged PRs by ${author} on main: ${mergedPRs.total_count}`);
+            } catch (error) {
+              core.warning(`⚠️  Could not query merged PRs: ${error.message}`);
+              // Default to false if API fails — don't break the workflow
+              isFirstContribution = false;
+            }
+
+            core.info(`🌟 First contribution: ${isFirstContribution}`);
+
+            // ── Check for special labels ─────────────────────────────────
+            const hasFirstContributionLabel = labels.some(
+              l => l.toLowerCase() === 'first contribution'
+            );
+            const hasGoodFirstIssueLabel = labels.some(
+              l => l.toLowerCase() === 'good first issue'
+            );
+            const showGreatFirstContribution = hasFirstContributionLabel || hasGoodFirstIssueLabel;
+
+            core.info(`🏷️  Labels: ${labels.join(', ') || '(none)'}`);
+            core.info(`🎊 Great first contribution: ${showGreatFirstContribution}`);
+
+            // ── Build the comment body ───────────────────────────────────
+            let comment = `🎉 Congratulations @${author}!\n\n`;
+            comment += `Your pull request has been successfully merged into **main**. 🚀\n\n`;
+            comment += `Thank you for contributing to OpenAgentHQ and helping improve the project.\n\n`;
+            comment += `We truly appreciate your contribution and hope to see you back with more amazing PRs!\n\n`;
+            comment += `Happy Open Sourcing! ❤️`;
+
+            // Append first contribution message
+            if (isFirstContribution) {
+              comment += `\n\n🌟 This is your first merged contribution to this repository.\n`;
+              comment += `Welcome to the OpenAgentHQ contributors family!`;
+            }
+
+            // Append great first contribution message
+            if (showGreatFirstContribution) {
+              comment += `\n\n🎊 Great first contribution!`;
+            }
+
+            // ── Set outputs for logging step ─────────────────────────────
+            core.setOutput('pr_number', prNumber);
+            core.setOutput('pr_title', prTitle);
+            core.setOutput('author', author);
+            core.setOutput('merge_commit_sha', mergeCommitSha);
+            core.setOutput('is_first_contribution', isFirstContribution);
+            core.setOutput('action_taken', 'commented');
+            core.setOutput('comment_body', comment);
+
+            core.info(`✅ Comment built successfully (${comment.length} chars)`);
+
+      # ─────────────────────────────────────────────────────────────────────
+      # Step 2: Post the comment on the PR
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Post comment on PR
+        if: steps.build-comment.outputs.action_taken == 'commented'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commentBody = `${{ steps.build-comment.outputs.comment_body }}`;
+            const prNumber = parseInt('${{ steps.build-comment.outputs.pr_number }}', 10);
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: commentBody,
+            });
+
+            core.info(`💬 Comment posted on PR #${prNumber}`);
+
+      # ─────────────────────────────────────────────────────────────────────
+      # Step 3: Structured logging for audit trail
+      # ─────────────────────────────────────────────────────────────────────
+      - name: Log workflow execution
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const actionTaken = '${{ steps.build-comment.outputs.action_taken }}';
+
+            core.startGroup('📊 Workflow Execution Summary');
+            core.info(`PR Number:        ${{ steps.build-comment.outputs.pr_number }}`);
+            core.info(`PR Title:         ${{ steps.build-comment.outputs.pr_title }}`);
+            core.info(`Author:           ${{ steps.build-comment.outputs.author }}`);
+            core.info(`Merge Commit SHA: ${{ steps.build-comment.outputs.merge_commit_sha }}`);
+            core.info(`First Contrib.:   ${{ steps.build-comment.outputs.is_first_contribution }}`);
+            core.info(`Action Taken:     ${actionTaken}`);
+            core.endGroup();
+
+            if (actionTaken === 'skipped_bot') {
+              core.info('⏭️  No action taken — author is a bot.');
+            } else if (actionTaken === 'commented') {
+              core.info('✅ Congratulations comment posted successfully.');
+            } else {
+              core.warning(`⚠️  Unknown action: ${actionTaken}`);
+            }
