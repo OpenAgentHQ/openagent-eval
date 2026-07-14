@@ -10,6 +10,8 @@
 [![Downloads](https://static.pepy.tech/personalized-badge/openagent-eval?period=total&units=INTERNATIONAL_SYSTEM&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/projects/openagent-eval)
 [![Code Style](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![GitHub Stars](https://img.shields.io/github/stars/OpenAgentHQ/openagent-eval?style=social)](https://github.com/OpenAgentHQ/openagent-eval/stargazers)
+[![Contributors](https://img.shields.io/github/contributors/OpenAgentHQ/openagent-eval?style=social)](https://github.com/OpenAgentHQ/openagent-eval/graphs/contributors)
 [![Issues](https://img.shields.io/github/issues/OpenAgentHQ/openagent-eval)](https://github.com/OpenAgentHQ/openagent-eval/issues)
 
 Local-first. Framework-agnostic. Developer-friendly.
