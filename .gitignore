@@ -227,3 +227,10 @@ Release_Guide.md
 
 # Task tracking (local-only)
 /05_TASKS.md
+
+# Local documentation artifacts
+openai-docs.md
+tiktoken-docs.md
+
+# Local data directory
+/data/
