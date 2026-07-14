@@ -166,9 +166,12 @@ class CorpusAuditor:
         documents: list[CorpusDocument] = []
 
         if path.is_file():
-            doc = self._load_single_file(path)
-            if doc:
-                documents.append(doc)
+            if path.suffix.lower() == ".jsonl":
+                documents.extend(self._load_jsonl_documents(path))
+            else:
+                doc = self._load_single_file(path)
+                if doc:
+                    documents.append(doc)
         elif path.is_dir():
             files = sorted(path.rglob("*"))
             for file_path in files:
@@ -176,9 +179,12 @@ class CorpusAuditor:
                     file_path.is_file()
                     and file_path.suffix.lower() in _SUPPORTED_EXTENSIONS
                 ):
-                    doc = self._load_single_file(file_path)
-                    if doc:
-                        documents.append(doc)
+                    if file_path.suffix.lower() == ".jsonl":
+                        documents.extend(self._load_jsonl_documents(file_path))
+                    else:
+                        doc = self._load_single_file(file_path)
+                        if doc:
+                            documents.append(doc)
                         if len(documents) >= self.max_documents:
                             break
 
@@ -212,6 +218,48 @@ class CorpusAuditor:
             )
         except (OSError, UnicodeDecodeError):
             return None
+
+    def _load_jsonl_documents(self, file_path: Path) -> list[CorpusDocument]:
+        """Load a JSONL file as one CorpusDocument per line.
+
+        Args:
+            file_path: Path to the JSONL file.
+
+        Returns:
+            List of CorpusDocument instances (one per line).
+        """
+        import json
+
+        documents: list[CorpusDocument] = []
+        try:
+            text = file_path.read_text(encoding="utf-8", errors="ignore")
+        except (OSError, UnicodeDecodeError):
+            return documents
+
+        for line_num, line in enumerate(text.splitlines(), start=1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                json.loads(stripped)  # validate JSON
+            except json.JSONDecodeError:
+                continue
+            doc_id = f"{file_path}:L{line_num}"
+            documents.append(
+                CorpusDocument(
+                    doc_id=doc_id,
+                    content=stripped,
+                    metadata={
+                        "filename": file_path.name,
+                        "extension": ".jsonl",
+                        "line_number": line_num,
+                    },
+                )
+            )
+            if len(documents) >= self.max_documents:
+                break
+
+        return documents
 
     def _merge_reports(
         self,
