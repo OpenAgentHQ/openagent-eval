@@ -65,7 +65,7 @@ class InvalidDatasetError(DatasetError):
         self,
         message: str,
         dataset_path: str | None = None,
-        format: str | None = None,
+        frmt: str | None = None,
         line_number: int | None = None,
         details: dict | None = None,
     ) -> None:
@@ -79,13 +79,13 @@ class InvalidDatasetError(DatasetError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if format:
-            error_details["format"] = format
+        if frmt:
+            error_details["format"] = frmt
         if line_number:
             error_details["line_number"] = line_number
 
         super().__init__(message=message, dataset_path=dataset_path, details=error_details)
-        self.format = format
+        self.format = frmt
         self.line_number = line_number
 
 

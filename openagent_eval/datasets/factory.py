@@ -59,7 +59,7 @@ def _get_loader(config: DatasetConfig) -> BaseDatasetLoader:
         raise InvalidDatasetError(
             message=f"Unsupported dataset format: '{config.format}'. "
             f"Supported formats: {list(_FORMAT_MAP.keys())}",
-            format=config.format,
+            frmt=config.format,
         )
 
     # Guard against directory paths, which have no usable extension and

@@ -88,7 +88,7 @@ class PDFDatasetLoader(BaseDatasetLoader):
                     "Install it with: pip install openagent-eval[pdf]"
                 ),
                 dataset_path=str(path),
-                format="pdf",
+                frmt="pdf",
             ) from e
 
         try:
@@ -97,7 +97,7 @@ class PDFDatasetLoader(BaseDatasetLoader):
             raise InvalidDatasetError(
                 message=f"Failed to read PDF: {e}",
                 dataset_path=str(path),
-                format="pdf",
+                frmt="pdf",
             ) from e
 
         raw_items = self._extract_raw(reader, path)

@@ -63,7 +63,7 @@ class JSONDatasetLoader(BaseDatasetLoader):
             raise InvalidDatasetError(
                 message=f"Invalid JSON in file: {e}",
                 dataset_path=str(path),
-                format="json",
+                frmt="json",
                 line_number=e.lineno,
             ) from e
 
