@@ -100,6 +100,23 @@ class TestReadCorpus:
         result = _read_corpus(tmp_path)
         assert result == []
 
+    def test_read_file_with_encoding_error(self, tmp_path: Path) -> None:
+        """Test reading a file with invalid UTF-8 encoding raises error."""
+        # Create a file with invalid UTF-8 bytes
+        bad_file = tmp_path / "bad.txt"
+        bad_file.write_bytes(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+
+        with pytest.raises(SynthesisExecutionError, match="Failed to read"):
+            _read_corpus(tmp_path)
+
+    def test_read_single_file_with_encoding_error(self, tmp_path: Path) -> None:
+        """Test reading a single file with invalid UTF-8 raises error."""
+        bad_file = tmp_path / "bad.txt"
+        bad_file.write_bytes(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+
+        with pytest.raises(SynthesisExecutionError, match="Failed to read corpus file"):
+            _read_corpus(bad_file)
+
 
 class TestSyntheticDataGenerator:
     """Tests for SyntheticDataGenerator."""
