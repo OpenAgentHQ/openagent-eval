@@ -1,8 +1,0 @@
-[
-  {"content": "Python is a high-level, interpreted programming language known for its readability.", "id": "py1", "metadata": {"topic": "python"}},
-  {"content": "RAG (Retrieval-Augmented Generation) combines a retrieval step with a generative model to ground answers in retrieved documents.", "id": "rag1", "metadata": {"topic": "rag"}},
-  {"content": "A vector database stores high-dimensional embeddings and supports similarity search via cosine or dot-product distance.", "id": "vec1", "metadata": {"topic": "vectordb"}},
-  {"content": "Sentence transformers produce dense sentence embeddings used for semantic search and clustering.", "id": "st1", "metadata": {"topic": "embeddings"}},
-  {"content": "Groq provides high-speed LLM inference through custom LPU hardware, offering low-latency token generation.", "id": "groq1", "metadata": {"topic": "inference"}},
-  {"content": "Faithfulness measures whether a generated answer is supported by the retrieved context, penalizing hallucination.", "id": "faith1", "metadata": {"topic": "evaluation"}}
-]

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from openagent_eval.metrics.generation.faithfulness import Faithfulness
 from openagent_eval.metrics.generation.relevancy import AnswerRelevancy

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from openagent_eval.core.pipeline import EvaluationResult, PipelineResult
+from openagent_eval.core.pipeline import PipelineResult
 
 
 @dataclass(frozen=True)

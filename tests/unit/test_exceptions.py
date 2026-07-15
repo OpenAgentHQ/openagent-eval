@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from openagent_eval.exceptions import (
     CLIError,
     CommandError,
@@ -124,6 +122,12 @@ class TestMetricError:
         """Test metric timeout error."""
         error = MetricTimeoutError("Timed out", timeout_seconds=30.0)
         assert error.timeout_seconds == 30.0
+
+    def test_timeout_error_preserves_zero_timeout(self) -> None:
+        """Test that a zero timeout is retained in the error details."""
+        error = MetricTimeoutError("Timed out immediately", timeout_seconds=0.0)
+        assert error.timeout_seconds == 0.0
+        assert error.details["timeout_seconds"] == 0.0
 
 
 class TestProviderError:

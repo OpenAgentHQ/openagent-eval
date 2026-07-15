@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from openagent_eval.datasets.base import BaseDatasetLoader, Dataset, DatasetItem
-from openagent_eval.datasets.models import DatasetItemModel, DatasetModel
+from openagent_eval.datasets.models import DatasetItemModel
 from openagent_eval.exceptions import DatasetValidationError, InvalidDatasetError
 
 

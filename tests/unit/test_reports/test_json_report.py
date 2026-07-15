@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import pytest
 
 from openagent_eval.reports.json_report import JSONReport
 
