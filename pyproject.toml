@@ -92,7 +92,7 @@ all = [
 ]
 
 [project.scripts]
-oaeval = "openagent_eval.cli.main:app"
+oaeval = "openagent_eval.cli.main:_version_aware_cli"
 
 [project.entry-points."openagent_eval.metrics"]
 # Custom metrics can be registered here
