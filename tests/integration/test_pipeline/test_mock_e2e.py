@@ -18,7 +18,7 @@ from openagent_eval.config.models import (
     RetrieverConfig,
 )
 from openagent_eval.core.engine import Engine
-from openagent_eval.metrics.base import BaseMetric, MetricResult
+from openagent_eval.metrics.base import BaseMetric
 
 
 class _FailingMetric(BaseMetric):

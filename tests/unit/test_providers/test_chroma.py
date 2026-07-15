@@ -13,7 +13,6 @@ from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
     ProviderExecutionError,
 )
-from openagent_eval.providers.models import Document
 from openagent_eval.providers.retrievers._scoring import normalize_distance
 from openagent_eval.providers.retrievers.chroma import ChromaRetriever
 

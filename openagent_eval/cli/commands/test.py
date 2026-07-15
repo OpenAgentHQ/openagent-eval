@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -188,7 +187,6 @@ def _display_results(
     verbose: bool,
 ) -> None:
     """Display evaluation results in a formatted table."""
-    from openagent_eval.cicd.thresholds import EvaluationResult
 
     # Summary table
     table = Table(title="Evaluation Summary", show_header=True)
@@ -239,7 +237,6 @@ def _output_json(result: "EvaluationResult", duration: float) -> None:
     """Output results as JSON."""
     import json
 
-    from openagent_eval.cicd.thresholds import EvaluationResult
 
     output = {
         "status": "passed" if result.passed else "failed",

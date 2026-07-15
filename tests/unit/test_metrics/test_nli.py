@@ -20,13 +20,9 @@ from openagent_eval.metrics.nli import (
 )
 from openagent_eval.metrics.generation.llm_judge import (
     LLMJudgeMetric,
-    AsyncLLMJudgeMetric,
-    JudgeCriteria,
     FAITHFULNESS_CRITERIA,
     RELEVANCY_CRITERIA,
-    COMPREHENSIVENESS_CRITERIA,
 )
-from openagent_eval.metrics.base import MetricResult
 
 
 # ============================================================

@@ -8,7 +8,88 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-No changes yet.
+### Fixed
+
+- Add consistent `--version` flag to all CLI commands (#125).
+
+---
+
+## [0.4.5] - 2026-07-15
+
+### Added
+
+- **Issue Claim System** — production-ready issue claim workflow replacing broken auto-assign
+- **PR Congratulations Workflow** — automated congratulations on merged PRs
+- **Reports Output Formats Documentation** — new docs page covering report output formats
+
+### Fixed
+
+- **JSONL Corpus Loading** — JSONL files now load as one document per line in corpus auditor
+- **Unused Imports** — removed unused imports across the codebase
+
+### Changed
+
+- **README Rewrite** — professional layout with GitHub badges (Stars, Forks, Contributors)
+
+---
+
+## [0.4.4] - 2026-07-12
+
+### Fixed
+
+- **Synthesis JSON Parsing** — add individual JSON object parsing for malformed responses
+- **Synthesis Notebook** — update notebook with v0.4.4 and no hardcoded API key
+
+---
+
+## [0.4.3] - 2026-07-12
+
+### Fixed
+
+- **Synthesis JSON Parsing** — simplify JSON parsing with multi-strategy fallback
+
+---
+
+## [0.4.2] - 2026-07-12
+
+### Fixed
+
+- **Synthesis JSON Parsing** — add regex fallback for JSON parsing in synthesis module
+
+---
+
+## [0.4.1] - 2026-07-12
+
+### Fixed
+
+- **Synthesis JSON Parsing** — improve JSON parsing resilience in question_gen
+
+---
+
+## [0.4.0] - 2026-07-12
+
+### Added
+
+- **Phase 13: CI/CD Integration**
+  - CI/CD module with workflow management
+  - Unit tests for CI/CD module (35 tests)
+
+- **Phase 14: TUI Redesign (Partial)**
+  - Claude Code-inspired TUI components
+  - Rich command input with autocomplete
+  - Virtual scrolling message list
+  - OAEVAL block-style ASCII art banner
+
+### Changed
+
+- **TUI Removal** — removed TUI dashboard, keeping CLI-only interface
+- **README Badges** — updated badges and uv.lock dependencies
+- **Documentation** — removed all TUI/Textual references
+
+### Fixed
+
+- **ChromaDB Tests** — resolve ChromaDB test mock setup and normalize_distance tests
+- **CLI Tests** — fix CLI test assertions and eval workflow audit command
 
 ---
 
@@ -287,7 +368,13 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ## Links
 
-[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/openagenthq/openagent-eval/compare/v0.4.4...v0.4.5
+[0.4.4]: https://github.com/openagenthq/openagent-eval/compare/v0.4.3...v0.4.4
+[0.4.3]: https://github.com/openagenthq/openagent-eval/compare/v0.4.2...v0.4.3
+[0.4.2]: https://github.com/openagenthq/openagent-eval/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/openagenthq/openagent-eval/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/openagenthq/openagent-eval/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/openagenthq/openagent-eval/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/openagenthq/openagent-eval/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/openagenthq/openagent-eval/releases/tag/v0.1.0

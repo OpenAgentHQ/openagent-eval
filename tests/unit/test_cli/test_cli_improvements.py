@@ -2,24 +2,29 @@
 
 from __future__ import annotations
 
-import json
 import re
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import TYPE_CHECKING
 
-import pytest
 from typer.testing import CliRunner
 
+from openagent_eval.cli.context import (
+    CLIContext,
+    get_context,
+    reset_context,
+    set_context,
+)
 from openagent_eval.cli.main import app
-from openagent_eval.cli.context import CLIContext, get_context, set_context, reset_context
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 runner = CliRunner()
 
 
 def strip_ansi(text: str) -> str:
     """Strip ANSI escape codes from text."""
-    ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
-    return ansi_escape.sub('', text)
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_escape.sub("", text)
 
 
 class TestGlobalFlags:
@@ -115,7 +120,11 @@ class TestDeleteCommand:
         """Test delete with nonexistent report ID."""
         result = runner.invoke(app, ["delete", "nonexistent_report"])
         # Should fail or show error
-        assert result.exit_code != 0 or "Error" in result.output or "not found" in result.output
+        assert (
+            result.exit_code != 0
+            or "Error" in result.output
+            or "not found" in result.output
+        )
 
 
 class TestCompletionCommand:
@@ -171,6 +180,22 @@ class TestRunCommandImprovements:
         """Test dry-run with missing config."""
         result = runner.invoke(app, ["run", "--dry-run", "nonexistent.yaml"])
         assert result.exit_code == 2
+
+    def test_run_dry_run_interpolates_timeout_warning(
+        self, sample_config_path: Path
+    ) -> None:
+        """Dry-run warnings should display the configured timeout value."""
+        sample_config_path.write_text(
+            f"{sample_config_path.read_text()}\ntimeout: 30\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(app, ["run", "--dry-run", str(sample_config_path)])
+
+        assert result.exit_code == 0
+        output = strip_ansi(result.output)
+        assert "Timeout is low (30.0s)" in output
+        assert "{config.timeout}" not in output
 
 
 class TestDoctorCommandImprovements:
@@ -231,7 +256,9 @@ class TestConfigDiscovery:
         from openagent_eval.cli.utils.discovery import find_config_file
 
         config_file = tmp_path / "config.yaml"
-        config_file.write_text("dataset: test.yaml\nllm:\n  provider: openai\n  model: gpt-4")
+        config_file.write_text(
+            "dataset: test.yaml\nllm:\n  provider: openai\n  model: gpt-4"
+        )
         result = find_config_file(tmp_path)
         assert result == config_file
 
@@ -240,7 +267,9 @@ class TestConfigDiscovery:
         from openagent_eval.cli.utils.discovery import find_config_file
 
         config_file = tmp_path / "oaeval.yaml"
-        config_file.write_text("dataset: test.yaml\nllm:\n  provider: openai\n  model: gpt-4")
+        config_file.write_text(
+            "dataset: test.yaml\nllm:\n  provider: openai\n  model: gpt-4"
+        )
         result = find_config_file(tmp_path)
         assert result == config_file
 
@@ -250,13 +279,33 @@ class TestVersionCommand:
 
     def test_version_short_flag(self):
         """Test --version flag."""
+        from importlib.metadata import version
+
         result = runner.invoke(app, ["--version"])
         assert result.exit_code == 0
+        assert result.output.strip() == f"openagent-eval {version('openagent-eval')}"
 
-    def test_version_V_flag(self):
+    def test_version_V_flag(self):  # noqa: N802
         """Test -V flag."""
+        from importlib.metadata import version
+
         result = runner.invoke(app, ["-V"])
         assert result.exit_code == 0
+        assert result.output.strip() == f"openagent-eval {version('openagent-eval')}"
+
+    def test_version_on_subcommand(self):
+        """Test --version flag on subcommands."""
+        from importlib.metadata import version
+
+        expected = f"openagent-eval {version('openagent-eval')}"
+
+        result_run = runner.invoke(app, ["run", "--version"])
+        assert result_run.exit_code == 0
+        assert result_run.output.strip() == expected
+
+        result_init = runner.invoke(app, ["init", "-V"])
+        assert result_init.exit_code == 0
+        assert result_init.output.strip() == expected
 
 
 class TestHelpOutput:

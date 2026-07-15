@@ -102,7 +102,7 @@ class QuestionGenerator:
 
         prompt = _QUESTION_GENERATION_PROMPT.format(
             count=count,
-            context=context.strip(),
+            context=context.strip().replace("{", "{{").replace("}", "}}"),
         )
 
         try:

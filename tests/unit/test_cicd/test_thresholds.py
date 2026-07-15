@@ -1,6 +1,5 @@
 """Unit tests for threshold evaluation."""
 
-import pytest
 
 from openagent_eval.cicd.models import (
     CICDConfig,

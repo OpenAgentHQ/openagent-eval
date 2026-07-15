@@ -152,7 +152,7 @@ class HTMLReport(ReportGenerator):
             path = path / "report.html"
         elif path.suffix.lower() != ".html":
             path = path.with_suffix(".html")
-        path = self._ensure_output_dir(path)
+        path = self._prepare_output_file(path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")
         return path

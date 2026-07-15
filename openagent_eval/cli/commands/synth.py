@@ -25,10 +25,13 @@ from rich.panel import Panel
 from rich.table import Table
 
 from openagent_eval.cli.context import get_context
+from openagent_eval.config.models import LLMConfig
 from openagent_eval.exceptions.synthesis import SynthesisError
+from openagent_eval.providers.factory import get_llm_provider
 from openagent_eval.synthesis import SyntheticDataGenerator, TestCaseType
 
 if TYPE_CHECKING:
+    from openagent_eval.providers.base.llm import LLMProvider
     from openagent_eval.synthesis.models import SyntheticDataset
 
 console = Console()
@@ -252,7 +255,7 @@ async def _run_generation(
         )
 
 
-def _create_provider(provider_name: str, model: str) -> object:
+def _create_provider(provider_name: str, model: str) -> LLMProvider:
     """Create an LLM provider instance.
 
     Args:
@@ -263,31 +266,17 @@ def _create_provider(provider_name: str, model: str) -> object:
         LLMProvider instance.
 
     Raises:
+        ProviderNotFoundError: If the provider name is unknown.
         ImportError: If the provider SDK is not installed.
     """
-    if provider_name == "openai":
-        from openagent_eval.providers.llm.openai import OpenAIProvider
-
-        return OpenAIProvider(model=model)
-    elif provider_name == "gemini":
-        from openagent_eval.providers.llm.gemini import GeminiProvider
-
-        return GeminiProvider(model=model)
-    elif provider_name == "anthropic":
-        from openagent_eval.providers.llm.anthropic import AnthropicProvider
-
-        return AnthropicProvider(model=model)
-    elif provider_name == "groq":
-        from openagent_eval.providers.llm.groq import GroqProvider
-
-        return GroqProvider(model=model)
-    elif provider_name == "mock":
-        from openagent_eval.providers.llm.openai import OpenAIProvider
-
-        # For testing, use OpenAI provider as fallback
-        return OpenAIProvider(model=model)
-    else:
-        raise ValueError(f"Unsupported LLM provider: {provider_name}")
+    config = LLMConfig(
+        provider=provider_name,
+        model=model,
+        api_key=None,
+        temperature=0.0,
+        max_tokens=None,
+    )
+    return get_llm_provider(config)
 
 
 def _save_output(
