@@ -77,20 +77,20 @@ def main(
 ) -> None:
     """OpenAgent Eval - Evaluate RAG systems and AI Agents."""
     # Set global CLI context
-    ctx = CLIContext(
+    cli_ctx = CLIContext(
         quiet=quiet,
         json_output=json_output,
         no_color=no_color,
         verbose=verbose,
     )
-    set_context(ctx)
+    set_context(cli_ctx)
 
     # Show banner when invoked without a subcommand (help display)
     try:
         import click
 
-        ctx = click.get_current_context(silent=True)
-        if ctx is not None and ctx.invoked_subcommand is None and not quiet:
+        click_ctx = click.get_current_context(silent=True)
+        if click_ctx is not None and click_ctx.invoked_subcommand is None and not quiet:
             create_mini_banner()
     except Exception:
         pass
