@@ -17,7 +17,6 @@ from openagent_eval.corpus.models import (
     IssueSeverity,
     IssueType,
 )
-from openagent_eval.exceptions.corpus import CorpusAuditError
 
 # Maximum content length sent to LLM per document (chars)
 _MAX_DOC_CHARS = 2000
@@ -249,7 +248,6 @@ class ContradictionDetector(BaseCorpusAnalyzer):
 
         # Score decreases with more contradictions
         # Use log scale to avoid extreme penalties for large corpora
-        import math
 
         max_expected = num_docs * (num_docs - 1) / 2
         ratio = num_issues / max(max_expected * 0.1, 1)  # 10% of max pairs is "bad"

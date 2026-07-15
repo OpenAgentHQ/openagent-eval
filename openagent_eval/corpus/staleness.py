@@ -18,7 +18,6 @@ from openagent_eval.corpus.models import (
     IssueSeverity,
     IssueType,
 )
-from openagent_eval.exceptions.corpus import CorpusAuditError
 
 # Common date patterns in document metadata or content
 _DATE_PATTERNS = [

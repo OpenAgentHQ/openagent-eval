@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from openagent_eval.core.pipeline import EvaluationResult, PipelineResult
+from openagent_eval.core.pipeline import PipelineResult
 
 
 @dataclass(frozen=True)
@@ -107,8 +107,8 @@ class ReportGenerator(ABC):
         """
         ...
 
-    def _ensure_output_dir(self, output_path: Path | str) -> Path:
-        """Ensure the output directory exists.
+    def _prepare_output_file(self, output_path: Path | str) -> Path:
+        """Ensure the parent directory exists and return the resolved file path.
 
         Args:
             output_path: Target file path.

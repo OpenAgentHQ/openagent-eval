@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
 
 import pytest
 
 from openagent_eval.corpus.auditor import CorpusAuditor
-from openagent_eval.corpus.models import IssueType
 from openagent_eval.exceptions.corpus import (
-    CorpusAuditError,
     CorpusNotFoundError,
     CorpusValidationError,
 )

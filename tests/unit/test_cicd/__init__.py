@@ -1,7 +1,5 @@
 """Unit tests for CI/CD models."""
 
-import pytest
-
 from openagent_eval.cicd.models import (
     CICDConfig,
     EvaluationGate,

@@ -76,10 +76,6 @@ class PGVectorRetriever(Retriever):
     async def retrieve(self, query: str, k: int = 5) -> list[Document]:
         """Embed the query and run a similarity SQL query."""
         self.validate_inputs(query=query, k=k)
-        try:
-            import psycopg
-        except ImportError as exc:  # pragma: no cover
-            raise ImportError("psycopg is required for the pgvector retriever") from exc
 
         try:
             vector = await self._embedder.embed_query(query)

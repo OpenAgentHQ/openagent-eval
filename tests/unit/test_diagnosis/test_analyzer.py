@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from openagent_eval.diagnosis.analyzer import DiagnosisAnalyzer
-from openagent_eval.diagnosis.models import BlameTarget, DiagnosisReport
+from openagent_eval.diagnosis.models import DiagnosisReport
 
 
 class TestDiagnosisAnalyzer:
