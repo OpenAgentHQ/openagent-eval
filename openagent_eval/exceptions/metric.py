@@ -116,7 +116,7 @@ class MetricTimeoutError(MetricError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if timeout_seconds:
+        if timeout_seconds is not None:
             error_details["timeout_seconds"] = timeout_seconds
 
         super().__init__(message=message, metric_name=metric_name, details=error_details)
