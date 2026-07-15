@@ -107,7 +107,12 @@ class TerminalReport(ReportGenerator):
         Returns:
             Path to the written file.
         """
-        path = self._ensure_output_dir(output_path)
+        path = Path(output_path)
+        if path.suffix == "":
+            path = path / "report.txt"
+        elif path.suffix.lower() != ".txt":
+            path = path.with_suffix(".txt")
+        path = self._ensure_output_dir(path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")
         return path
