@@ -159,6 +159,7 @@ class ReportGenerator(ABC):
                     item=error_entry.get("item", {}),
                     error=error_entry.get("error", "Unknown error"),
                     error_type=error_entry.get("error_type", "Unknown"),
+                    metric_scores=error_entry.get("metric_scores", {}),
                 )
             )
         return failures
