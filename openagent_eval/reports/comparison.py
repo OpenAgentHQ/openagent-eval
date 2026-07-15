@@ -159,7 +159,7 @@ class ComparisonReport(ReportGenerator):
         Returns:
             Path to the written file.
         """
-        path = self._ensure_output_dir(output_path)
+        path = self._prepare_output_file(output_path)
         if not str(path).endswith(".txt"):
             path = path / "comparison.txt"
         content = self.generate(report)
