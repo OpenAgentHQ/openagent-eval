@@ -227,6 +227,7 @@ Release_Guide.md
 
 # Task tracking (local-only)
 /05_TASKS.md
+DECISIONS.md
 
 # Local documentation artifacts
 openai-docs.md
@@ -234,3 +235,8 @@ tiktoken-docs.md
 
 # Local data directory
 /data/
+
+# Local config files (contains local settings, use env vars for secrets)
+config.yaml
+config.groq.yaml
+config.*.yaml
