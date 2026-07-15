@@ -12,3 +12,13 @@ def version_callback(value: bool) -> None:
 
         typer.echo(f"OpenAgent Eval v{__version__}")
         raise typer.Exit()
+
+
+VERSION_OPTION = typer.Option(
+    False,
+    "--version",
+    "-V",
+    help="Show version and exit.",
+    callback=version_callback,
+    is_eager=True,
+)

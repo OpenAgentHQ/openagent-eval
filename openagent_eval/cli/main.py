@@ -7,6 +7,7 @@ import sys
 import typer
 from rich.console import Console
 
+from openagent_eval import __version__
 from openagent_eval.cli.banner import create_mini_banner
 from openagent_eval.cli.commands.compare import compare_command
 from openagent_eval.cli.commands.delete import delete_command
@@ -21,7 +22,7 @@ from openagent_eval.cli.commands.test import test_command
 from openagent_eval.cli.commands.validate import validate_command
 from openagent_eval.cli.commands.audit import audit_command
 from openagent_eval.cli.context import CLIContext, set_context
-from openagent_eval.cli.utils.callbacks import version_callback
+from openagent_eval.cli.utils.callbacks import VERSION_OPTION, version_callback
 from openagent_eval.exceptions import OpenAgentEvalError
 
 # Error code mapping for different exception types
@@ -475,3 +476,17 @@ def _cli_exception_handler(exc_type: type, exc_value: BaseException, exc_tb: obj
 
 # Install custom exception handler
 sys.excepthook = _cli_exception_handler
+
+
+def _version_aware_cli() -> None:
+    """CLI entry point that also responds to ``--version`` in subcommand position.
+
+    Typer requires callback options (e.g. ``--version``) to appear *before*
+    the subcommand token.  This wrapper scans ``sys.argv`` so that
+    ``oaeval run --version`` prints the version and exits.
+    """
+    for token in sys.argv[1:]:
+        if token in ("--version", "-V"):
+            typer.echo(f"OpenAgent Eval v{__version__}")
+            raise SystemExit(0)
+    app()
