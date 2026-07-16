@@ -7,7 +7,7 @@ and content freshness signals.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
 
 from openagent_eval.corpus.base import BaseCorpusAnalyzer
@@ -172,6 +172,8 @@ class StalenessDetector(BaseCorpusAnalyzer):
                 continue
 
             if isinstance(value, datetime):
+                if value.tzinfo is None:
+                    return value.replace(tzinfo=UTC)
                 return value
 
             if isinstance(value, str):
