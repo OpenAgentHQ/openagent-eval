@@ -3,71 +3,77 @@
 from __future__ import annotations
 
 import json
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from typer.testing import CliRunner
 
+from openagent_eval.cli.context import get_context, reset_context
 from openagent_eval.cli.main import app
-from openagent_eval.corpus.models import IssueSeverity
-from openagent_eval.exceptions.corpus import CorpusAuditError, CorpusNotFoundError
+from openagent_eval.corpus.models import AuditReport, CorpusIssue, IssueSeverity, IssueType
+from openagent_eval.exceptions.corpus import (
+    CorpusAuditError,
+    CorpusNotFoundError,
+    CorpusValidationError,
+)
 
 runner = CliRunner()
 
 
-class _IssueTypeStub(str):
-    """Hashable stand-in for an issue-type enum member.
+@pytest.fixture(autouse=True)
+def _reset_cli_context():
+    """Reset the global CLI context before and after every test.
 
-    Behaves like a string for dict-keying/equality purposes but also
-    exposes ``.value`` the way the real enum does, since the CLI code
-    reads ``issue.issue_type.value``.
+    The CLI context (quiet/json/verbose flags) lives in a module-level
+    global, so leaving it dirty between tests can make later tests pass
+    or fail depending on run order.
     """
-
-    @property
-    def value(self) -> str:
-        return str(self)
+    reset_context()
+    yield
+    reset_context()
 
 
 def make_issue(
-        severity: IssueSeverity = IssueSeverity.MEDIUM,
-        issue_type: str = "duplicate",
-        title: str = "Sample issue",
-        document_ids: list[str] | None = None,
-        metadata: dict | None = None,
-        description: str = "A sample issue description.",
-) -> SimpleNamespace:
-    """Build a lightweight stand-in for an audit issue."""
-    return SimpleNamespace(
+    severity: IssueSeverity = IssueSeverity.MEDIUM,
+    issue_type: IssueType = IssueType.DUPLICATE,
+    title: str = "Sample issue",
+    document_ids: list[str] | None = None,
+    metadata: dict | None = None,
+    description: str = "A sample issue description.",
+) -> CorpusIssue:
+    """Build a real CorpusIssue for use in test fixtures."""
+    return CorpusIssue(
+        issue_type=issue_type,
         severity=severity,
-        issue_type=_IssueTypeStub(issue_type),
         title=title,
+        description=description,
         document_ids=document_ids if document_ids is not None else ["doc1", "doc2"],
         metadata=metadata if metadata is not None else {},
-        description=description,
     )
 
 
 def make_report(
-        health_score: float = 0.95,
-        summary: str = "Corpus looks healthy.",
-        issues: list | None = None,
-        checks_performed: list[str] | None = None,
-        total_documents: int = 10,
-) -> SimpleNamespace:
-    """Build a lightweight stand-in for an AuditReport."""
-    issues = issues if issues is not None else []
-    by_type: dict = {}
-    for issue in issues:
-        by_type.setdefault(issue.issue_type, []).append(issue)
+    health_score: float = 0.95,
+    summary: str = "Corpus looks healthy.",
+    issues: list[CorpusIssue] | None = None,
+    checks_performed: list[str] | None = None,
+    total_documents: int = 10,
+    corpus_path: str = "corpus",
+) -> AuditReport:
+    """Build a real AuditReport for use in test fixtures.
 
-    return SimpleNamespace(
-        health_score=health_score,
-        summary=summary,
-        issues=issues,
-        checks_performed=checks_performed if checks_performed is not None else ["contradiction", "staleness"],
+    Grouping (``issues_by_type``, ``issues_by_severity``, etc.) is a
+    computed property on the real model, so we don't need to duplicate
+    that logic here — if the model's grouping logic changes, these
+    tests will actually notice.
+    """
+    return AuditReport(
+        corpus_path=corpus_path,
         total_documents=total_documents,
-        issues_by_type=by_type,
+        issues=issues if issues is not None else [],
+        health_score=health_score,
+        checks_performed=checks_performed if checks_performed is not None else ["contradiction", "staleness"],
+        summary=summary,
     )
 
 
@@ -193,7 +199,7 @@ class TestAuditIntegration:
     def test_audit_corpus_not_found_error(self, mock_auditor_cls, corpus_dir):
         mock_auditor = mock_auditor_cls.return_value
         mock_auditor.audit = AsyncMock(
-            side_effect=CorpusNotFoundError("corpus missing")
+            side_effect=CorpusNotFoundError(corpus_path=str(corpus_dir))
         )
 
         result = runner.invoke(app, ["audit", str(corpus_dir)])
@@ -204,12 +210,34 @@ class TestAuditIntegration:
     @patch("openagent_eval.cli.commands.audit.CorpusAuditor")
     def test_audit_corpus_audit_error(self, mock_auditor_cls, corpus_dir):
         mock_auditor = mock_auditor_cls.return_value
-        mock_auditor.audit = AsyncMock(side_effect=CorpusAuditError("audit failed"))
+        mock_auditor.audit = AsyncMock(
+            side_effect=CorpusAuditError(message="audit failed", corpus_path=str(corpus_dir))
+        )
 
         result = runner.invoke(app, ["audit", str(corpus_dir)])
 
         assert result.exit_code == 3
         assert "error" in result.output.lower()
+
+    @patch("openagent_eval.cli.commands.audit.CorpusAuditor")
+    def test_audit_empty_corpus_validation_error(self, mock_auditor_cls, corpus_dir):
+        """CorpusValidationError (raised by the real auditor when no readable
+        documents are found) is NOT one of the exception types the command
+        explicitly catches (only CorpusNotFoundError / CorpusAuditError are).
+        This pins down current behavior so a future fix is a visible diff
+        here rather than a silent regression either way.
+        """
+        mock_auditor = mock_auditor_cls.return_value
+        mock_auditor.audit = AsyncMock(
+            side_effect=CorpusValidationError(
+                message="No readable documents found",
+                corpus_path=str(corpus_dir),
+            )
+        )
+
+        result = runner.invoke(app, ["audit", str(corpus_dir)])
+
+        assert result.exit_code != 0
 
 
 class TestAuditErrorHandling:
@@ -298,16 +326,16 @@ class TestAuditOutputFormatting:
         assert result.exit_code == 0
         assert "contradiction" in result.output.lower()
         assert "42" in result.output
+        # The command sets ctx.verbose = True when --verbose is passed;
+        # confirm that actually happens rather than just checking the
+        # downstream output it enables.
+        assert get_context().verbose is True
 
     @patch("openagent_eval.cli.commands.audit.CorpusAuditor")
     def test_audit_json_output_structure(self, mock_auditor_cls, corpus_dir):
-        # 1. Kontekstni to'g'rilash (JSON formatda chiqishini kafolatlash uchun)
-        from openagent_eval.cli.context import CLIContext, set_context
-        set_context(CLIContext(json_output=True, quiet=True))
-
         issue = make_issue(
             severity=IssueSeverity.LOW,
-            issue_type="staleness",
+            issue_type=IssueType.STALENESS,
             title="Stale document",
             document_ids=["docA"],
         )
@@ -316,15 +344,11 @@ class TestAuditOutputFormatting:
             return_value=make_report(health_score=0.75, issues=[issue])
         )
 
-        # 2. Buyruqni chaqirish (Global flaglarni buyruqdan oldinga qo'yamiz)
         result = runner.invoke(
             app, ["--quiet", "audit", str(corpus_dir), "--output", "json"]
         )
 
-        # 3. Natijani tekshirish (Agar xato qilsa, nima xatoligini ekranga chiqaradi)
-        assert result.exit_code == 0, f"Buyruq xato bilan yakunlandi: {result.output}"
-
-        # 4. JSON formatini tekshirish
+        assert result.exit_code == 0, f"Command failed: {result.output}"
         payload = json.loads(result.output)
         assert payload["status"] == "success"
         assert payload["health_score"] == pytest.approx(0.75)
@@ -332,3 +356,19 @@ class TestAuditOutputFormatting:
         assert payload["issues"][0]["title"] == "Stale document"
         assert payload["issues"][0]["type"] == "staleness"
         assert "elapsed_seconds" in payload
+
+    @patch("openagent_eval.cli.commands.audit.CorpusAuditor")
+    def test_audit_json_output_without_quiet(self, mock_auditor_cls, corpus_dir):
+        """Without --quiet, a banner is printed before the JSON payload.
+        The JSON itself should still be well-formed once you skip past it.
+        """
+        mock_auditor = mock_auditor_cls.return_value
+        mock_auditor.audit = AsyncMock(return_value=make_report(health_score=0.75))
+
+        result = runner.invoke(app, ["audit", str(corpus_dir), "--output", "json"])
+
+        assert result.exit_code == 0
+        json_start = result.output.index("{")
+        payload = json.loads(result.output[json_start:])
+        assert payload["status"] == "success"
+        assert payload["health_score"] == pytest.approx(0.75)
