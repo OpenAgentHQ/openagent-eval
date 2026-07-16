@@ -169,10 +169,18 @@ class ReportManager:
 
         This is useful when loading a report and passing it to report
         generators that expect the full dataclass.
+
+        Raises:
+            ValueError: If the ``config`` section is missing from the data.
         """
         from openagent_eval.config.models import Config
 
-        config = Config(**data.get("config", {}))
+        config = data.get("config")
+        if not config:
+            raise ValueError(
+                "Cannot reconstruct EvaluationReport: 'config' section is missing from data"
+            )
+        config = Config(**config)
 
         results = [
             EvaluationResult(

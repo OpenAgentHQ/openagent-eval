@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-No changes yet.
+### Fixed
+
+- Add consistent `--version` flag to all CLI commands (#125).
 
 ---
 

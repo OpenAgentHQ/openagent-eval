@@ -107,8 +107,8 @@ class ReportGenerator(ABC):
         """
         ...
 
-    def _ensure_output_dir(self, output_path: Path | str) -> Path:
-        """Ensure the output directory exists.
+    def _prepare_output_file(self, output_path: Path | str) -> Path:
+        """Ensure the parent directory exists and return the resolved file path.
 
         Args:
             output_path: Target file path.
@@ -159,6 +159,7 @@ class ReportGenerator(ABC):
                     item=error_entry.get("item", {}),
                     error=error_entry.get("error", "Unknown error"),
                     error_type=error_entry.get("error_type", "Unknown"),
+                    metric_scores=error_entry.get("metric_scores", {}),
                 )
             )
         return failures

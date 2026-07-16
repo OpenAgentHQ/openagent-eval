@@ -213,7 +213,7 @@ class AdversarialTestCaseGenerator:
                 details={"supported_types": [t.value for t in TestCaseType]},
             )
 
-        prompt = prompt_template.format(count=count, context=context.strip())
+        prompt = prompt_template.format(count=count, context=context.strip().replace("{", "{{").replace("}", "}}"))
 
         try:
             raw_response = await self._llm.generate(prompt)
