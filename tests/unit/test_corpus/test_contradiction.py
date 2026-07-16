@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from openagent_eval.corpus.contradiction import ContradictionDetector
-from openagent_eval.corpus.models import CorpusDocument, IssueSeverity, IssueType
+from openagent_eval.corpus.models import CorpusDocument, IssueType
 
 
 class MockLLMProvider:

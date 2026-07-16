@@ -1,0 +1,673 @@
+# =============================================================================
+# Issue Claim System
+# =============================================================================
+# Production-ready GitHub Actions workflow for automatic issue claiming.
+#
+# Supports three commands via issue comments:
+#   /claim              — Claim an unassigned issue
+#   /assign @username   — Assign issue to a user (maintainer only)
+#   /release            — Release a claimed issue back to the pool
+#
+# Trigger: issue_comment (fires when a comment is created on an issue)
+# Uses: actions/github-script@v7 for inline JavaScript execution
+#
+# Author: OpenAgentHQ
+# License: MIT
+# =============================================================================
+
+name: Issue Claim System
+
+# ---------------------------------------------------------------------------
+# Trigger Configuration
+# ---------------------------------------------------------------------------
+# Uses issue_comment event which fires on issue AND PR comments.
+# We add guards in the workflow to skip PR comments.
+on:
+  issue_comment:
+    types: [created]
+
+# ---------------------------------------------------------------------------
+# Permissions (Least Privilege)
+# ---------------------------------------------------------------------------
+# - issues: write    — Assign/unassign users, add labels, post comments
+# - contents: read   — Read repository metadata (required by github-script)
+# - pull-requests: read — Detect PR vs issue comments (to skip PRs)
+permissions:
+  issues: write
+  contents: read
+  pull-requests: read
+
+# ---------------------------------------------------------------------------
+# Concurrency Control
+# ---------------------------------------------------------------------------
+# Prevents race conditions when multiple comments arrive simultaneously.
+# Groups by issue number so different issues can process in parallel.
+concurrency:
+  group: issue-claim-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  # =========================================================================
+  # Issue Claim Handler
+  # =========================================================================
+  # Single job that routes commands to appropriate handlers.
+  # All logic is modular — each command is a separate pure function.
+  issue-claim:
+    name: Process Issue Command
+    runs-on: ubuntu-latest
+
+    # Only run if the comment starts with a slash command
+    if: startsWith(github.event.comment.body, '/')
+
+    steps:
+      # =====================================================================
+      # Step 1: Initialize and Route Command
+      # =====================================================================
+      - name: Route and Execute Command
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // =================================================================
+            // MODULE: Context Extraction
+            // Pure functions to extract data from the GitHub event payload.
+            // =================================================================
+
+            /**
+             * Extract issue context from the event payload.
+             * Returns an immutable context object.
+             *
+             * @param {Object} payload - GitHub event payload
+             * @returns {Object} Issue context (frozen for immutability)
+             */
+            const extractIssueContext = (payload) => {
+              const issue = payload.issue;
+              const comment = payload.comment;
+
+              const ctx = {
+                // Issue metadata
+                issueNumber: issue.number,
+                issueTitle: issue.title,
+                issueState: issue.state,
+                issueUrl: issue.html_url,
+
+                // Author info
+                issueAuthor: issue.user.login,
+                issueAuthorType: comment.user.type,
+
+                // Commenter info
+                commenter: comment.user.login,
+                commenterType: comment.user.type,
+
+                // Assignees
+                assignees: (issue.assignees || []).map(a => a.login),
+                hasAssignees: (issue.assignees || []).length > 0,
+
+                // Labels
+                labels: (issue.labels || []).map(l => l.name),
+
+                // Comment
+                commentBody: comment.body.trim(),
+                commentId: comment.id,
+
+                // Repository info
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+
+                // PR detection (issue_comment fires on PRs too)
+                isPullRequest: !!payload.issue.pull_request,
+              };
+
+              // Freeze to prevent mutation
+              return Object.freeze(ctx);
+            };
+
+            /**
+             * Parse the command from comment body.
+             * Extracts the command name and any arguments.
+             *
+             * @param {string} body - Comment body text
+             * @returns {Object} Parsed command with name and args
+             */
+            const parseCommand = (body) => {
+              const trimmed = body.trim();
+              const parts = trimmed.split(/\s+/);
+              const command = parts[0].toLowerCase();
+              const args = parts.slice(1);
+
+              // Extract @mention from args
+              const mentionArg = args.find(a => a.startsWith('@'));
+              const targetUser = mentionArg ? mentionArg.slice(1) : null;
+
+              return Object.freeze({
+                command,
+                args,
+                mentionArg,
+                targetUser,
+                raw: trimmed,
+              });
+            };
+
+
+            // =================================================================
+            // MODULE: Logging
+            // Structured logging for debugging and audit trail.
+            // =================================================================
+
+            /**
+             * Log a message with structured prefix.
+             *
+             * @param {string} level - Log level (INFO, WARN, ERROR, DEBUG)
+             * @param {string} message - Human-readable message
+             * @param {Object} data - Additional structured data
+             */
+            const log = (level, message, data = {}) => {
+              const timestamp = new Date().toISOString();
+              const prefix = `[${timestamp}] [${level}]`;
+              const dataStr = Object.keys(data).length > 0
+                ? `\n  Data: ${JSON.stringify(data, null, 2)}`
+                : '';
+              console.log(`${prefix} ${message}${dataStr}`);
+            };
+
+
+            // =================================================================
+            // MODULE: Permission Checks
+            // Functions to verify user permissions and roles.
+            // =================================================================
+
+            /**
+             * Check if a user is a maintainer (org member with write access).
+             *
+             * @param {Object} github - Octokit client
+             * @param {Object} ctx - Issue context
+             * @param {string} username - User to check
+             * @returns {Promise<boolean>} True if user is a maintainer
+             */
+            const isMaintainer = async (github, ctx, username) => {
+              try {
+                // Check if user has admin/write permission on the repo
+                const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
+                  owner: ctx.owner,
+                  repo: ctx.repo,
+                  username: username,
+                });
+
+                const allowedPermissions = ['admin', 'write'];
+                const hasPermission = allowedPermissions.includes(permission.permission);
+
+                log('INFO', `Permission check for @${username}`, {
+                  permission: permission.permission,
+                  isMaintainer: hasPermission,
+                });
+
+                return hasPermission;
+              } catch (error) {
+                log('ERROR', `Permission check failed for @${username}`, {
+                  error: error.message,
+                });
+                return false;
+              }
+            };
+
+
+            // =================================================================
+            // MODULE: Label Management
+            // Safe label operations that don't fail if labels don't exist.
+            // =================================================================
+
+            /**
+             * Safely add a label to an issue.
+             * Skips gracefully if the label doesn't exist in the repository.
+             *
+             * @param {Object} github - Octokit client
+             * @param {Object} ctx - Issue context
+             * @param {string} labelName - Name of the label to add
+             */
+            const safelyAddLabel = async (github, ctx, labelName) => {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: ctx.owner,
+                  repo: ctx.repo,
+                  issue_number: ctx.issueNumber,
+                  labels: [labelName],
+                });
+                log('INFO', `Added label "${labelName}"`, {
+                  issue: ctx.issueNumber,
+                });
+              } catch (error) {
+                // Label might not exist — log and continue
+                log('WARN', `Could not add label "${labelName}" (may not exist)`, {
+                  error: error.message,
+                  issue: ctx.issueNumber,
+                });
+              }
+            };
+
+            /**
+             * Safely remove a label from an issue.
+             * Skips gracefully if the label doesn't exist on the issue.
+             *
+             * @param {Object} github - Octokit client
+             * @param {Object} ctx - Issue context
+             * @param {string} labelName - Name of the label to remove
+             */
+            const safelyRemoveLabel = async (github, ctx, labelName) => {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: ctx.owner,
+                  repo: ctx.repo,
+                  issue_number: ctx.issueNumber,
+                  name: labelName,
+                });
+                log('INFO', `Removed label "${labelName}"`, {
+                  issue: ctx.issueNumber,
+                });
+              } catch (error) {
+                // Label might not exist on issue — log and continue
+                log('WARN', `Could not remove label "${labelName}" (may not exist on issue)`, {
+                  error: error.message,
+                  issue: ctx.issueNumber,
+                });
+              }
+            };
+
+
+            // =================================================================
+            // MODULE: Comment Helpers
+            // Functions to post formatted comments on issues.
+            // =================================================================
+
+            /**
+             * Post a comment on the issue.
+             *
+             * @param {Object} github - Octokit client
+             * @param {Object} ctx - Issue context
+             * @param {string} body - Comment body (Markdown supported)
+             */
+            const postComment = async (github, ctx, body) => {
+              try {
+                await github.rest.issues.createComment({
+                  owner: ctx.owner,
+                  repo: ctx.repo,
+                  issue_number: ctx.issueNumber,
+                  body: body,
+                });
+                log('INFO', 'Posted comment', {
+                  issue: ctx.issueNumber,
+                  bodyPreview: body.substring(0, 100) + (body.length > 100 ? '...' : ''),
+                });
+              } catch (error) {
+                log('ERROR', 'Failed to post comment', {
+                  error: error.message,
+                  issue: ctx.issueNumber,
+                });
+              }
+            };
+
+
+            // =================================================================
+            // MODULE: Command Handlers
+            // Each handler is an isolated function that processes one command.
+            // =================================================================
+
+            /**
+             * Handle /claim command.
+             * Assigns the issue to the commenter if not already assigned.
+             *
+             * @param {Object} github - Octokit client
+             * @param {Object} ctx - Issue context
+             */
+            const handleClaim = async (github, ctx) => {
+              log('INFO', 'Processing /claim command', {
+                commenter: ctx.commenter,
+                issue: ctx.issueNumber,
+                currentAssignees: ctx.assignees,
+              });
+
+              // Guard: Issue already assigned
+              if (ctx.hasAssignees) {
+                const assigneeList = ctx.assignees.join(', @');
+                log('INFO', 'Issue already assigned, rejecting claim', {
+                  assignees: ctx.assignees,
+                });
+
+                await postComment(github, ctx,
+                  `❌ This issue is already assigned to @${assigneeList}.\n\n` +
+                  `If there is no activity for 7 days it may become available again.\n\n` +
+                  `Please check other open issues.`
+                );
+                return;
+              }
+
+              // Guard: Commenter is already the assignee (edge case)
+              if (ctx.assignees.includes(ctx.commenter)) {
+                log('INFO', 'Commenter is already assigned', {
+                  commenter: ctx.commenter,
+                });
+
+                await postComment(github, ctx,
+                  `ℹ️ You are already assigned to this issue.`
+                );
+                return;
+              }
+
+              // Assign the issue to the commenter
+              try {
+                await github.rest.issues.addAssignees({
+                  owner: ctx.owner,
+                  repo: ctx.repo,
+                  issue_number: ctx.issueNumber,
+                  assignees: [ctx.commenter],
+                });
+
+                log('INFO', 'Assigned issue to commenter', {
+                  assignee: ctx.commenter,
+                  issue: ctx.issueNumber,
+                });
+
+                // Add in-progress label
+                await safelyAddLabel(github, ctx, 'in-progress');
+
+                // Post success comment
+                await postComment(github, ctx,
+                  `🎉 Thanks @${ctx.commenter}!\n\n` +
+                  `This issue has been assigned to you.\n\n` +
+                  `Happy coding! 🚀`
+                );
+              } catch (error) {
+                log('ERROR', 'Failed to assign issue', {
+                  error: error.message,
+                  issue: ctx.issueNumber,
+                });
+
+                await postComment(github, ctx,
+                  `⚠️ Failed to assign this issue. Please try again or contact a maintainer.`
+                );
+              }
+            };
+
+            /**
+             * Handle /assign @username command.
+             * Allows maintainers to assign issues to specific users.
+             *
+             * @param {Object} github - Octokit client
+             * @param {Object} ctx - Issue context
+             * @param {Object} cmd - Parsed command
+             */
+            const handleAssign = async (github, ctx, cmd) => {
+              log('INFO', 'Processing /assign command', {
+                commenter: ctx.commenter,
+                targetUser: cmd.targetUser,
+                issue: ctx.issueNumber,
+              });
+
+              // Guard: No target user specified
+              if (!cmd.targetUser) {
+                log('WARN', 'No target user specified', { args: cmd.args });
+
+                await postComment(github, ctx,
+                  `⚠️ Please specify a user to assign.\n\n` +
+                  `Usage: \`/assign @username\``
+                );
+                return;
+              }
+
+              // Guard: Permission check — only maintainers can use /assign
+              const commenterIsMaintainer = await isMaintainer(github, ctx, ctx.commenter);
+              if (!commenterIsMaintainer) {
+                log('WARN', 'Non-maintainer tried to use /assign', {
+                  commenter: ctx.commenter,
+                });
+
+                await postComment(github, ctx,
+                  `❌ Only maintainers can manually assign issues.`
+                );
+                return;
+              }
+
+              // Guard: Target user is already assigned
+              if (ctx.assignees.includes(cmd.targetUser)) {
+                log('INFO', 'Target user already assigned', {
+                  targetUser: cmd.targetUser,
+                });
+
+                await postComment(github, ctx,
+                  `ℹ️ @${cmd.targetUser} is already assigned to this issue.`
+                );
+                return;
+              }
+
+              // Assign the target user
+              try {
+                await github.rest.issues.addAssignees({
+                  owner: ctx.owner,
+                  repo: ctx.repo,
+                  issue_number: ctx.issueNumber,
+                  assignees: [cmd.targetUser],
+                });
+
+                log('INFO', 'Assigned issue to target user', {
+                  assignee: cmd.targetUser,
+                  issue: ctx.issueNumber,
+                  assignedBy: ctx.commenter,
+                });
+
+                // Add in-progress label
+                await safelyAddLabel(github, ctx, 'in-progress');
+
+                // Post confirmation
+                await postComment(github, ctx,
+                  `✅ @${cmd.targetUser} has been assigned to this issue by @${ctx.commenter}.\n\n` +
+                  `Happy coding! 🚀`
+                );
+              } catch (error) {
+                log('ERROR', 'Failed to assign issue', {
+                  error: error.message,
+                  targetUser: cmd.targetUser,
+                  issue: ctx.issueNumber,
+                });
+
+                await postComment(github, ctx,
+                  `⚠️ Failed to assign @${cmd.targetUser}. Please check that the username is valid.`
+                );
+              }
+            };
+
+            /**
+             * Handle /release command.
+             * Removes the assignee and in-progress label from the issue.
+             *
+             * @param {Object} github - Octokit client
+             * @param {Object} ctx - Issue context
+             */
+            const handleRelease = async (github, ctx) => {
+              log('INFO', 'Processing /release command', {
+                commenter: ctx.commenter,
+                issue: ctx.issueNumber,
+                currentAssignees: ctx.assignees,
+              });
+
+              // Guard: No one is assigned
+              if (!ctx.hasAssignees) {
+                log('INFO', 'Issue has no assignees', { issue: ctx.issueNumber });
+
+                await postComment(github, ctx,
+                  `ℹ️ This issue is not currently assigned to anyone.\n\n` +
+                  `Use \`/claim\` to assign it to yourself.`
+                );
+                return;
+              }
+
+              // Guard: Only the current assignee can release
+              if (!ctx.assignees.includes(ctx.commenter)) {
+                const assigneeList = ctx.assignees.join(', @');
+                log('WARN', 'Non-assignee tried to release', {
+                  commenter: ctx.commenter,
+                  assignees: ctx.assignees,
+                });
+
+                await postComment(github, ctx,
+                  `❌ Only the current assignee can release this issue.\n\n` +
+                  `Currently assigned to: @${assigneeList}`
+                );
+                return;
+              }
+
+              // Remove assignee
+              try {
+                await github.rest.issues.removeAssignees({
+                  owner: ctx.owner,
+                  repo: ctx.repo,
+                  issue_number: ctx.issueNumber,
+                  assignees: [ctx.commenter],
+                });
+
+                log('INFO', 'Removed assignee', {
+                  assignee: ctx.commenter,
+                  issue: ctx.issueNumber,
+                });
+
+                // Remove in-progress label
+                await safelyRemoveLabel(github, ctx, 'in-progress');
+
+                // Post confirmation
+                await postComment(github, ctx,
+                  `🔄 Issue has been released and is now available for contributors.`
+                );
+              } catch (error) {
+                log('ERROR', 'Failed to release issue', {
+                  error: error.message,
+                  issue: ctx.issueNumber,
+                });
+
+                await postComment(github, ctx,
+                  `⚠️ Failed to release this issue. Please try again or contact a maintainer.`
+                );
+              }
+            };
+
+
+            // =================================================================
+            // MODULE: Command Router
+            // Routes parsed commands to appropriate handlers.
+            // =================================================================
+
+            /**
+             * Route a command to its handler.
+             *
+             * @param {Object} github - Octokit client
+             * @param {Object} ctx - Issue context
+             * @param {Object} cmd - Parsed command
+             */
+            const routeCommand = async (github, ctx, cmd) => {
+              log('INFO', 'Routing command', {
+                command: cmd.command,
+                commenter: ctx.commenter,
+                issue: ctx.issueNumber,
+              });
+
+              switch (cmd.command) {
+                case '/claim':
+                  await handleClaim(github, ctx);
+                  break;
+
+                case '/assign':
+                  await handleAssign(github, ctx, cmd);
+                  break;
+
+                case '/release':
+                  await handleRelease(github, ctx);
+                  break;
+
+                default:
+                  log('DEBUG', 'Unknown command, ignoring', {
+                    command: cmd.command,
+                  });
+                  break;
+              }
+            };
+
+
+            // =================================================================
+            // MODULE: Guard Clauses
+            // Pre-flight checks before processing any command.
+            // =================================================================
+
+            /**
+             * Validate the context before processing.
+             * Returns null if valid, or a rejection message if invalid.
+             *
+             * @param {Object} ctx - Issue context
+             * @returns {{ valid: boolean, reason?: string }}
+             */
+            const validateContext = (ctx) => {
+              // Guard: Skip PR comments (issue_comment fires on PRs too)
+              if (ctx.isPullRequest) {
+                return { valid: false, reason: 'PR comment detected, skipping' };
+              }
+
+              // Guard: Skip if issue is closed
+              if (ctx.issueState === 'closed') {
+                return { valid: false, reason: 'Issue is closed, skipping' };
+              }
+
+              // Guard: Skip if commenter is a bot
+              if (ctx.commenterType === 'Bot') {
+                return { valid: false, reason: 'Commenter is a bot, skipping' };
+              }
+
+              // Guard: Skip if comment doesn't start with /
+              if (!ctx.commentBody.startsWith('/')) {
+                return { valid: false, reason: 'Not a command (no / prefix), skipping' };
+              }
+
+              return { valid: true };
+            };
+
+
+            // =================================================================
+            // MAIN: Entry Point
+            // =================================================================
+            // Extract context, validate, parse command, and route.
+
+            try {
+              // Step 1: Extract immutable context
+              const ctx = extractIssueContext(context.payload);
+
+              log('INFO', 'Issue comment received', {
+                issue: ctx.issueNumber,
+                title: ctx.issueTitle,
+                commenter: ctx.commenter,
+                commenterType: ctx.commenterType,
+                state: ctx.issueState,
+                isPR: ctx.isPullRequest,
+                assignees: ctx.assignees,
+              });
+
+              // Step 2: Validate context
+              const validation = validateContext(ctx);
+              if (!validation.valid) {
+                log('INFO', 'Skipping: ' + validation.reason);
+                return;
+              }
+
+              // Step 3: Parse command
+              const cmd = parseCommand(ctx.commentBody);
+
+              log('INFO', 'Command parsed', {
+                command: cmd.command,
+                targetUser: cmd.targetUser,
+                args: cmd.args,
+              });
+
+              // Step 4: Route to handler
+              await routeCommand(github, ctx, cmd);
+
+            } catch (error) {
+              // Catch-all error handler — never crash the workflow
+              log('ERROR', 'Unexpected error in issue claim workflow', {
+                error: error.message,
+                stack: error.stack,
+              });
+            }

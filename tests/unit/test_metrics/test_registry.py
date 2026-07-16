@@ -7,7 +7,6 @@ import pytest
 from openagent_eval.metrics import (
     METRIC_REGISTRY,
     BaseMetric,
-    MetricResult,
     get_metric,
     list_metrics,
 )

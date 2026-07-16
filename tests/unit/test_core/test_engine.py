@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from openagent_eval.config.models import Config, DatasetConfig, LLMConfig
+from openagent_eval.config.models import Config
 from openagent_eval.core.engine import Engine
 from openagent_eval.core.executor import Executor
 from openagent_eval.core.pipeline import EvaluationResult, Pipeline, PipelineResult

@@ -5,9 +5,48 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
+from pydantic import ValidationError as PydanticValidationError
 
 from openagent_eval.config.models import Config
 from openagent_eval.exceptions import ConfigurationError
+
+_FIELD_FORMAT_HINTS = {
+    "llm.provider": (
+        "llm:\n"
+        "  provider: openai | gemini | anthropic | groq | openrouter | ollama | mock\n"
+        "  model: gpt-4o (or your preferred model)"
+    ),
+    "llm.model": (
+        "llm:\n"
+        "  provider: openai | gemini | anthropic | groq | openrouter | ollama | mock\n"
+        "  model: gpt-4o (or your preferred model)"
+    ),
+}
+
+
+def _format_validation_error(
+    error: PydanticValidationError,
+    config_path: str | Path,
+) -> str:
+    lines = []
+
+    for err in error.errors():
+        location = ".".join(str(part) for part in err["loc"])
+
+        if err["type"] == "missing":
+            lines.append(
+                f"Missing required field '{location}' in {config_path}"
+            )
+
+            hint = _FIELD_FORMAT_HINTS.get(location)
+            if hint:
+                lines.append(f"Expected format:\n{hint}")
+        else:
+            lines.append(
+                f"Invalid value for '{location}': {err['msg']}"
+            )
+
+    return "\n\n".join(lines)
 
 
 def load_config(config_path: str | Path) -> Config:
@@ -30,7 +69,7 @@ def load_config(config_path: str | Path) -> Config:
             config_path=str(config_path),
         )
 
-    if not path.suffix in (".yaml", ".yml"):
+    if path.suffix not in (".yaml", ".yml"):
         raise ConfigurationError(
             message=f"Configuration file must be YAML format (.yaml or .yml): {config_path}",
             config_path=str(config_path),
@@ -131,8 +170,16 @@ def load_config(config_path: str | Path) -> Config:
 
         config = Config(**raw_config)
         return config
+
+    except PydanticValidationError as e:
+        raise ConfigurationError(
+            message=_format_validation_error(e, config_path),
+            config_path=str(config_path),
+        ) from e
+
     except Exception as e:
         raise ConfigurationError(
             message=f"Invalid configuration: {e}",
             config_path=str(config_path),
+
         ) from e

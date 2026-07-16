@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import sys
+from importlib.metadata import PackageNotFoundError, version
 
 import typer
 from rich.console import Console
+from typer.core import TyperGroup
 
 from openagent_eval.cli.banner import create_mini_banner
+from openagent_eval.cli.commands.audit import audit_command
 from openagent_eval.cli.commands.compare import compare_command
 from openagent_eval.cli.commands.delete import delete_command
 from openagent_eval.cli.commands.diagnose import diagnose_command
@@ -19,9 +22,7 @@ from openagent_eval.cli.commands.run import run_command
 from openagent_eval.cli.commands.synth import synth_command
 from openagent_eval.cli.commands.test import test_command
 from openagent_eval.cli.commands.validate import validate_command
-from openagent_eval.cli.commands.audit import audit_command
 from openagent_eval.cli.context import CLIContext, set_context
-from openagent_eval.cli.utils.callbacks import version_callback
 from openagent_eval.exceptions import OpenAgentEvalError
 
 # Error code mapping for different exception types
@@ -33,7 +34,31 @@ _ERROR_CODES: dict[str, int] = {
     "CorpusError": 6,
 }
 
+
+def version_callback(value: bool) -> None:
+    if value:
+        try:
+            v = version("openagent-eval")
+        except PackageNotFoundError:
+            v = "unknown"
+        typer.echo(f"openagent-eval {v}")
+        raise typer.Exit()
+
+
+class VersionAwareGroup(TyperGroup):
+    def parse_args(self, ctx, args):
+        if args:
+            version_flags = {"--version", "-V"}
+            for flag in version_flags:
+                if flag in args:
+                    # Reconstruct args with the version flag at the beginning
+                    args = [flag] + [arg for arg in args if arg != flag]
+                    break
+        return super().parse_args(ctx, args)
+
+
 app = typer.Typer(
+    cls=VersionAwareGroup,
     name="oaeval",
     help="Open-source CLI framework for evaluating RAG systems and AI Agents.",
     no_args_is_help=True,
@@ -45,10 +70,10 @@ app = typer.Typer(
 @app.callback(invoke_without_command=True)
 def main(
     version: bool = typer.Option(
-        False,
+        None,
         "--version",
         "-V",
-        help="Show version and exit.",
+        help="Show the application's version and exit.",
         callback=version_callback,
         is_eager=True,
     ),
@@ -77,20 +102,20 @@ def main(
 ) -> None:
     """OpenAgent Eval - Evaluate RAG systems and AI Agents."""
     # Set global CLI context
-    ctx = CLIContext(
+    cli_ctx = CLIContext(
         quiet=quiet,
         json_output=json_output,
         no_color=no_color,
         verbose=verbose,
     )
-    set_context(ctx)
+    set_context(cli_ctx)
 
     # Show banner when invoked without a subcommand (help display)
     try:
         import click
 
-        ctx = click.get_current_context(silent=True)
-        if ctx is not None and ctx.invoked_subcommand is None and not quiet:
+        click_ctx = click.get_current_context(silent=True)
+        if click_ctx is not None and click_ctx.invoked_subcommand is None and not quiet:
             create_mini_banner()
     except Exception:
         pass
@@ -454,7 +479,9 @@ complete -c oaeval -n __oaeval_using_command -a completion -a 'bash zsh fish' -d
 
 
 # Override the default exception handler
-def _cli_exception_handler(exc_type: type, exc_value: BaseException, exc_tb: object) -> None:
+def _cli_exception_handler(
+    exc_type: type, exc_value: BaseException, exc_tb: object
+) -> None:
     """Custom exception handler for CLI.
 
     Args:

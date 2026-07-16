@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from openagent_eval.exceptions.corpus import (
     CorpusAuditError,
