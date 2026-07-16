@@ -179,12 +179,26 @@ class BaseDatasetLoader(ABC):
             path: Path to validate.
 
         Raises:
-            DatasetNotFoundError: If the path does not exist.
+            DatasetNotFoundError: If the path does not exist
+            with a helpful message showing the current working directory.
         """
+        import os
+
         if not path.exists():
             from openagent_eval.exceptions import DatasetNotFoundError
 
-            raise DatasetNotFoundError(dataset_path=str(path))
+            cwd = os.getcwd()
+            raise DatasetNotFoundError(
+                dataset_path=str(path),
+                details={
+                    "tip": (
+                        f"Dataset file not found at '{path}'. "
+                        f"Checked in: {cwd}. "
+                        f"Use an absolute path or verify the path "
+                        f"exists relative to your current directory."
+                    ),
+                },
+            )
 
         if not path.is_file():
             from openagent_eval.exceptions import InvalidDatasetError

@@ -143,7 +143,7 @@ def run_command(
             format_file = output_dir / f"{report_path.stem}{ext}"
             generator.generate_to_file(report, format_file)
 
-        progress.update(task, description="Complete!", completed=True)
+        progress.update(task, description="Complete!", completed=total_items)
 
     elapsed = time.time() - start_time
 

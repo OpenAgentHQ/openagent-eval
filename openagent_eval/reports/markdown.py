@@ -102,7 +102,7 @@ class MarkdownReport(ReportGenerator):
             # Error details
             sections.append("### Error Details")
             sections.append("")
-            for i, err in enumerate(result.errors[:10], 1):
+            for i, err in enumerate(result.errors[:config.report.max_examples], 1):
                 sections.append(f"{i}. **{err.get('error_type', 'Unknown')}**: {err.get('error', 'No message')}")
             sections.append("")
 
@@ -110,7 +110,7 @@ class MarkdownReport(ReportGenerator):
         if result.results:
             sections.append("## Sample Results")
             sections.append("")
-            max_examples = min(len(result.results), 10)
+            max_examples = min(len(result.results), config.report.max_examples)
             for i, eval_result in enumerate(result.results[:max_examples], 1):
                 sections.append(f"### Result {i}")
                 sections.append("")
