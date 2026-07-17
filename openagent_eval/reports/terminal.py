@@ -12,7 +12,6 @@ from typing import Any
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
 from openagent_eval.reports.base import ReportGenerator
 
@@ -108,7 +107,7 @@ class TerminalReport(ReportGenerator):
         Returns:
             Path to the written file.
         """
-        path = self._ensure_output_dir(output_path)
+        path = self._prepare_output_file(output_path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")
         return path
@@ -182,7 +181,7 @@ class TerminalReport(ReportGenerator):
             example_table.add_column("#", style="dim")
             example_table.add_column("Question", max_width=40)
             example_table.add_column("Metrics", max_width=30)
-            for i, eval_result in enumerate(result.results[:5], 1):
+            for i, eval_result in enumerate(result.results[:config.report.max_examples], 1):
                 metrics_str = ", ".join(
                     f"{k}={v:.2f}" for k, v in eval_result.metrics.items()
                 )

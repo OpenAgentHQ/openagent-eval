@@ -4,9 +4,6 @@ import pytest
 
 from openagent_eval.cicd.models import (
     CICDConfig,
-    EvaluationGate,
-    ThresholdConfig,
-    ThresholdOperator,
 )
 from openagent_eval.cicd.plugin import OAEvalPlugin
 

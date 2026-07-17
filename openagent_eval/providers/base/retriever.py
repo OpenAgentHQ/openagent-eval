@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from openagent_eval.providers.base.models import Document
+    from openagent_eval.providers.models import Document
 
 
 class Retriever(ABC):

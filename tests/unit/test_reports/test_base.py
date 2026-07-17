@@ -118,19 +118,19 @@ class TestReportGenerator:
         result = report_gen.generate(evaluation_report)
         assert result == "test report"
 
-    def test_ensure_output_dir(self, tmp_path: Path) -> None:
-        """_ensure_output_dir creates parent directories."""
+    def test_prepare_output_file(self, tmp_path: Path) -> None:
+        """_prepare_output_file creates parent directories."""
 
         class ConcreteReport(ReportGenerator):
             def generate(self, report: Any) -> str:
                 return ""
 
             def generate_to_file(self, report: Any, output_path: Path | str) -> Path:
-                return self._ensure_output_dir(output_path)
+                return self._prepare_output_file(output_path)
 
         report_gen = ConcreteReport()
         target = tmp_path / "subdir" / "report.txt"
-        result = report_gen._ensure_output_dir(target)
+        result = report_gen._prepare_output_file(target)
         assert result.parent.exists()
 
     def test_extract_metric_averages(self, pipeline_result_with_data: Any) -> None:

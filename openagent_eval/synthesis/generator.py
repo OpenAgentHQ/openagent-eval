@@ -75,7 +75,8 @@ def _read_corpus(corpus_path: str | Path) -> list[tuple[str, str]]:
         List of (filename, content) tuples.
 
     Raises:
-        SynthesisExecutionError: If the path doesn't exist or can't be read.
+        SynthesisExecutionError: If the path doesn't exist, can't be read,
+            or any files fail to read.
     """
     path = Path(corpus_path)
     if not path.exists():
@@ -85,10 +86,19 @@ def _read_corpus(corpus_path: str | Path) -> list[tuple[str, str]]:
         )
 
     if path.is_file():
-        content = path.read_text(encoding="utf-8")
-        return [(path.name, content)]
+        try:
+            content = path.read_text(encoding="utf-8")
+            return [(path.name, content)]
+        except Exception as e:
+            raise SynthesisExecutionError(
+                message=f"Failed to read corpus file: {path}",
+                original_error=e,
+                details={"path": str(path)},
+            )
 
     documents: list[tuple[str, str]] = []
+    failed_files: list[dict[str, str]] = []
+
     for file_path in sorted(path.rglob("*")):
         if file_path.is_file() and file_path.suffix.lower() in {
             ".txt",
@@ -102,7 +112,16 @@ def _read_corpus(corpus_path: str | Path) -> list[tuple[str, str]]:
                 content = file_path.read_text(encoding="utf-8")
                 documents.append((str(file_path.relative_to(path)), content))
             except Exception as e:
+                failed_files.append(
+                    {"file": str(file_path.relative_to(path)), "error": str(e)}
+                )
                 logger.warning("Failed to read %s: %s", file_path, e)
+
+    if failed_files:
+        raise SynthesisExecutionError(
+            message=f"Failed to read {len(failed_files)} file(s) from corpus",
+            details={"failed_files": failed_files, "corpus_path": str(path)},
+        )
 
     return documents
 

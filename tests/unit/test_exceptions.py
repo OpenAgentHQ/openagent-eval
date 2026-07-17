@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from openagent_eval.exceptions import (
     CLIError,
     CommandError,
@@ -125,32 +123,66 @@ class TestMetricError:
         error = MetricTimeoutError("Timed out", timeout_seconds=30.0)
         assert error.timeout_seconds == 30.0
 
+    def test_timeout_error_preserves_zero_timeout(self) -> None:
+        """Test that a zero timeout is retained in the error details."""
+        error = MetricTimeoutError("Timed out immediately", timeout_seconds=0.0)
+        assert error.timeout_seconds == 0.0
+        assert error.details["timeout_seconds"] == 0.0
+
 
 class TestProviderError:
     """Tests for provider errors."""
 
     def test_basic_error(self) -> None:
-        """Test basic provider error."""
+        """Test basic provider error with standardized format."""
         error = ProviderError("Invalid provider")
-        assert str(error) == "Invalid provider"
+        assert str(error) == "Provider Error: Invalid provider"
+        assert error.error_type == "Provider Error"
+
+    def test_error_with_provider_name(self) -> None:
+        """Test provider error with provider name in standardized format."""
+        error = ProviderError(
+            "API key not found",
+            provider_name="openai",
+        )
+        assert str(error) == "[openai] Provider Error: API key not found"
 
     def test_not_found_error(self) -> None:
         """Test provider not found error."""
         error = ProviderNotFoundError("my_provider", available_providers=["openai", "gemini"])
         assert error.provider_name == "my_provider"
         assert error.available_providers == ["openai", "gemini"]
+        assert error.error_type == "Provider Not Found"
+        expected = (
+            "[my_provider] Provider Not Found: "
+            "Provider not found: my_provider. Available providers: openai, gemini "
+            "(available_providers=['openai', 'gemini'])"
+        )
+        assert str(error) == expected
 
     def test_connection_error(self) -> None:
         """Test provider connection error."""
         original = ConnectionError("Connection failed")
-        error = ProviderConnectionError("Failed to connect", original_error=original)
+        error = ProviderConnectionError(
+            "Failed to connect",
+            provider_name="gemini",
+            original_error=original,
+        )
         assert error.original_error is original
+        assert error.error_type == "Connection Error"
+        assert str(error) == "[gemini] Connection Error: Failed to connect (original_error=Connection failed)"
 
     def test_execution_error(self) -> None:
         """Test provider execution error."""
         original = RuntimeError("Execution failed")
-        error = ProviderExecutionError("Failed", original_error=original)
+        error = ProviderExecutionError(
+            "API call failed",
+            provider_name="anthropic",
+            original_error=original,
+        )
         assert error.original_error is original
+        assert error.error_type == "Execution Error"
+        assert str(error) == "[anthropic] Execution Error: API call failed (original_error=Execution failed)"
 
 
 class TestPluginError:

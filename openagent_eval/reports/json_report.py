@@ -129,7 +129,7 @@ class JSONReport(ReportGenerator):
         path = Path(output_path)
         if not str(path).endswith(".json"):
             path = path / "report.json"
-        path = self._ensure_output_dir(path)
+        path = self._prepare_output_file(path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")
         return path

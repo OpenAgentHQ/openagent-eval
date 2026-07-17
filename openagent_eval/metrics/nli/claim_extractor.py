@@ -43,17 +43,6 @@ class ClaimExtractor:
     # Sentence-ending patterns
     _SENTENCE_SPLIT = re.compile(r'(?<=[.!?])\s+')
 
-    # Patterns that indicate a single claim
-    _SIMPLE_PATTERNS = re.compile(
-        r'^(?:'
-        r'(?:The|A|An)\s+\w+\s+(?:is|are|was|were)\s+'  # "The X is Y"
-        r'|(?:It|This|That)\s+(?:is|are|was|were)\s+'     # "It is Y"
-        r'|\w+\s+(?:has|have|had)\s+'                      # "X has Y"
-        r'|\w+\s+(?:can|could|will|would|should)\s+'      # "X can Y"
-        r')',
-        re.IGNORECASE,
-    )
-
     def extract(self, answer: str) -> list[Claim]:
         """Extract atomic claims from an answer.
 
