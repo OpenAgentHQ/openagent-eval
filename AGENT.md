@@ -97,4 +97,110 @@
 
 ---
 
+## Package Release Rules
+
+Whenever releasing a new version of any package, ALWAYS follow this workflow.
+
+### 1. Validate the Project
+- Ensure all tests pass.
+- Ensure linting and formatting pass.
+- Verify CI is green.
+- Confirm the package builds successfully.
+- Ensure documentation is up to date.
+
+### 2. Update the Release
+- Update the package version following Semantic Versioning.
+- Update CHANGELOG.md with all user-facing changes.
+- Verify README examples and installation instructions.
+
+### 3. Commit Changes
+- Create a release commit if needed.
+
+Commit message:
+
+```
+release: vX.Y.Z
+```
+
+### 4. Create Git Tag
+- Create an annotated Git tag.
+
+Tag:
+
+```
+vX.Y.Z
+```
+
+Push the tag to GitHub.
+
+### 5. GitHub Release
+Create a GitHub Release using the same tag.
+
+Release title should be descriptive.
+
+Example:
+
+```
+v0.5.0 – New Features & Improvements
+```
+
+Generate release notes with the following sections:
+
+- ✨ Features
+- 🐛 Bug Fixes
+- 📚 Documentation
+- ⚙️ Internal Changes
+- ❤️ Contributors
+
+Never use the version number alone as the release title.
+
+### 6. Automated Release
+If GitHub Actions handles releases:
+
+- Wait for the workflow to finish.
+- Verify build success.
+- Verify package publishing succeeded.
+- Verify GitHub Release was created.
+- Stop immediately if any workflow fails.
+
+Never assume a release succeeded without verification.
+
+### 7. Post-Release Verification
+Verify:
+
+- Git tag exists.
+- GitHub Release exists.
+- Package is available on the package registry.
+- Fresh installation succeeds.
+- The CLI/package reports the correct version.
+
+### 8. Final Report
+After every release, provide a summary including:
+
+- Version released
+- Release status
+- CI status
+- Package publish status
+- GitHub Release status
+- Any warnings or failures
+
+### Semantic Versioning
+
+| Change | Example |
+|--------|---------|
+| PATCH (bug fixes, docs, internal) | 0.4.5 → 0.4.6 |
+| MINOR (backward-compatible features) | 0.4.5 → 0.5.0 |
+| MAJOR (breaking changes) | 1.x.x → 2.0.0 |
+
+### Rules
+- Never skip tests.
+- Never skip CHANGELOG updates.
+- Never publish an unverified release.
+- Never ignore failed CI or publishing workflows.
+- Always verify the published package after release.
+- Always use annotated Git tags.
+- Always follow the same release workflow for every package.
+
+---
+
 `PROJECT.md` · `ARCHITECTURE.md` · `DECISIONS.md` · `CONTEXT.md`
