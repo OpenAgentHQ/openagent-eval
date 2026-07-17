@@ -22,6 +22,9 @@ from openagent_eval.providers.base.llm import LLMProvider
 from openagent_eval.providers.base.retriever import Retriever
 from openagent_eval.providers.embedders.base import Embedder
 from openagent_eval.providers.models import Document, LLMResponse, TokenUsage
+from openagent_eval.providers.retrievers._validation import (
+    validate_retriever_settings,
+)
 
 # --------------------------------------------------------------------------- #
 # LLM provider registry                                                       #
@@ -114,6 +117,15 @@ def get_retriever(config: RetrieverConfig) -> Retriever:
         )
     retriever_cls = _resolve(_RETRIEVER_PROVIDERS[key])
     settings = dict(config.settings or {})
+
+    # Catch typos/unknown keys in the free-form settings dict early, before the
+    # values reach a provider constructor (which may silently swallow unknown
+    # kwargs). Providers opt in by declaring ``SETTINGS_KEYS``.
+    allowed_keys = getattr(retriever_cls, "SETTINGS_KEYS", None)
+    if allowed_keys is not None:
+        unknown = validate_retriever_settings(key, settings, allowed_keys)
+        for bad_key in unknown:
+            settings.pop(bad_key, None)
 
     embedder = None
     if config.embedder is not None:
