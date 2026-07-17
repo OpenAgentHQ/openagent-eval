@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -20,6 +21,19 @@ from openagent_eval.exceptions.corpus import (
 runner = CliRunner()
 
 
+def strip_ansi(text: str) -> str:
+    """Strip ANSI escape codes from text.
+
+    Rich emits color codes even when CliRunner's output isn't a real
+    terminal, which can split option names like ``--checks`` across
+    escape sequences (``-`` + reset + ``-checks``). Assertions on raw
+    CLI output should strip these first, matching the helper already
+    used in test_cli_improvements.py.
+    """
+    ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+    return ansi_escape.sub('', text)
+
+
 @pytest.fixture(autouse=True)
 def _reset_cli_context():
     """Reset the global CLI context before and after every test.
@@ -34,12 +48,12 @@ def _reset_cli_context():
 
 
 def make_issue(
-    severity: IssueSeverity = IssueSeverity.MEDIUM,
-    issue_type: IssueType = IssueType.DUPLICATE,
-    title: str = "Sample issue",
-    document_ids: list[str] | None = None,
-    metadata: dict | None = None,
-    description: str = "A sample issue description.",
+        severity: IssueSeverity = IssueSeverity.MEDIUM,
+        issue_type: IssueType = IssueType.DUPLICATE,
+        title: str = "Sample issue",
+        document_ids: list[str] | None = None,
+        metadata: dict | None = None,
+        description: str = "A sample issue description.",
 ) -> CorpusIssue:
     """Build a real CorpusIssue for use in test fixtures."""
     return CorpusIssue(
@@ -53,12 +67,12 @@ def make_issue(
 
 
 def make_report(
-    health_score: float = 0.95,
-    summary: str = "Corpus looks healthy.",
-    issues: list[CorpusIssue] | None = None,
-    checks_performed: list[str] | None = None,
-    total_documents: int = 10,
-    corpus_path: str = "corpus",
+        health_score: float = 0.95,
+        summary: str = "Corpus looks healthy.",
+        issues: list[CorpusIssue] | None = None,
+        checks_performed: list[str] | None = None,
+        total_documents: int = 10,
+        corpus_path: str = "corpus",
 ) -> AuditReport:
     """Build a real AuditReport for use in test fixtures.
 
@@ -97,12 +111,12 @@ class TestAuditHelp:
     def test_audit_help_shows_checks_option(self):
         result = runner.invoke(app, ["audit", "--help"])
         assert result.exit_code == 0
-        assert "--checks" in result.output
+        assert "--checks" in strip_ansi(result.output)
 
     def test_audit_help_shows_output_option(self):
         result = runner.invoke(app, ["audit", "--help"])
         assert result.exit_code == 0
-        assert "--output" in result.output
+        assert "--output" in strip_ansi(result.output)
 
 
 class TestAuditArgumentParsing:
@@ -246,7 +260,7 @@ class TestAuditErrorHandling:
     def test_audit_error_message_includes_path(self, tmp_path):
         missing = tmp_path / "missing_corpus"
         result = runner.invoke(app, ["audit", str(missing)])
-        assert str(missing) in result.output
+        assert str(missing) in strip_ansi(result.output)
 
     def test_audit_unknown_check_lists_valid_checks(self, corpus_dir):
         result = runner.invoke(app, ["audit", str(corpus_dir), "--checks", "bogus"])
@@ -349,7 +363,7 @@ class TestAuditOutputFormatting:
         )
 
         assert result.exit_code == 0, f"Command failed: {result.output}"
-        payload = json.loads(result.output)
+        payload = json.loads(strip_ansi(result.output))
         assert payload["status"] == "success"
         assert payload["health_score"] == pytest.approx(0.75)
         assert payload["issues_count"] == 1
@@ -368,7 +382,8 @@ class TestAuditOutputFormatting:
         result = runner.invoke(app, ["audit", str(corpus_dir), "--output", "json"])
 
         assert result.exit_code == 0
-        json_start = result.output.index("{")
-        payload = json.loads(result.output[json_start:])
+        clean_output = strip_ansi(result.output)
+        json_start = clean_output.index("{")
+        payload = json.loads(clean_output[json_start:])
         assert payload["status"] == "success"
         assert payload["health_score"] == pytest.approx(0.75)
