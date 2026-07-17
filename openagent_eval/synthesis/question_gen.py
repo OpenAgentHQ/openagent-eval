@@ -262,7 +262,7 @@ class QuestionGenerator:
         questions = question_pattern.findall(text)
         answers = answer_pattern.findall(text)
 
-        for q, a in zip(questions, answers):
+        for q, a in zip(questions, answers, strict=False):
             q = q.strip()
             a = a.strip()
             if q and a:

@@ -405,7 +405,7 @@ class AdversarialTestCaseGenerator:
         questions = question_pattern.findall(text)
         answers = answer_pattern.findall(text)
 
-        for q, a in zip(questions, answers):
+        for q, a in zip(questions, answers, strict=False):
             _add_test_case(q, a)
 
         if test_cases:
