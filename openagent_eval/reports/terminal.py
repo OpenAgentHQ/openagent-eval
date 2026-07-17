@@ -181,7 +181,7 @@ class TerminalReport(ReportGenerator):
             example_table.add_column("#", style="dim")
             example_table.add_column("Question", max_width=40)
             example_table.add_column("Metrics", max_width=30)
-            for i, eval_result in enumerate(result.results[:5], 1):
+            for i, eval_result in enumerate(result.results[:config.report.max_examples], 1):
                 metrics_str = ", ".join(
                     f"{k}={v:.2f}" for k, v in eval_result.metrics.items()
                 )

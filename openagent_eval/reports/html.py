@@ -106,9 +106,10 @@ class HTMLReport(ReportGenerator):
             if numeric_metric_values else None
         )
 
-        # Format results for template
+        # Format results for template, respecting the configured example limit
+        max_examples = min(len(result.results), config.report.max_examples)
         results_data = []
-        for eval_result in result.results:
+        for eval_result in result.results[:max_examples]:
             results_data.append({
                 "question": eval_result.question,
                 "answer": eval_result.answer,

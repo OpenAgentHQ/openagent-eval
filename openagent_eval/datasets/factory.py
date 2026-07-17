@@ -50,7 +50,28 @@ def _get_loader(config: DatasetConfig) -> BaseDatasetLoader:
 
     Raises:
         InvalidDatasetError: If format cannot be determined or is unsupported.
+        DatasetNotFoundError: If the dataset path does not exist.
     """
+    # Early path validation — fail fast with a helpful message.
+    path = Path(config.path)
+    if not path.exists():
+        from openagent_eval.exceptions import DatasetNotFoundError
+
+        import os
+
+        cwd = os.getcwd()
+        raise DatasetNotFoundError(
+            dataset_path=config.path,
+            details={
+                "tip": (
+                    f"Dataset file not found at '{config.path}'. "
+                    f"Checked in: {cwd}. "
+                    f"Use an absolute path or verify the path "
+                    f"exists relative to your current directory."
+                ),
+            },
+        )
+
     # Try explicit format first
     if config.format is not None:
         format_key = config.format.lower().strip()

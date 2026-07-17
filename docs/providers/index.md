@@ -23,7 +23,8 @@ and OpenAgent Eval builds the right adapter for you.
 llm:
   provider: openai          # <- LLM provider name
   model: gpt-4o-mini
-  api_key: ${OPENAI_API_KEY}   # or leave out and use the env var
+  # api_key omitted -> read from the OPENAI_API_KEY env var (config values are
+  # used literally; ${VAR} is not expanded)
 
 retriever:
   provider: chroma          # <- Retriever provider name

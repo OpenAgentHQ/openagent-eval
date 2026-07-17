@@ -23,7 +23,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
-from openagent_eval.providers.models import LLMResponse, TokenUsage
+from openagent_eval.providers.models import TokenUsage
 
 
 class Anthropic(LLMProvider):
@@ -200,15 +200,6 @@ class Anthropic(LLMProvider):
             )
 
             latency_ms = (time.time() - start_time) * 1000
-
-            # Build standardized response
-            LLMResponse(
-                content=content,
-                model=response.model,
-                usage=usage,
-                provider="anthropic",
-                latency_ms=latency_ms,
-            )
 
             return content
 

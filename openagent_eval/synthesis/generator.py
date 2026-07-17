@@ -170,6 +170,105 @@ class SyntheticDataGenerator:
         self._question_gen = QuestionGenerator(llm_provider)
         self._adversarial_gen = AdversarialTestCaseGenerator(llm_provider)
 
+    async def _generate_standard_cases(
+        self,
+        chunks: list[tuple[str, int, str]],
+        questions_per_chunk: int,
+        remaining: int,
+        semaphore: asyncio.Semaphore,
+    ) -> list[TestCase]:
+        """Generate standard test cases for a list of chunks.
+
+        Args:
+            chunks: List of (source_document, chunk_index, chunk_text) tuples.
+            questions_per_chunk: Base number of questions per chunk.
+            remaining: Extra questions to distribute across the first chunks.
+            semaphore: Bounds concurrent LLM calls.
+
+        Returns:
+            List of generated standard TestCase instances.
+        """
+
+        async def _generate_one(
+            filename: str,
+            chunk_idx: int,
+            chunk: str,
+            num_questions: int,
+        ) -> list[TestCase]:
+            async with semaphore:
+                return await self._question_gen.generate(
+                    context=chunk,
+                    count=num_questions,
+                    source_document=filename,
+                    chunk_index=chunk_idx,
+                )
+
+        tasks: list[asyncio.Task[list[TestCase]]] = []
+        for i, (filename, chunk_idx, chunk) in enumerate(chunks):
+            n = questions_per_chunk + (1 if i < remaining else 0)
+            if n > 0:
+                task = asyncio.create_task(
+                    _generate_one(filename, chunk_idx, chunk, n)
+                )
+                tasks.append(task)
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        test_cases: list[TestCase] = []
+        for result in results:
+            if isinstance(result, Exception):
+                logger.warning("Standard generation failed: %s", result)
+                continue
+            test_cases.extend(result)
+
+        return test_cases
+
+    async def _generate_adversarial_cases(
+        self,
+        chunks: list[tuple[str, int, str]],
+        count_per_type: int,
+        semaphore: asyncio.Semaphore,
+    ) -> list[TestCase]:
+        """Generate adversarial test cases for a list of chunks.
+
+        Args:
+            chunks: List of (source_document, chunk_index, chunk_text) tuples.
+            count_per_type: Number of adversarial cases per type per chunk.
+            semaphore: Bounds concurrent LLM calls.
+
+        Returns:
+            List of generated adversarial TestCase instances.
+        """
+
+        async def _generate_one(
+            filename: str,
+            chunk_idx: int,
+            chunk: str,
+        ) -> list[TestCase]:
+            async with semaphore:
+                return await self._adversarial_gen.generate_all_types(
+                    context=chunk,
+                    count_per_type=count_per_type,
+                    source_document=filename,
+                    chunk_index=chunk_idx,
+                )
+
+        tasks: list[asyncio.Task[list[TestCase]]] = []
+        for filename, chunk_idx, chunk in chunks:
+            task = asyncio.create_task(_generate_one(filename, chunk_idx, chunk))
+            tasks.append(task)
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        test_cases: list[TestCase] = []
+        for result in results:
+            if isinstance(result, Exception):
+                logger.warning("Adversarial generation failed: %s", result)
+                continue
+            test_cases.extend(result)
+
+        return test_cases
+
     async def generate(
         self,
         corpus_path: str | Path,
@@ -215,72 +314,17 @@ class SyntheticDataGenerator:
         remaining = count - (questions_per_chunk * len(all_chunks))
 
         # Generate standard test cases
-        all_test_cases: list[TestCase] = []
-
         semaphore = asyncio.Semaphore(self._max_concurrent)
-
-        async def _generate_standard(
-            filename: str,
-            chunk_idx: int,
-            chunk: str,
-            num_questions: int,
-        ) -> list[TestCase]:
-            async with semaphore:
-                return await self._question_gen.generate(
-                    context=chunk,
-                    count=num_questions,
-                    source_document=filename,
-                    chunk_index=chunk_idx,
-                )
-
-        # Build tasks for standard generation
-        tasks: list[asyncio.Task[list[TestCase]]] = []
-        for i, (filename, chunk_idx, chunk) in enumerate(all_chunks):
-            n = questions_per_chunk + (1 if i < remaining else 0)
-            if n > 0:
-                task = asyncio.create_task(
-                    _generate_standard(filename, chunk_idx, chunk, n)
-                )
-                tasks.append(task)
-
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        for result in results:
-            if isinstance(result, Exception):
-                logger.warning("Standard generation failed: %s", result)
-                continue
-            all_test_cases.extend(result)
+        all_test_cases = await self._generate_standard_cases(
+            all_chunks, questions_per_chunk, remaining, semaphore
+        )
 
         # Generate adversarial test cases if requested
         if adversarial:
-            adv_tasks: list[asyncio.Task[list[TestCase]]] = []
-
-            async def _generate_adversarial(
-                filename: str,
-                chunk_idx: int,
-                chunk: str,
-            ) -> list[TestCase]:
-                async with semaphore:
-                    return await self._adversarial_gen.generate_all_types(
-                        context=chunk,
-                        count_per_type=adversarial_count_per_chunk,
-                        source_document=filename,
-                        chunk_index=chunk_idx,
-                    )
-
-            for filename, chunk_idx, chunk in all_chunks:
-                task = asyncio.create_task(
-                    _generate_adversarial(filename, chunk_idx, chunk)
-                )
-                adv_tasks.append(task)
-
-            adv_results = await asyncio.gather(*adv_tasks, return_exceptions=True)
-
-            for result in adv_results:
-                if isinstance(result, Exception):
-                    logger.warning("Adversarial generation failed: %s", result)
-                    continue
-                all_test_cases.extend(result)
+            adv_cases = await self._generate_adversarial_cases(
+                all_chunks, adversarial_count_per_chunk, semaphore
+            )
+            all_test_cases.extend(adv_cases)
 
         # Filter adversarial types if specified
         if adversarial_types and adversarial:
@@ -335,55 +379,24 @@ class SyntheticDataGenerator:
                 details={"text_length": len(text)},
             )
 
+        # Normalize chunks to (source_document, chunk_index, chunk_text) tuples
+        chunk_tuples: list[tuple[str, int, str]] = [
+            (source_name, i, chunk) for i, chunk in enumerate(chunks)
+        ]
+
         questions_per_chunk = max(1, count // len(chunks))
         remaining = count - (questions_per_chunk * len(chunks))
 
-        all_test_cases: list[TestCase] = []
         semaphore = asyncio.Semaphore(self._max_concurrent)
-
-        async def _gen(chunk: str, idx: int, n: int) -> list[TestCase]:
-            async with semaphore:
-                return await self._question_gen.generate(
-                    context=chunk,
-                    count=n,
-                    source_document=source_name,
-                    chunk_index=idx,
-                )
-
-        tasks = []
-        for i, chunk in enumerate(chunks):
-            n = questions_per_chunk + (1 if i < remaining else 0)
-            if n > 0:
-                tasks.append(asyncio.create_task(_gen(chunk, i, n)))
-
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        for result in results:
-            if isinstance(result, Exception):
-                logger.warning("Standard generation failed: %s", result)
-                continue
-            all_test_cases.extend(result)
+        all_test_cases = await self._generate_standard_cases(
+            chunk_tuples, questions_per_chunk, remaining, semaphore
+        )
 
         if adversarial:
-            adv_tasks = []
-
-            async def _gen_adv(chunk: str, idx: int) -> list[TestCase]:
-                async with semaphore:
-                    return await self._adversarial_gen.generate_all_types(
-                        context=chunk,
-                        count_per_type=adversarial_count_per_type,
-                        source_document=source_name,
-                        chunk_index=idx,
-                    )
-
-            for i, chunk in enumerate(chunks):
-                adv_tasks.append(asyncio.create_task(_gen_adv(chunk, i)))
-
-            adv_results = await asyncio.gather(*adv_tasks, return_exceptions=True)
-            for result in adv_results:
-                if isinstance(result, Exception):
-                    logger.warning("Adversarial generation failed: %s", result)
-                    continue
-                all_test_cases.extend(result)
+            adv_cases = await self._generate_adversarial_cases(
+                chunk_tuples, adversarial_count_per_type, semaphore
+            )
+            all_test_cases.extend(adv_cases)
 
         if adversarial_types and adversarial:
             type_values = {t.value for t in adversarial_types}

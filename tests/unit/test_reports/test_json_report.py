@@ -84,6 +84,15 @@ class TestJSONReport:
         assert data["failure_analysis"]["total_errors"] == 2
         assert "ProviderConnectionError" in data["failure_analysis"]["error_breakdown"]
 
+    def test_generate_respects_max_examples(
+        self, evaluation_report_limited: Any
+    ) -> None:
+        """generate() includes at most config.report.max_examples results."""
+        report = JSONReport()
+        result = report.generate(evaluation_report_limited)
+        data = json.loads(result)
+        assert len(data["results"]) == 2
+
     def test_generate_contains_configuration(
         self, evaluation_report: Any
     ) -> None:

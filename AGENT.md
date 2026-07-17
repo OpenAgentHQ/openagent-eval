@@ -97,4 +97,21 @@
 
 ---
 
+## Package Release Rules
+
+Whenever releasing a new version of any package, ALWAYS follow the workflow in `Release_Guide.md`.
+
+Quick reference: See `Release.md` for the release checklist.
+
+Key rules:
+- Never skip tests.
+- Never skip CHANGELOG updates.
+- Never publish an unverified release.
+- Never ignore failed CI or publishing workflows.
+- Always verify the published package after release.
+- Always use annotated Git tags.
+- Always follow the same release workflow for every package.
+
+---
+
 `PROJECT.md` · `ARCHITECTURE.md` · `DECISIONS.md` · `CONTEXT.md`

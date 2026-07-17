@@ -128,6 +128,54 @@ def evaluation_report(
 
 
 @pytest.fixture
+def sample_config_limited() -> Config:
+    """Create a sample configuration with a low max_examples limit."""
+    return Config(
+        dataset=DatasetConfig(path="tests/sample_data/test_dataset.json"),
+        llm=LLMConfig(provider="openai", model="gpt-4o"),
+        retriever=RetrieverConfig(provider="chroma"),
+        metrics=MetricsConfig(
+            retrieval=["context_precision", "context_recall"],
+            generation=["faithfulness"],
+        ),
+        report=ReportConfig(
+            output=OutputFormat.TERMINAL,
+            output_dir="./test_reports",
+            max_examples=2,
+        ),
+    )
+
+
+@pytest.fixture
+def evaluation_report_limited(
+    sample_config_limited: Config,
+    pipeline_result_with_data: PipelineResult,
+) -> EvaluationReport:
+    """Create an EvaluationReport with max_examples below the result count."""
+    summary = {
+        "total_items": 5,
+        "successful_evaluations": 3,
+        "failed_evaluations": 2,
+        "metrics_summary": {
+            "precision": 0.85,
+            "recall": 0.8433,
+            "faithfulness": 0.8567,
+        },
+    }
+
+    return EvaluationReport(
+        config=sample_config_limited,
+        result=pipeline_result_with_data,
+        summary=summary,
+        metadata={
+            "version": "0.1.0",
+            "engine": "openagent-eval",
+            "title": "Test Report",
+        },
+    )
+
+
+@pytest.fixture
 def evaluation_report_empty(
     sample_config: Config,
     pipeline_result_empty: PipelineResult,

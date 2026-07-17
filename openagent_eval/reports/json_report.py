@@ -87,8 +87,9 @@ class JSONReport(ReportGenerator):
             },
         }
 
-        # Format individual results
-        for eval_result in result.results:
+        # Format individual results, respecting the configured example limit
+        max_examples = min(len(result.results), config.report.max_examples)
+        for eval_result in result.results[:max_examples]:
             report_data["results"].append({
                 "question": eval_result.question,
                 "answer": eval_result.answer,
