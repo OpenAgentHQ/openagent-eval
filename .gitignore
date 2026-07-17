@@ -240,3 +240,6 @@ tiktoken-docs.md
 config.yaml
 config.groq.yaml
 config.*.yaml
+
+# Generated eval report artifacts
+reports/
