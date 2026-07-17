@@ -9,6 +9,7 @@ from openagent_eval.exceptions import (
     DatasetError,
     DatasetNotFoundError,
     DatasetValidationError,
+    DiagnosisExecutionError,
     InvalidDatasetError,
     MetricError,
     MetricExecutionError,
@@ -128,6 +129,17 @@ class TestMetricError:
         error = MetricTimeoutError("Timed out immediately", timeout_seconds=0.0)
         assert error.timeout_seconds == 0.0
         assert error.details["timeout_seconds"] == 0.0
+
+
+class TestDiagnosisError:
+    """Tests for diagnosis errors."""
+
+    def test_execution_error_includes_step_in_details(self) -> None:
+        """Test that the failed step is visible in error details."""
+        error = DiagnosisExecutionError("Failed", step="blame_attribution")
+
+        assert error.step == "blame_attribution"
+        assert error.details["step"] == "blame_attribution"
 
 
 class TestProviderError:
