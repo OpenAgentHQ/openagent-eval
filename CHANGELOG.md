@@ -8,9 +8,77 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+---
+
+## [0.4.6] - 2026-07-17
+
+### Added
+
+- **Retriever Settings Validation** — validate retriever settings keys to catch typos early (#172)
+- **Standardized Provider Errors** — standardize provider error `__str__` format for better debugging (#167)
+- **Environment Variables Reference** — new docs page covering all environment variables (#176)
+- **Package Release Rules** — add release workflow documentation to AGENT.md (#183)
+
 ### Fixed
 
-- Add consistent `--version` flag to all CLI commands (#125).
+- **pgvector Async Connection** — use async psycopg connection in pgvector retriever (#182)
+- **Report max_examples Respect** — HTML and JSON generators now respect `ReportConfig.max_examples` (#181)
+- **Synthesis Duplicate Functions** — extract duplicate inner generation functions (#180)
+- **Synthesis Parallel Generation** — parallelize adversarial test case generation with `asyncio.gather` (#178)
+- **Synthesis Premature Return** — fix Strategy 0 in `_parse_response` returning prematurely (#175)
+- **Synthesis Corpus Errors** — `_read_corpus` no longer silently swallows file reading errors (#149)
+- **CLI Version Flag** — add consistent `--version` flag to all CLI commands (#157)
+- **CLI Export Commands** — export all CLI commands (#147)
+- **CLI Dry-run Warning** — interpolate timeout in dry-run warning (#145)
+- **CLI Mock Provider** — use configured provider for synth (#148)
+- **Progress Bar Reset** — fix progress bar reset to 1/total_items on completion (#162)
+- **Context Variable Shadowing** — rename ctx variables to avoid shadowing CLIContext and click.Context (#153, #162)
+- **Report max_examples Hardcoded** — use `ReportConfig.max_examples` instead of hardcoded limits (#161)
+- **Comparison Winner Logic** — use common metrics only in comparison report (#159)
+- **Dataset Input Validation** — add input validation for dataset path with helpful error message (#158)
+- **Non-ASCII Keywords** — support non-ASCII characters in content gap analysis (#156)
+- **Failure Analysis Metrics** — pass `metric_scores` from error entries in `_compute_failure_analysis` (#155)
+- **Synthesis Curly Braces** — escape curly braces in context before `str.format()` in synthesis (#152)
+- **Report Config Validation** — validate config key in `ReportManager.reconstruct()` (#150)
+- **Metrics Zero Timeout** — preserve zero timeout details (#146)
+- **Missing Command Imports** — add missing imports and `__all__` entries for 6 commands (#168)
+- **Orphan LLMResponse** — remove orphan LLMResponse construction in anthropic generate() (#166)
+- **Dead Regex** — remove dead `_SIMPLE_PATTERNS` regex (#165)
+- **Corpus Naive Timestamps** — normalize naive staleness timestamps (#170)
+- **Configuration Validation** — enhance error messages for missing required config fields (#140)
+
+### Changed
+
+- **Env-var Documentation** — correct env-var and config claims in docs (#179)
+
+### Documentation
+
+- **Quickstart Guide** — add QUICKSTART.md for coding agents (#144)
+- **Context Files Compressed** — compress context files to <100 lines for coding agent efficiency (#142)
+- **AI Files Reorganized** — move .ai/ files to root, add INSTRUCTIONS.md writing rules (#139)
+
+### Testing
+
+- **Synth CLI Unit Tests** — add unit tests for the synth CLI command (#174)
+- **Report Edge Cases** — cover `ReportManager.reconstruct()` edge cases (#173)
+- **Pipeline Integration Test** — add full-pipeline e2e test with mock providers (#171)
+
+### Internal
+
+- **Ignore Local Configs** — ignore local config files in git (#143)
+- **Remove Local Artifacts** — remove local artifacts from tracking (#141)
+
+### Contributors
+
+- ❤️ @himanshu231204
+- ❤️ @Nitjsefnie
+- ❤️ @fazalpsinfo-cmyk
+- ❤️ @Sanjays2402
+- ❤️ @lesbass
+- ❤️ @PrinceThummar011
+- ❤️ @Silvren
+- ❤️ @hkJerryLeung
+- ❤️ @1-gokul
 
 ---
 
@@ -368,7 +436,8 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ## Links
 
-[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.6...HEAD
+[0.4.6]: https://github.com/openagenthq/openagent-eval/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/openagenthq/openagent-eval/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/openagenthq/openagent-eval/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/openagenthq/openagent-eval/compare/v0.4.2...v0.4.3
