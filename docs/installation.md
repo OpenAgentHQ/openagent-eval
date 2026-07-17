@@ -80,6 +80,10 @@ OPENROUTER_API_KEY=...
     OpenAgent Eval supports fully local models through [Ollama](https://ollama.com).
     Set `provider: ollama` in your config and no API key is required.
 
+See the [Environment Variables](environment-variables.md) reference for every
+variable OpenAgent Eval reads, including how keys are resolved and how they
+reach the process.
+
 ## Next steps
 
 - Follow the [Quickstart](quickstart.md) to run your first evaluation.
