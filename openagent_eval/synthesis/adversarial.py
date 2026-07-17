@@ -294,6 +294,22 @@ class AdversarialTestCaseGenerator:
         import re as _re
 
         test_cases: list[TestCase] = []
+        seen_questions: set[str] = set()
+
+        def _add_test_case(question: str, answer: str) -> None:
+            """Add test case if question not already seen."""
+            if question and question not in seen_questions:
+                seen_questions.add(question)
+                test_cases.append(
+                    TestCase(
+                        question=question,
+                        ground_truth=answer,
+                        context=context,
+                        test_type=test_type,
+                        source_document=source_document,
+                        chunk_index=chunk_index,
+                    )
+                )
 
         # Clean code blocks and normalize text
         text = raw_response.strip()
@@ -312,20 +328,10 @@ class AdversarialTestCaseGenerator:
         try:
             data = json.loads(text)
             if isinstance(data, dict):
-                question = data.get("question", "").strip()
-                answer = data.get("answer", "").strip()
-                if question:
-                    test_cases.append(
-                        TestCase(
-                            question=question,
-                            ground_truth=answer,
-                            context=context,
-                            test_type=test_type,
-                            source_document=source_document,
-                            chunk_index=chunk_index,
-                        )
-                    )
-                    return test_cases
+                question = data.get("question", "")
+                answer = data.get("answer", "")
+                _add_test_case(question, answer)
+                # Don't return here - continue to other strategies to find more questions
         except (json.JSONDecodeError, ValueError):
             pass
 
@@ -347,19 +353,9 @@ class AdversarialTestCaseGenerator:
             if isinstance(data, list):
                 for item in data:
                     if isinstance(item, dict):
-                        question = item.get("question", "").strip()
-                        answer = item.get("answer", "").strip()
-                        if question:
-                            test_cases.append(
-                                TestCase(
-                                    question=question,
-                                    ground_truth=answer,
-                                    context=context,
-                                    test_type=test_type,
-                                    source_document=source_document,
-                                    chunk_index=chunk_index,
-                                )
-                            )
+                        question = item.get("question", "")
+                        answer = item.get("answer", "")
+                        _add_test_case(question, answer)
                 if test_cases:
                     return test_cases
         except (json.JSONDecodeError, ValueError):
@@ -378,19 +374,9 @@ class AdversarialTestCaseGenerator:
                     obj_str = _re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", obj_str)
 
                     item = json.loads(obj_str)
-                    question = item.get("question", "").strip()
-                    answer = item.get("answer", "").strip()
-                    if question:
-                        test_cases.append(
-                            TestCase(
-                                question=question,
-                                ground_truth=answer,
-                                context=context,
-                                test_type=test_type,
-                                source_document=source_document,
-                                chunk_index=chunk_index,
-                            )
-                        )
+                    question = item.get("question", "")
+                    answer = item.get("answer", "")
+                    _add_test_case(question, answer)
                 except (json.JSONDecodeError, ValueError):
                     continue
 
@@ -407,19 +393,7 @@ class AdversarialTestCaseGenerator:
         matches = qa_pattern.findall(text)
 
         for question, answer in matches:
-            question = question.strip()
-            answer = answer.strip()
-            if question:
-                test_cases.append(
-                    TestCase(
-                        question=question,
-                        ground_truth=answer,
-                        context=context,
-                        test_type=test_type,
-                        source_document=source_document,
-                        chunk_index=chunk_index,
-                    )
-                )
+            _add_test_case(question, answer)
 
         if test_cases:
             return test_cases
@@ -431,20 +405,8 @@ class AdversarialTestCaseGenerator:
         questions = question_pattern.findall(text)
         answers = answer_pattern.findall(text)
 
-        for q, a in zip(questions, answers):
-            q = q.strip()
-            a = a.strip()
-            if q:
-                test_cases.append(
-                    TestCase(
-                        question=q,
-                        ground_truth=a,
-                        context=context,
-                        test_type=test_type,
-                        source_document=source_document,
-                        chunk_index=chunk_index,
-                    )
-                )
+        for q, a in zip(questions, answers, strict=False):
+            _add_test_case(q, a)
 
         if test_cases:
             return test_cases
