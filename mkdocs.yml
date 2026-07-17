@@ -178,6 +178,7 @@ nav:
   - Guide:
       - Architecture: architecture.md
       - CLI Reference: cli.md
+      - Environment Variables: environment-variables.md
       - API Reference: api.md
       - Report Output Formats: reports-output-formats.md
   - Examples:
