@@ -10,6 +10,8 @@ import yaml
 from openagent_eval.config.loader import load_config
 from openagent_eval.config.models import (
     Config,
+    CorpusCheckType,
+    CorpusConfig,
     DatasetConfig,
     LLMConfig,
     MetricsConfig,
@@ -164,3 +166,78 @@ class TestConfigLoader:
             load_config(config_path)
 
         assert "totally_fake_metric" in caplog.text
+
+
+class TestCorpusConfigIntegration:
+    """Issue #121: the corpus: section is part of the main Config."""
+
+    def test_corpus_defaults_to_none(self) -> None:
+        """A Config without a corpus section leaves corpus unset."""
+        config = Config(
+            dataset=DatasetConfig(path="data.json"),
+            llm=LLMConfig(provider="openai", model="gpt-4o"),
+        )
+        assert config.corpus is None
+
+    def test_load_config_parses_corpus_section(self, tmp_path: Path) -> None:
+        """A corpus: section in config.yaml parses into a CorpusConfig."""
+        config_dict = {
+            "dataset": {"path": "data.json"},
+            "llm": {"provider": "openai", "model": "gpt-4o"},
+            "corpus": {
+                "path": "./knowledge_base/",
+                "checks": ["contradiction", "staleness"],
+                "staleness_days": 180,
+                "similarity_threshold": 0.8,
+                "max_documents": 50,
+            },
+        }
+        config_path = tmp_path / "with_corpus.yaml"
+        config_path.write_text(yaml.dump(config_dict), encoding="utf-8")
+
+        config = load_config(config_path)
+
+        assert isinstance(config.corpus, CorpusConfig)
+        assert config.corpus.path == "./knowledge_base/"
+        assert config.corpus.checks == [
+            CorpusCheckType.CONTRADICTION,
+            CorpusCheckType.STALENESS,
+        ]
+        assert config.corpus.staleness_days == 180
+        assert config.corpus.similarity_threshold == 0.8
+        assert config.corpus.max_documents == 50
+
+    def test_load_config_without_corpus_leaves_it_none(self, tmp_path: Path) -> None:
+        """Omitting the corpus section keeps config.corpus as None."""
+        config_dict = {
+            "dataset": {"path": "data.json"},
+            "llm": {"provider": "openai", "model": "gpt-4o"},
+        }
+        config_path = tmp_path / "no_corpus.yaml"
+        config_path.write_text(yaml.dump(config_dict), encoding="utf-8")
+
+        config = load_config(config_path)
+
+        assert config.corpus is None
+
+    def test_load_config_corpus_unknown_key_is_ignored(self, tmp_path: Path) -> None:
+        """Unknown keys in corpus: are silently ignored, matching sibling
+        sections (pydantic ``extra="ignore"``); they neither error nor drop
+        the known fields."""
+        config_dict = {
+            "dataset": {"path": "data.json"},
+            "llm": {"provider": "openai", "model": "gpt-4o"},
+            "corpus": {
+                "path": "./kb/",
+                "staleness_days": 90,
+                "totally_fake_corpus_key": 123,
+            },
+        }
+        config_path = tmp_path / "corpus_unknown.yaml"
+        config_path.write_text(yaml.dump(config_dict), encoding="utf-8")
+
+        config = load_config(config_path)
+
+        assert isinstance(config.corpus, CorpusConfig)
+        assert config.corpus.staleness_days == 90
+        assert not hasattr(config.corpus, "totally_fake_corpus_key")
