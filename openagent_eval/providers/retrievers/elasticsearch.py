@@ -61,7 +61,7 @@ class ElasticsearchRetriever(Retriever):
             )
 
         try:
-            from elasticsearch import Elasticsearch
+            from elasticsearch import AsyncElasticsearch
         except ImportError as exc:  # pragma: no cover - depends on installed dep
             raise ImportError(
                 "elasticsearch is required for the elasticsearch retriever. "
@@ -69,7 +69,7 @@ class ElasticsearchRetriever(Retriever):
             ) from exc
 
         try:
-            self._client = Elasticsearch(hosts=hosts, api_key=api_key)
+            self._client = AsyncElasticsearch(hosts=hosts, api_key=api_key)
         except Exception as exc:
             raise ProviderConnectionError(
                 message=f"Failed to connect to Elasticsearch: {exc}",
@@ -103,7 +103,7 @@ class ElasticsearchRetriever(Retriever):
                     "size": k,
                     "_source": [self._content_field],
                 }
-            resp = self._client.search(index=self._index, **body)
+            resp = await self._client.search(index=self._index, **body)
         except Exception as exc:
             raise ProviderExecutionError(
                 message=f"Elasticsearch query failed: {exc}",
@@ -130,3 +130,7 @@ class ElasticsearchRetriever(Retriever):
                 )
             )
         return documents
+
+    async def close(self) -> None:
+        """Close the underlying async Elasticsearch client."""
+        await self._client.close()
