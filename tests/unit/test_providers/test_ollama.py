@@ -239,7 +239,7 @@ class TestOllamaTokenCount:
 
 
 # ---------------------------------------------------------------------------
-# generate_with_usage() / generate_with_usage_async() tests
+# generate_with_usage() / generate_with_usage_sync() tests
 #
 # Regression for #78: both methods must return an ``LLMResponse`` (matching
 # every other LLM provider), not a ``tuple[str, TokenUsage]``.
@@ -250,7 +250,7 @@ class TestOllamaGenerateWithUsage:
     def test_generate_with_usage_returns_llm_response(
         self, provider: Ollama, mock_httpx_response, monkeypatch
     ):
-        """generate_with_usage() returns an LLMResponse with all fields."""
+        """generate_with_usage_sync() returns an LLMResponse with all fields."""
         import openagent_eval.providers.llm.ollama as ollama_module
 
         mock_client = MagicMock()
@@ -262,7 +262,7 @@ class TestOllamaGenerateWithUsage:
             ollama_module.httpx, "Client", MagicMock(return_value=client_cm)
         )
 
-        result = provider.generate_with_usage("Test prompt")
+        result = provider.generate_with_usage_sync("Test prompt")
 
         assert isinstance(result, LLMResponse)
         assert result.content == "Ollama response"
@@ -277,7 +277,7 @@ class TestOllamaGenerateWithUsage:
     def test_generate_with_usage_model_override(
         self, provider: Ollama, mock_httpx_response, monkeypatch
     ):
-        """generate_with_usage() reflects a per-call model override."""
+        """generate_with_usage_sync() reflects a per-call model override."""
         import openagent_eval.providers.llm.ollama as ollama_module
 
         mock_client = MagicMock()
@@ -289,7 +289,7 @@ class TestOllamaGenerateWithUsage:
             ollama_module.httpx, "Client", MagicMock(return_value=client_cm)
         )
 
-        result = provider.generate_with_usage("Test prompt", model="mistral")
+        result = provider.generate_with_usage_sync("Test prompt", model="mistral")
 
         assert isinstance(result, LLMResponse)
         assert result.model == "mistral"

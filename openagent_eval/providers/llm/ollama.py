@@ -249,12 +249,12 @@ class Ollama(LLMProvider):
             # Fallback to word-based approximation
             return len(text.split())
 
-    def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
+    def generate_with_usage_sync(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate text and return a full LLMResponse synchronously.
 
-        This is a helper method that generates text and extracts token usage
-        from Ollama's response metadata. For async usage, call
-        generate_with_usage_async() directly.
+        This is a blocking helper for callers that are not running inside an
+        event loop. Async callers must use ``generate_with_usage`` (the
+        coroutine that every LLM provider exposes).
 
         Args:
             prompt: The input prompt.
@@ -265,7 +265,7 @@ class Ollama(LLMProvider):
 
         Note:
             This method is synchronous for convenience. For async contexts,
-            use generate_with_usage_async() instead.
+            use ``generate_with_usage`` instead.
         """
         # Build request payload
         model = kwargs.get("model", self._model)
@@ -337,13 +337,14 @@ class Ollama(LLMProvider):
             latency_ms=latency_ms,
         )
 
-    async def generate_with_usage_async(
-        self, prompt: str, **kwargs: Any
-    ) -> LLMResponse:
+    async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate text and return a full LLMResponse asynchronously.
 
-        This method generates text and extracts token usage from Ollama's
-        response metadata for accurate cost tracking.
+        This is the canonical usage-returning entry point and matches the
+        ``async def generate_with_usage`` signature exposed by every other LLM
+        provider, so the evaluation pipeline can ``await`` it uniformly. It
+        generates text and extracts token usage from Ollama's response metadata
+        for accurate cost tracking.
 
         Args:
             prompt: The input prompt.
@@ -416,6 +417,17 @@ class Ollama(LLMProvider):
             provider=self.name,
             latency_ms=latency_ms,
         )
+
+    async def generate_with_usage_async(
+        self, prompt: str, **kwargs: Any
+    ) -> LLMResponse:
+        """Deprecated alias for :meth:`generate_with_usage`.
+
+        Retained for backward compatibility with callers written against the
+        old Ollama-only name. New code should ``await generate_with_usage``,
+        which matches every other provider.
+        """
+        return await self.generate_with_usage(prompt, **kwargs)
 
     async def close(self) -> None:
         """Close the HTTP client and clean up resources."""
