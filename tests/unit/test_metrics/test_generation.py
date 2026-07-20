@@ -173,30 +173,54 @@ class TestSemanticSimilarity:
 
     def test_identical_meaning(self):
         """Same meaning returns high score."""
-        try:
-            from sentence_transformers import SentenceTransformer
-            SentenceTransformer("all-MiniLM-L6-v2")
-        except (ImportError, Exception):
-            pytest.skip("sentence-transformers is not available or model download failed")
+        import sys
+        from unittest.mock import MagicMock, patch
+        import numpy as np
 
-        result = self.metric.evaluate(
-            answer="The car is red",
-            ground_truth="The automobile is red",
-        )
+        if hasattr(self.metric, "_cached_model"):
+            delattr(self.metric, "_cached_model")
+
+        mock_st = MagicMock()
+        mock_st.return_value.encode.return_value = np.array([[1.0, 0.0], [1.0, 0.0]])
+        mock_sklearn = MagicMock()
+        mock_sklearn.cosine_similarity.return_value = np.array([[0.8]])
+
+        with patch.dict(sys.modules, {
+            "sentence_transformers": mock_st,
+            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+            "sklearn.metrics.pairwise": mock_sklearn,
+        }):
+            result = self.metric.evaluate(
+                answer="The car is red",
+                ground_truth="The automobile is red",
+            )
         assert result.score > 0.7
 
     def test_different_meaning(self):
         """Different meaning returns lower score."""
-        try:
-            from sentence_transformers import SentenceTransformer
-            SentenceTransformer("all-MiniLM-L6-v2")
-        except (ImportError, Exception):
-            pytest.skip("sentence-transformers is not available or model download failed")
+        import sys
+        from unittest.mock import MagicMock, patch
+        import numpy as np
 
-        result = self.metric.evaluate(
-            answer="The sky is blue",
-            ground_truth="Python is a programming language",
-        )
+        if hasattr(self.metric, "_cached_model"):
+            delattr(self.metric, "_cached_model")
+
+        mock_st = MagicMock()
+        mock_st.return_value.encode.return_value = np.array([[1.0, 0.0], [0.0, 1.0]])
+        mock_sklearn = MagicMock()
+        mock_sklearn.cosine_similarity.return_value = np.array([[0.0]])
+
+        with patch.dict(sys.modules, {
+            "sentence_transformers": mock_st,
+            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+            "sklearn.metrics.pairwise": mock_sklearn,
+        }):
+            result = self.metric.evaluate(
+                answer="The sky is blue",
+                ground_truth="Python is a programming language",
+            )
         assert result.score < 0.7
 
     def test_empty_answer(self):
