@@ -120,7 +120,7 @@ class JSONLDatasetLoader(BaseDatasetLoader):
                 raise InvalidDatasetError(
                     message=f"Invalid JSON on line {line_num}: {e}",
                     dataset_path=str(path),
-                    format="jsonl",
+                    data_format="jsonl",
                     line_number=line_num,
                 ) from e
 

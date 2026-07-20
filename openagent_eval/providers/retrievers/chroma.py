@@ -67,6 +67,13 @@ class ChromaRetriever(Retriever):
     name: str = "chroma"
     description: str = "ChromaDB vector-based document retriever"
 
+    #: Setting keys accepted via ``retriever.settings``. Used by the provider
+    #: factory to catch typos/unknown keys early (mirrors the constructor's
+    #: parameters below).
+    SETTINGS_KEYS: frozenset[str] = frozenset(
+        {"collection_name", "persist_directory", "distance_fn"}
+    )
+
     def __init__(
         self,
         collection_name: str,

@@ -64,21 +64,25 @@ uv run oaeval --help
 
 ## Setting up API keys
 
-OpenAgent Eval reads provider credentials from environment variables. Create a `.env`
-file in your project root (or export them in your shell):
+OpenAgent Eval reads provider credentials from environment variables. Export them in
+your shell before running `oaeval` — the CLI does not auto-load a `.env` file, so if
+you keep one, source it yourself first (e.g. `set -a; . ./.env; set +a`):
 
 ```bash
-# .env
-OPENAI_API_KEY=sk-...
-GOOGLE_API_KEY=...
-ANTHROPIC_API_KEY=...
-GROQ_API_KEY=...
-OPENROUTER_API_KEY=...
+export OPENAI_API_KEY=sk-...
+export GEMINI_API_KEY=...
+export ANTHROPIC_API_KEY=...
+export GROQ_API_KEY=...
+export OPENROUTER_API_KEY=...
 ```
 
 !!! tip "No keys? Use Ollama"
     OpenAgent Eval supports fully local models through [Ollama](https://ollama.com).
     Set `provider: ollama` in your config and no API key is required.
+
+See the [Environment Variables](environment-variables.md) reference for every
+variable OpenAgent Eval reads, including how keys are resolved and how they
+reach the process.
 
 ## Next steps
 

@@ -37,7 +37,11 @@ class DiagnosisExecutionError(DiagnosisError):
             details: Optional dictionary with additional error context.
             step: The diagnosis step that failed (e.g., "blame_attribution").
         """
-        super().__init__(message, details)
+        error_details = details or {}
+        if step is not None:
+            error_details["step"] = step
+
+        super().__init__(message, error_details)
         self.step = step
 
 

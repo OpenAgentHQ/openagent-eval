@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import pytest
 from rich.console import Console
 
 from openagent_eval.reports.terminal import TerminalReport
@@ -76,11 +75,48 @@ class TestTerminalReport:
     ) -> None:
         """generate_to_file() creates parent directories."""
         report = TerminalReport()
-        output_path = tmp_path / "subdir" / "report.txt"
+        output_path = Path(tmp_path / "subdir" / "report.txt")
         result_path = report.generate_to_file(evaluation_report, output_path)
 
         assert result_path.exists()
         assert result_path.parent.exists()
+
+    def test_generate_to_file_defaults_to_txt(
+        self, evaluation_report: Any, tmp_path: Path
+    ) -> None:
+        """generate_to_file() appends report.txt when no extension is given."""
+        report = TerminalReport()
+        output_path = tmp_path / "my_report"
+        result_path = report.generate_to_file(evaluation_report, output_path)
+
+        assert result_path.name == "report.txt"
+        assert result_path.exists()
+        content = result_path.read_text(encoding="utf-8")
+        assert "SUMMARY" in content
+
+    def test_generate_to_file_normalizes_wrong_suffix(
+        self, evaluation_report: Any, tmp_path: Path
+    ) -> None:
+        """generate_to_file() normalizes a non-.txt suffix to .txt."""
+        report = TerminalReport()
+        output_path = tmp_path / "my_report.log"
+        result_path = report.generate_to_file(evaluation_report, output_path)
+
+        assert result_path.suffix.lower() == ".txt"
+        assert result_path.exists()
+        content = result_path.read_text(encoding="utf-8")
+        assert "SUMMARY" in content
+
+    def test_generate_to_file_keeps_txt_suffix(
+        self, evaluation_report: Any, tmp_path: Path
+    ) -> None:
+        """generate_to_file() preserves an explicit .txt path."""
+        report = TerminalReport()
+        output_path = tmp_path / "explicit.txt"
+        result_path = report.generate_to_file(evaluation_report, output_path)
+
+        assert result_path.name == "explicit.txt"
+        assert result_path.exists()
 
     def test_print_report(
         self, evaluation_report: Any, tmp_path: Path

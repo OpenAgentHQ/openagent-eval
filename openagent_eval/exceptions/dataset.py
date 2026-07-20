@@ -57,7 +57,7 @@ class InvalidDatasetError(DatasetError):
     """Raised when a dataset has invalid format or structure.
 
     Attributes:
-        format: The detected or expected format of the dataset.
+        data_format: The detected or expected format of the dataset.
         line_number: The line number where the error occurred (if applicable).
     """
 
@@ -65,7 +65,7 @@ class InvalidDatasetError(DatasetError):
         self,
         message: str,
         dataset_path: str | None = None,
-        format: str | None = None,
+        data_format: str | None = None,
         line_number: int | None = None,
         details: dict | None = None,
     ) -> None:
@@ -74,18 +74,18 @@ class InvalidDatasetError(DatasetError):
         Args:
             message: Human-readable error message.
             dataset_path: Path to the invalid dataset.
-            format: The detected or expected format.
+            data_format: The detected or expected format.
             line_number: The line number where the error occurred.
             details: Additional context about the error.
         """
         error_details = details or {}
-        if format:
-            error_details["format"] = format
+        if data_format:
+            error_details["format"] = data_format
         if line_number:
             error_details["line_number"] = line_number
 
         super().__init__(message=message, dataset_path=dataset_path, details=error_details)
-        self.format = format
+        self.data_format = data_format
         self.line_number = line_number
 
 

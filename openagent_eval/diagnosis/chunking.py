@@ -159,7 +159,7 @@ class ChunkingQualityAnalyzer:
             "will", "about", "into", "your", "some", "than",
         }
         question_words = set(
-            w.lower() for w in re.findall(r"\b[a-zA-Z]{4,}\b", question)
+            w.lower() for w in re.findall(r"\b\w{4,}\b", question)
         ) - stop_words
         if not question_words:
             return issues

@@ -55,6 +55,7 @@ class PGVectorRetriever(Retriever):
         self._content_column = content_column
         self._embedding_column = embedding_column
         self._metric = metric
+        self._conn: Any = None
 
         try:
             import psycopg
@@ -64,8 +65,22 @@ class PGVectorRetriever(Retriever):
                 "Install it with: pip install openagent-eval[pgvector]"
             ) from exc
 
+    async def _ensure_connection(self) -> None:
+        """Lazily open the async Postgres connection on first use.
+
+        The async cursor API requires an :class:`psycopg.AsyncConnection`,
+        which can only be created with ``await``. We therefore defer
+        connection establishment out of ``__init__`` and into the async
+        ``retrieve`` path.
+        """
+        if self._conn is not None:
+            return
+        import psycopg
+
         try:
-            self._conn = psycopg.connect(self._dsn, autocommit=True)
+            self._conn = await psycopg.AsyncConnection.connect(
+                self._dsn, autocommit=True
+            )
         except Exception as exc:
             raise ProviderConnectionError(
                 message=f"Failed to connect to Postgres: {exc}",
@@ -76,10 +91,10 @@ class PGVectorRetriever(Retriever):
     async def retrieve(self, query: str, k: int = 5) -> list[Document]:
         """Embed the query and run a similarity SQL query."""
         self.validate_inputs(query=query, k=k)
-        try:
-            import psycopg
-        except ImportError as exc:  # pragma: no cover
-            raise ImportError("psycopg is required for the pgvector retriever") from exc
+
+        # Connection failures must surface as ProviderConnectionError, not be
+        # swallowed into the query-execution error below.
+        await self._ensure_connection()
 
         try:
             vector = await self._embedder.embed_query(query)
@@ -128,3 +143,9 @@ class PGVectorRetriever(Retriever):
                 )
             )
         return documents
+
+    async def close(self) -> None:
+        """Close the underlying async connection if open."""
+        if self._conn is not None:
+            await self._conn.close()
+            self._conn = None

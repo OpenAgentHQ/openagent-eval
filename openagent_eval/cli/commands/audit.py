@@ -20,17 +20,77 @@ from rich.table import Table
 
 from openagent_eval import __version__
 from openagent_eval.cli.context import get_context
+from openagent_eval.cli.utils.helpers import load_config_from_path
+from openagent_eval.config.models import CorpusConfig
 from openagent_eval.corpus.auditor import CorpusAuditor
 from openagent_eval.corpus.models import AuditReport, IssueSeverity
+from openagent_eval.exceptions import ConfigurationError
 from openagent_eval.exceptions.corpus import CorpusAuditError, CorpusNotFoundError
 
 console = Console()
 
+# Built-in defaults, used when neither a CLI flag nor a config value is given.
+# Kept in sync with the CorpusAuditor / CorpusConfig defaults.
+_DEFAULT_STALENESS_DAYS = 365
+_DEFAULT_SIMILARITY_THRESHOLD = 0.92
+_DEFAULT_MAX_DOCUMENTS = 1000
+
+
+def _resolve_audit_settings(
+    corpus_cfg: CorpusConfig | None,
+    *,
+    corpus_path: str | None,
+    checks: str | None,
+    staleness_days: int | None,
+    similarity_threshold: float | None,
+    max_documents: int | None,
+) -> tuple[str | None, str | None, int, float, int]:
+    """Merge CLI flags with an optional ``corpus:`` config section.
+
+    Precedence (highest first): an explicitly-provided CLI flag, then the
+    value from the config file's ``corpus:`` section, then the built-in
+    default. A CLI flag counts as "explicitly provided" when it is not
+    ``None`` (the sentinel default the command declares for each option),
+    mirroring how ``run`` treats its override flags.
+
+    Returns:
+        ``(corpus_path, checks, staleness_days, similarity_threshold,
+        max_documents)`` with the tuning knobs resolved to concrete values.
+    """
+    if corpus_cfg is not None:
+        if corpus_path is None:
+            corpus_path = corpus_cfg.path
+        if checks is None and corpus_cfg.checks:
+            checks = ",".join(check.value for check in corpus_cfg.checks)
+        if staleness_days is None:
+            staleness_days = corpus_cfg.staleness_days
+        if similarity_threshold is None:
+            similarity_threshold = corpus_cfg.similarity_threshold
+        if max_documents is None:
+            max_documents = corpus_cfg.max_documents
+
+    if staleness_days is None:
+        staleness_days = _DEFAULT_STALENESS_DAYS
+    if similarity_threshold is None:
+        similarity_threshold = _DEFAULT_SIMILARITY_THRESHOLD
+    if max_documents is None:
+        max_documents = _DEFAULT_MAX_DOCUMENTS
+
+    return corpus_path, checks, staleness_days, similarity_threshold, max_documents
+
 
 def audit_command(
-    corpus_path: str = typer.Argument(
-        ...,
-        help="Path to the corpus directory or file to audit.",
+    corpus_path: str | None = typer.Argument(
+        None,
+        help="Path to the corpus directory or file to audit. "
+        "Falls back to the config file's 'corpus.path' when omitted.",
+    ),
+    config_path: str | None = typer.Option(
+        None,
+        "--config",
+        "-C",
+        help="Path to a config file whose 'corpus:' section provides audit "
+        "settings. Explicit CLI flags override the file's values.",
     ),
     checks: str | None = typer.Option(
         None,
@@ -38,20 +98,21 @@ def audit_command(
         "-c",
         help="Comma-separated checks to perform (contradiction, staleness, duplicate, coverage).",
     ),
-    staleness_days: int = typer.Option(
-        365,
+    staleness_days: int | None = typer.Option(
+        None,
         "--staleness-days",
-        help="Days threshold for staleness detection.",
+        help="Days threshold for staleness detection. [default: 365 or config value]",
     ),
-    similarity_threshold: float = typer.Option(
-        0.92,
+    similarity_threshold: float | None = typer.Option(
+        None,
         "--similarity-threshold",
-        help="Similarity threshold for duplicate detection (0.0-1.0).",
+        help="Similarity threshold for duplicate detection (0.0-1.0). "
+        "[default: 0.92 or config value]",
     ),
-    max_documents: int = typer.Option(
-        1000,
+    max_documents: int | None = typer.Option(
+        None,
         "--max-documents",
-        help="Maximum documents to audit.",
+        help="Maximum documents to audit. [default: 1000 or config value]",
     ),
     output: str | None = typer.Option(
         None,
@@ -83,6 +144,40 @@ def audit_command(
 
     if verbose:
         ctx.verbose = True
+
+    # Load the optional corpus config section from a config file. Explicit CLI
+    # flags take precedence over the file's values (see _resolve_audit_settings).
+    corpus_cfg: CorpusConfig | None = None
+    if config_path is not None:
+        try:
+            config = load_config_from_path(Path(config_path))
+        except ConfigurationError as e:
+            console.print(f"[red]Error:[/red] {e.message}")
+            raise typer.Exit(code=2) from e
+        corpus_cfg = config.corpus
+        if corpus_cfg is None:
+            console.print(
+                f"[red]Error:[/red] No 'corpus:' section found in {config_path}"
+            )
+            raise typer.Exit(code=2)
+
+    corpus_path, checks, staleness_days, similarity_threshold, max_documents = (
+        _resolve_audit_settings(
+            corpus_cfg,
+            corpus_path=corpus_path,
+            checks=checks,
+            staleness_days=staleness_days,
+            similarity_threshold=similarity_threshold,
+            max_documents=max_documents,
+        )
+    )
+
+    if corpus_path is None:
+        console.print(
+            "[red]Error:[/red] No corpus path provided. Pass it as an argument "
+            "or set 'corpus.path' in the config file."
+        )
+        raise typer.Exit(code=2)
 
     if not ctx.quiet:
         console.print(f"[bold blue]OpenAgent Eval[/bold blue] v{__version__}")

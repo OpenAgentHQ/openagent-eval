@@ -87,8 +87,9 @@ class JSONReport(ReportGenerator):
             },
         }
 
-        # Format individual results
-        for eval_result in result.results:
+        # Format individual results, respecting the configured example limit
+        max_examples = min(len(result.results), config.report.max_examples)
+        for eval_result in result.results[:max_examples]:
             report_data["results"].append({
                 "question": eval_result.question,
                 "answer": eval_result.answer,
@@ -129,7 +130,7 @@ class JSONReport(ReportGenerator):
         path = Path(output_path)
         if not str(path).endswith(".json"):
             path = path / "report.json"
-        path = self._ensure_output_dir(path)
+        path = self._prepare_output_file(path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")
         return path

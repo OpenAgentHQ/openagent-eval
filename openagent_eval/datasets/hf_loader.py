@@ -69,7 +69,7 @@ class HFDatasetLoader(BaseDatasetLoader):
                         "Install it with: pip install openagent-eval[datasets]"
                     ),
                     dataset_path=str(path),
-                    format="hf",
+                    data_format="hf",
                 ) from e
 
             try:
@@ -78,7 +78,7 @@ class HFDatasetLoader(BaseDatasetLoader):
                 raise InvalidDatasetError(
                     message=f"Failed to load HuggingFace dataset: {e}",
                     dataset_path=str(path),
-                    format="hf",
+                    data_format="hf",
                 ) from e
 
             return self._parse_hf_dataset(hf_dataset, path)
@@ -153,7 +153,7 @@ class HFDatasetLoader(BaseDatasetLoader):
                     "The 'datasets' package is required for HuggingFace dataset loading. "
                     "Install it with: pip install openagent-eval[datasets]"
                 ),
-                format="hf",
+                data_format="hf",
             ) from e
 
         try:
@@ -161,7 +161,7 @@ class HFDatasetLoader(BaseDatasetLoader):
         except Exception as e:
             raise InvalidDatasetError(
                 message=f"Failed to load dataset '{dataset_name}': {e}",
-                format="hf",
+                data_format="hf",
             ) from e
 
         # Convert to list and apply limit

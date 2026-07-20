@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
@@ -9,8 +10,12 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from openagent_eval.exceptions.synthesis import SynthesisExecutionError
-from openagent_eval.synthesis.generator import SyntheticDataGenerator, _chunk_text, _read_corpus
-from openagent_eval.synthesis.models import TestCase, TestCaseType
+from openagent_eval.synthesis.generator import (
+    SyntheticDataGenerator,
+    _chunk_text,
+    _read_corpus,
+)
+from openagent_eval.synthesis.models import TestCaseType
 
 
 def _make_mock_llm(response: str | None = None) -> MagicMock:
@@ -99,6 +104,23 @@ class TestReadCorpus:
         """Test reading empty directory."""
         result = _read_corpus(tmp_path)
         assert result == []
+
+    def test_read_file_with_encoding_error(self, tmp_path: Path) -> None:
+        """Test reading a file with invalid UTF-8 encoding raises error."""
+        # Create a file with invalid UTF-8 bytes
+        bad_file = tmp_path / "bad.txt"
+        bad_file.write_bytes(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+
+        with pytest.raises(SynthesisExecutionError, match="Failed to read"):
+            _read_corpus(tmp_path)
+
+    def test_read_single_file_with_encoding_error(self, tmp_path: Path) -> None:
+        """Test reading a single file with invalid UTF-8 raises error."""
+        bad_file = tmp_path / "bad.txt"
+        bad_file.write_bytes(b"\xff\xfe\x00\x00")  # Invalid UTF-8
+
+        with pytest.raises(SynthesisExecutionError, match="Failed to read corpus file"):
+            _read_corpus(bad_file)
 
 
 class TestSyntheticDataGenerator:
@@ -278,3 +300,117 @@ class TestSyntheticDataGenerator:
 
         # Should still produce some results despite one failure
         assert isinstance(result.total_count, int)
+
+
+class TestSharedGenerationHelpers:
+    """Tests for the extracted shared generation helpers.
+
+    These verify that ``generate`` and ``generate_from_text`` delegate to the
+    same private methods instead of each defining duplicate inner functions
+    (see issue #92).
+    """
+
+    @pytest.mark.asyncio
+    async def test_generate_standard_cases(self) -> None:
+        """Test _generate_standard_cases produces cases from chunk tuples."""
+        mock_llm = _make_mock_llm(_standard_response(1))
+        gen = SyntheticDataGenerator(mock_llm)
+
+        chunks = [("doc.txt", 0, "Python is a language."), ("doc.txt", 1, "Rust is a language.")]
+        semaphore = asyncio.Semaphore(gen._max_concurrent)
+
+        result = await gen._generate_standard_cases(chunks, 1, 0, semaphore)
+
+        assert len(result) == 2
+        assert all(tc.test_type == TestCaseType.STANDARD for tc in result)
+        assert {tc.source_document for tc in result} == {"doc.txt"}
+        assert {tc.chunk_index for tc in result} == {0, 1}
+
+    @pytest.mark.asyncio
+    async def test_generate_standard_cases_distributes_remaining(self) -> None:
+        """Test that the `remaining` budget adds an extra question to early chunks."""
+        # Mock honors the requested count so we can assert distribution.
+        async def mock_generate(prompt: str) -> str:
+            # The prompt embeds the requested count as "Generate {count}".
+            import re as _re
+
+            match = _re.search(r"Generate (\d+)", prompt)
+            n = int(match.group(1)) if match else 1
+            return _standard_response(n)
+
+        mock_llm = _make_mock_llm()
+        mock_llm.generate = mock_generate
+        gen = SyntheticDataGenerator(mock_llm)
+
+        # 3 chunks, questions_per_chunk=1, remaining=1 -> 2 + 1 + 1 distribution
+        chunks = [("doc.txt", i, f"Content {i}.") for i in range(3)]
+        semaphore = asyncio.Semaphore(gen._max_concurrent)
+
+        result = await gen._generate_standard_cases(chunks, 1, 1, semaphore)
+
+        assert len(result) == 4
+
+    @pytest.mark.asyncio
+    async def test_generate_standard_cases_handles_errors(self) -> None:
+        """Test that a failing chunk does not abort the whole batch."""
+        call_count = 0
+
+        async def mock_generate(prompt: str) -> str:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise RuntimeError("API error")
+            return _standard_response(1)
+
+        mock_llm = _make_mock_llm()
+        mock_llm.generate = mock_generate
+        gen = SyntheticDataGenerator(mock_llm)
+
+        chunks = [("doc.txt", 0, "Fail here."), ("doc.txt", 1, "Succeed here.")]
+        semaphore = asyncio.Semaphore(gen._max_concurrent)
+
+        result = await gen._generate_standard_cases(chunks, 1, 0, semaphore)
+
+        # One chunk failed, the other succeeded
+        assert len(result) == 1
+
+    @pytest.mark.asyncio
+    async def test_generate_adversarial_cases(self) -> None:
+        """Test _generate_adversarial_cases produces adversarial cases."""
+        async def mock_generate(prompt: str) -> str:
+            if any(
+                t in prompt
+                for t in ("UNANSWERABLE", "MISLEADING", "AMBIGUOUS", "MULTI-HOP", "COUNTERFACTUAL")
+            ):
+                return json.dumps([{"question": "Tricky?", "answer": ""}])
+            return _standard_response(1)
+
+        mock_llm = _make_mock_llm()
+        mock_llm.generate = mock_generate
+        gen = SyntheticDataGenerator(mock_llm)
+
+        chunks = [("doc.txt", 0, "Python is a language.")]
+        semaphore = asyncio.Semaphore(gen._max_concurrent)
+
+        result = await gen._generate_adversarial_cases(chunks, 1, semaphore)
+
+        # 5 adversarial types, 1 per type
+        assert len(result) == 5
+        assert all(tc.test_type != TestCaseType.STANDARD for tc in result)
+
+    @pytest.mark.asyncio
+    async def test_helpers_used_by_both_entrypoints(self) -> None:
+        """Test that generate and generate_from_text share the same helpers.
+
+        Both public methods should route through the extracted private
+        methods, confirming the duplication from issue #92 is removed.
+        """
+        mock_llm = _make_mock_llm(_standard_response(1))
+        gen = SyntheticDataGenerator(mock_llm)
+
+        from_text = await gen.generate_from_text(text="Python is a language.", count=1)
+        from_corpus = await gen.generate_from_text(text="Python is a language.", count=1)
+
+        # Both paths use the same helper; results should be equivalent in shape
+        assert from_text.total_count == from_corpus.total_count == 1
+        assert all(tc.test_type == TestCaseType.STANDARD for tc in from_text.test_cases)

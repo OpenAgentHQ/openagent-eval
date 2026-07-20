@@ -35,7 +35,8 @@ retriever:
   provider: pinecone
   settings:
     index_name: my-index
-    api_key: ${PINECONE_API_KEY}
+    # api_key omitted -> falls back to the PINECONE_API_KEY env var exported above
+    # (config values are used literally; ${VAR} is not expanded)
     # namespace: production     # optional
   embedder:
     provider: sentence_transformers

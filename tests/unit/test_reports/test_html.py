@@ -67,6 +67,22 @@ class TestHTMLReport:
         assert "Sample Results" in result
         assert "What is Python?" in result
 
+    def test_generate_respects_max_examples(
+        self, evaluation_report_limited: Any
+    ) -> None:
+        """generate() includes at most config.report.max_examples results."""
+        report = HTMLReport()
+        captured_context: dict[str, Any] = {}
+
+        def _capture_context(context: dict[str, Any]) -> str:
+            captured_context.update(context)
+            return "ok"
+
+        report._render_template = _capture_context
+        report.generate(evaluation_report_limited)
+
+        assert len(captured_context["results"]) == 2
+
     def test_generate_contains_config(self, evaluation_report: Any) -> None:
         """generate() includes configuration."""
         report = HTMLReport()

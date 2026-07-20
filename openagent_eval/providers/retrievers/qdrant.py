@@ -25,6 +25,13 @@ class QdrantRetriever(Retriever):
     name: str = "qdrant"
     description: str = "Qdrant vector database retriever"
 
+    #: Setting keys accepted via ``retriever.settings``. Used by the provider
+    #: factory to catch typos/unknown keys early. Note the constructor swallows
+    #: unknown kwargs via ``**_``, so without this a typo would pass silently.
+    SETTINGS_KEYS: frozenset[str] = frozenset(
+        {"collection_name", "embedder", "url", "api_key", "prefer_grpc", "distance"}
+    )
+
     def __init__(
         self,
         collection_name: str,

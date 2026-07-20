@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -11,6 +11,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.llm.ollama import Ollama
+from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 
 # ---------------------------------------------------------------------------
@@ -105,7 +106,9 @@ class TestOllamaGenerate:
         assert result == "Ollama response"
 
     @pytest.mark.asyncio
-    async def test_generate_with_model_override(self, provider: Ollama, mock_httpx_response):
+    async def test_generate_with_model_override(
+        self, provider: Ollama, mock_httpx_response
+    ):
         """generate() respects model override."""
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_httpx_response)
@@ -181,7 +184,9 @@ class TestOllamaGenerate:
             await provider.generate("Test prompt")
 
     @pytest.mark.asyncio
-    async def test_generate_with_max_tokens(self, provider: Ollama, mock_httpx_response):
+    async def test_generate_with_max_tokens(
+        self, provider: Ollama, mock_httpx_response
+    ):
         """generate() passes max_tokens as num_predict in options."""
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_httpx_response)
@@ -231,6 +236,112 @@ class TestOllamaTokenCount:
 
         count = await provider.get_token_count("Hello world test")
         assert count == 3  # Three words
+
+
+# ---------------------------------------------------------------------------
+# generate_with_usage() / generate_with_usage_sync() tests
+#
+# Regression for #78: both methods must return an ``LLMResponse`` (matching
+# every other LLM provider), not a ``tuple[str, TokenUsage]``.
+# ---------------------------------------------------------------------------
+class TestOllamaGenerateWithUsage:
+    """Tests for the sync/async usage-returning generation helpers."""
+
+    def test_generate_with_usage_returns_llm_response(
+        self, provider: Ollama, mock_httpx_response, monkeypatch
+    ):
+        """generate_with_usage_sync() returns an LLMResponse with all fields."""
+        import openagent_eval.providers.llm.ollama as ollama_module
+
+        mock_client = MagicMock()
+        mock_client.post = MagicMock(return_value=mock_httpx_response)
+        client_cm = MagicMock()
+        client_cm.__enter__ = MagicMock(return_value=mock_client)
+        client_cm.__exit__ = MagicMock(return_value=False)
+        monkeypatch.setattr(
+            ollama_module.httpx, "Client", MagicMock(return_value=client_cm)
+        )
+
+        result = provider.generate_with_usage_sync("Test prompt")
+
+        assert isinstance(result, LLMResponse)
+        assert result.content == "Ollama response"
+        assert result.model == "llama3.2"
+        assert result.provider == "ollama"
+        assert isinstance(result.usage, TokenUsage)
+        assert result.usage.prompt_tokens == 10
+        assert result.usage.completion_tokens == 15
+        assert result.usage.total_tokens == 25
+        assert result.latency_ms >= 0.0
+
+    def test_generate_with_usage_model_override(
+        self, provider: Ollama, mock_httpx_response, monkeypatch
+    ):
+        """generate_with_usage_sync() reflects a per-call model override."""
+        import openagent_eval.providers.llm.ollama as ollama_module
+
+        mock_client = MagicMock()
+        mock_client.post = MagicMock(return_value=mock_httpx_response)
+        client_cm = MagicMock()
+        client_cm.__enter__ = MagicMock(return_value=mock_client)
+        client_cm.__exit__ = MagicMock(return_value=False)
+        monkeypatch.setattr(
+            ollama_module.httpx, "Client", MagicMock(return_value=client_cm)
+        )
+
+        result = provider.generate_with_usage_sync("Test prompt", model="mistral")
+
+        assert isinstance(result, LLMResponse)
+        assert result.model == "mistral"
+
+    @pytest.mark.asyncio
+    async def test_generate_with_usage_async_returns_llm_response(
+        self, provider: Ollama, mock_httpx_response
+    ):
+        """generate_with_usage_async() returns an LLMResponse with all fields."""
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_httpx_response)
+        provider._client = mock_client
+
+        result = await provider.generate_with_usage_async("Test prompt")
+
+        assert isinstance(result, LLMResponse)
+        assert result.content == "Ollama response"
+        assert result.model == "llama3.2"
+        assert result.provider == "ollama"
+        assert isinstance(result.usage, TokenUsage)
+        assert result.usage.prompt_tokens == 10
+        assert result.usage.completion_tokens == 15
+        assert result.usage.total_tokens == 25
+        assert result.latency_ms >= 0.0
+
+    @pytest.mark.asyncio
+    async def test_generate_with_usage_async_model_override(
+        self, provider: Ollama, mock_httpx_response
+    ):
+        """generate_with_usage_async() reflects a per-call model override."""
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_httpx_response)
+        provider._client = mock_client
+
+        result = await provider.generate_with_usage_async(
+            "Test prompt", model="mistral"
+        )
+
+        assert isinstance(result, LLMResponse)
+        assert result.model == "mistral"
+
+    @pytest.mark.asyncio
+    async def test_generate_with_usage_async_connection_error(self, provider: Ollama):
+        """generate_with_usage_async() raises ProviderConnectionError on ConnectError."""
+        import httpx
+
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(side_effect=httpx.ConnectError("refused"))
+        provider._client = mock_client
+
+        with pytest.raises(ProviderConnectionError, match="connect"):
+            await provider.generate_with_usage_async("Test prompt")
 
 
 # ---------------------------------------------------------------------------

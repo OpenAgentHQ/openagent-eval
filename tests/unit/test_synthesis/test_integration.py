@@ -20,7 +20,6 @@ from openagent_eval.synthesis import (
     TestCase,
     TestCaseType,
 )
-from openagent_eval.synthesis.generator import _chunk_text
 
 
 def _mock_llm_factory(responses: list[str] | str = "[]") -> MagicMock:

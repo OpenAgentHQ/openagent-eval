@@ -64,7 +64,6 @@ class SemanticSimilarity(BaseMetric):
     ) -> MetricResult:
         """Evaluate using sentence-transformers."""
         from sklearn.metrics.pairwise import cosine_similarity
-        import numpy as np
 
         model = self._transformer
         embeddings = model.encode([answer, ground_truth])

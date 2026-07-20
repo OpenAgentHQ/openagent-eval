@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from openagent_eval.datasets.base import BaseDatasetLoader, Dataset, DatasetItem
-from openagent_eval.datasets.models import DatasetItemModel, DatasetModel
+from openagent_eval.datasets.models import DatasetItemModel
 from openagent_eval.exceptions import DatasetValidationError, InvalidDatasetError
 
 
@@ -63,7 +63,7 @@ class JSONDatasetLoader(BaseDatasetLoader):
             raise InvalidDatasetError(
                 message=f"Invalid JSON in file: {e}",
                 dataset_path=str(path),
-                format="json",
+                data_format="json",
                 line_number=e.lineno,
             ) from e
 

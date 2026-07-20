@@ -9,7 +9,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
 
 from openagent_eval.diagnosis import DiagnosisAnalyzer
 from openagent_eval.diagnosis.blame import BlameAttribution
@@ -17,8 +16,6 @@ from openagent_eval.diagnosis.chunking import ChunkingQualityAnalyzer
 from openagent_eval.diagnosis.models import (
     BlameTarget,
     ComponentScores,
-    DiagnosisReport,
-    FailureMode,
 )
 
 

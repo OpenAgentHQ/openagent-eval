@@ -61,6 +61,29 @@ def test_cli_doctor_help():
     assert result.exit_code == 0
 
 
+def test_all_cli_commands_are_exported():
+    """Test that every command is available from the package namespace."""
+    from openagent_eval.cli import commands
+
+    expected = {
+        "audit_command",
+        "compare_command",
+        "delete_command",
+        "diagnose_command",
+        "doctor_command",
+        "init_command",
+        "list_command",
+        "report_command",
+        "run_command",
+        "synth_command",
+        "test_command",
+        "validate_command",
+    }
+
+    assert set(commands.__all__) == expected
+    assert all(hasattr(commands, name) for name in expected)
+
+
 def test_cli_invalid_command():
     """Test that CLI handles invalid commands gracefully."""
     result = runner.invoke(app, ["invalid-command"])

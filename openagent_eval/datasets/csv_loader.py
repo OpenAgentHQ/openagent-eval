@@ -65,7 +65,7 @@ class CSVDatasetLoader(BaseDatasetLoader):
             raise InvalidDatasetError(
                 message=f"Invalid CSV format: {e}",
                 dataset_path=str(path),
-                format="csv",
+                data_format="csv",
             ) from e
 
         return self._parse_rows(rows, path)

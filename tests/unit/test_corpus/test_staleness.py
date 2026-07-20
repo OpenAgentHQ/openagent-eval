@@ -60,6 +60,20 @@ class TestStalenessDetector:
         assert "stale.txt" in report.issues[0].document_ids
 
     @pytest.mark.asyncio
+    async def test_naive_metadata_datetime_is_treated_as_utc(self, detector):
+        """Test that naive metadata datetimes do not fail UTC comparisons."""
+        doc = CorpusDocument(
+            doc_id="naive.txt",
+            content="Old content.",
+            metadata={"last_modified": datetime(2020, 1, 15)},
+        )
+
+        report = await detector.analyze([doc])
+
+        assert len(report.issues) == 1
+        assert report.issues[0].metadata["last_updated"].endswith("+00:00")
+
+    @pytest.mark.asyncio
     async def test_health_score_decreases_with_staleness(self, detector, recent_doc, stale_doc):
         """Test health score decreases with more stale documents."""
         # All recent = perfect score

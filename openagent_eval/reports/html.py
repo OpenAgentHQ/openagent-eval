@@ -106,9 +106,10 @@ class HTMLReport(ReportGenerator):
             if numeric_metric_values else None
         )
 
-        # Format results for template
+        # Format results for template, respecting the configured example limit
+        max_examples = min(len(result.results), config.report.max_examples)
         results_data = []
-        for eval_result in result.results:
+        for eval_result in result.results[:max_examples]:
             results_data.append({
                 "question": eval_result.question,
                 "answer": eval_result.answer,
@@ -152,7 +153,7 @@ class HTMLReport(ReportGenerator):
             path = path / "report.html"
         elif path.suffix.lower() != ".html":
             path = path.with_suffix(".html")
-        path = self._ensure_output_dir(path)
+        path = self._prepare_output_file(path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")
         return path

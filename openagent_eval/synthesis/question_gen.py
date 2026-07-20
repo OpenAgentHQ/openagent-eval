@@ -102,7 +102,7 @@ class QuestionGenerator:
 
         prompt = _QUESTION_GENERATION_PROMPT.format(
             count=count,
-            context=context.strip(),
+            context=context.strip().replace("{", "{{").replace("}", "}}"),
         )
 
         try:
@@ -145,6 +145,22 @@ class QuestionGenerator:
         import re as _re
 
         test_cases: list[TestCase] = []
+        seen_questions: set[str] = set()
+
+        def _add_test_case(question: str, answer: str) -> None:
+            """Add test case if question not already seen."""
+            if question and question not in seen_questions:
+                seen_questions.add(question)
+                test_cases.append(
+                    TestCase(
+                        question=question,
+                        ground_truth=answer,
+                        context=context,
+                        test_type=TestCaseType.STANDARD,
+                        source_document=source_document,
+                        chunk_index=chunk_index,
+                    )
+                )
 
         # Clean code blocks and normalize text
         text = raw_response.strip()
@@ -166,17 +182,8 @@ class QuestionGenerator:
                 question = data.get("question", "").strip()
                 answer = data.get("answer", "").strip()
                 if question and answer:
-                    test_cases.append(
-                        TestCase(
-                            question=question,
-                            ground_truth=answer,
-                            context=context,
-                            test_type=TestCaseType.STANDARD,
-                            source_document=source_document,
-                            chunk_index=chunk_index,
-                        )
-                    )
-                    return test_cases
+                    _add_test_case(question, answer)
+                    # Don't return here - continue to other strategies to find more questions
         except (json.JSONDecodeError, ValueError):
             pass
 
@@ -201,16 +208,7 @@ class QuestionGenerator:
                         question = item.get("question", "").strip()
                         answer = item.get("answer", "").strip()
                         if question and answer:
-                            test_cases.append(
-                                TestCase(
-                                    question=question,
-                                    ground_truth=answer,
-                                    context=context,
-                                    test_type=TestCaseType.STANDARD,
-                                    source_document=source_document,
-                                    chunk_index=chunk_index,
-                                )
-                            )
+                            _add_test_case(question, answer)
                 if test_cases:
                     return test_cases
         except (json.JSONDecodeError, ValueError):
@@ -232,16 +230,7 @@ class QuestionGenerator:
                     question = item.get("question", "").strip()
                     answer = item.get("answer", "").strip()
                     if question and answer:
-                        test_cases.append(
-                            TestCase(
-                                question=question,
-                                ground_truth=answer,
-                                context=context,
-                                test_type=TestCaseType.STANDARD,
-                                source_document=source_document,
-                                chunk_index=chunk_index,
-                            )
-                        )
+                        _add_test_case(question, answer)
                 except (json.JSONDecodeError, ValueError):
                     continue
 
@@ -261,16 +250,7 @@ class QuestionGenerator:
             question = question.strip()
             answer = answer.strip()
             if question and answer:
-                test_cases.append(
-                    TestCase(
-                        question=question,
-                        ground_truth=answer,
-                        context=context,
-                        test_type=TestCaseType.STANDARD,
-                        source_document=source_document,
-                        chunk_index=chunk_index,
-                    )
-                )
+                _add_test_case(question, answer)
 
         if test_cases:
             return test_cases
@@ -282,20 +262,11 @@ class QuestionGenerator:
         questions = question_pattern.findall(text)
         answers = answer_pattern.findall(text)
 
-        for q, a in zip(questions, answers):
+        for q, a in zip(questions, answers, strict=False):
             q = q.strip()
             a = a.strip()
             if q and a:
-                test_cases.append(
-                    TestCase(
-                        question=q,
-                        ground_truth=a,
-                        context=context,
-                        test_type=TestCaseType.STANDARD,
-                        source_document=source_document,
-                        chunk_index=chunk_index,
-                    )
-                )
+                _add_test_case(q, a)
 
         if test_cases:
             return test_cases
