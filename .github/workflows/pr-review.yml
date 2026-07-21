@@ -4,6 +4,7 @@
 #
 # Trigger: pull_request → opened/synchronize/reopened/ready_for_review
 # Permissions: id-token: write, contents: read, pull-requests: write, issues: write
+# Model: opencode/deepseek-v4-flash-free (@latest)
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: PR Review
