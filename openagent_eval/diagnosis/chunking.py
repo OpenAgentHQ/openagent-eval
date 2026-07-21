@@ -121,7 +121,7 @@ class ChunkingQualityAnalyzer:
                     )
 
         # If expected_overlap is provided, check for excessive character overlap
-        if expected_overlap is not None and expected_overlap > 0:
+        if expected_overlap is not None:
             for i in range(len(contexts)):
                 for j in range(i + 1, len(contexts)):
                     char_overlap = self._char_overlap(contexts[i], contexts[j])
@@ -162,7 +162,7 @@ class ChunkingQualityAnalyzer:
 
         if len(lengths) < 2:
             # Still check single chunk against expected size
-            if expected_chunk_size is not None and lengths:
+            if expected_chunk_size is not None and expected_chunk_size > 0 and lengths:
                 actual_len = lengths[0]
                 deviation = abs(actual_len - expected_chunk_size) / expected_chunk_size
                 if deviation > DEFAULT_MAX_SIZE_DEVIATION:
@@ -200,7 +200,7 @@ class ChunkingQualityAnalyzer:
             )
 
         # If expected_chunk_size is provided, check deviation from expected
-        if expected_chunk_size is not None:
+        if expected_chunk_size is not None and expected_chunk_size > 0:
             for idx, length in enumerate(lengths):
                 deviation = abs(length - expected_chunk_size) / expected_chunk_size
                 if deviation > DEFAULT_MAX_SIZE_DEVIATION:
