@@ -1,0 +1,548 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# PR Code Review Workflow for OpenAgent Eval
+# ─────────────────────────────────────────────────────────────────────────────
+# Automated code quality review on pull requests.
+#
+# Features:
+#   - Lint & format checks (Ruff)
+#   - Type checking (MyPy)
+#   - Unit test execution (pytest)
+#   - AI-powered code review via OpenCode
+#   - Structured review comments with severity levels
+#
+# Trigger: pull_request → opened, synchronize, reopened
+# Permissions: contents: read, pull-requests: write, checks: write
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: PR Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_DEFAULT: "3.11"
+  FORCE_COLOR: "1"
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 1: Lint & Format Checks
+  # ─────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run Ruff linter
+        id: ruff-lint
+        run: |
+          echo "## Ruff Linter Results" >> $GITHUB_STEP_SUMMARY
+          uv run ruff check . --output-format=github 2>&1 | tee /tmp/ruff-lint.txt || true
+          if [ -s /tmp/ruff-lint.txt ]; then
+            echo "has_issues=true" >> $GITHUB_OUTPUT
+            echo '### ⚠️ Lint Issues Found' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/ruff-lint.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+            echo '### ✅ No lint issues' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Run Ruff formatter check
+        id: ruff-format
+        run: |
+          echo "## Ruff Formatter Results" >> $GITHUB_STEP_SUMMARY
+          uv run ruff format --check . 2>&1 | tee /tmp/ruff-format.txt || true
+          if [ -s /tmp/ruff-format.txt ]; then
+            echo "has_issues=true" >> $GITHUB_OUTPUT
+            echo '### ⚠️ Formatting Issues Found' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/ruff-format.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+            echo '### ✅ No formatting issues' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Run MyPy type checker
+        id: mypy
+        run: |
+          echo "## MyPy Type Check Results" >> $GITHUB_STEP_SUMMARY
+          uv run mypy openagent_eval/ --ignore-missing-imports 2>&1 | tee /tmp/mypy.txt || true
+          if [ -s /tmp/mypy.txt ]; then
+            echo "has_issues=true" >> $GITHUB_OUTPUT
+            echo '### ⚠️ Type Check Issues Found' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/mypy.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+            echo '### ✅ No type check issues' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload lint results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-results
+          path: |
+            /tmp/ruff-lint.txt
+            /tmp/ruff-format.txt
+            /tmp/mypy.txt
+          retention-days: 7
+
+    outputs:
+      lint_issues: ${{ steps.ruff-lint.outputs.has_issues }}
+      format_issues: ${{ steps.ruff-format.outputs.has_issues }}
+      type_issues: ${{ steps.mypy.outputs.has_issues }}
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 2: Unit Tests
+  # ─────────────────────────────────────────────────────────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run unit tests with coverage
+        id: tests
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          uv run pytest tests/unit -v --tb=short \
+            --cov=openagent_eval \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junitxml=/tmp/test-results.xml \
+            2>&1 | tee /tmp/test-output.txt || TEST_EXIT=$?
+          
+          # Extract coverage percentage
+          COVERAGE=$(grep -oP 'TOTAL\s+\d+\s+\d+\s+\K\d+' /tmp/test-output.txt || echo "0")
+          echo "coverage=${COVERAGE}" >> $GITHUB_OUTPUT
+          
+          if [ "${TEST_EXIT:-0}" -ne 0 ]; then
+            echo "tests_passed=false" >> $GITHUB_OUTPUT
+            echo '### ❌ Tests Failed' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 /tmp/test-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "tests_passed=true" >> $GITHUB_OUTPUT
+            echo '### ✅ Tests Passed' >> $GITHUB_STEP_SUMMARY
+            echo "- **Coverage**: ${COVERAGE}%" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            /tmp/test-results.xml
+            /tmp/test-output.txt
+            coverage.xml
+          retention-days: 7
+
+    outputs:
+      tests_passed: ${{ steps.tests.outputs.tests_passed }}
+      coverage: ${{ steps.tests.outputs.coverage }}
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 3: AI-Powered Code Review
+  # ─────────────────────────────────────────────────────────────────────────
+  ai-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: pr-diff
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100
+            });
+            
+            // Filter for code files only (skip auto-generated, configs, etc.)
+            const codeFiles = files.filter(f => 
+              f.filename.match(/\.(py|js|ts|jsx|tsx)$/) &&
+              !f.filename.includes('test_') &&
+              !f.filename.includes('_test.py') &&
+              !f.filename.includes('conftest.py') &&
+              !f.filename.includes('__init__.py') &&
+              !f.filename.includes('.min.') &&
+              !f.filename.includes('dist/') &&
+              !f.filename.includes('node_modules/')
+            );
+            
+            const fileCount = codeFiles.length;
+            const totalChanges = codeFiles.reduce((sum, f) => sum + f.additions + f.deletions, 0);
+            
+            core.setOutput('file_count', fileCount);
+            core.setOutput('total_changes', totalChanges);
+            core.setOutput('files', JSON.stringify(codeFiles.map(f => ({
+              name: f.filename,
+              status: f.status,
+              additions: f.additions,
+              deletions: f.deletions,
+              changes: f.changes
+            }))));
+            
+            core.info(`📊 PR has ${fileCount} code files with ${totalChanges} total changes`);
+
+      - name: Prepare review context
+        if: steps.pr-diff.outputs.file_count != '0'
+        id: context
+        run: |
+          mkdir -p /tmp/review-context
+          
+          # Create review context file
+          cat > /tmp/review-context/review-prompt.md << 'PROMPT_EOF'
+          You are a senior code reviewer for the OpenAgent Eval project. Review the following PR changes and provide a structured code review.
+
+          ## Project Context
+          - **Project**: OpenAgent Eval - CLI framework for evaluating RAG systems and AI Agents
+          - **Language**: Python 3.10+
+          - **Package Manager**: uv
+          - **Linting**: ruff
+          - **Testing**: pytest
+          - **Type Checking**: mypy
+
+          ## Code Quality Standards
+          - Modular, functional, maintainable code
+          - Pure functions (same input = same output, no side effects)
+          - Immutability (create new data, don't modify)
+          - Composition over inheritance
+          - Small functions (< 50 lines)
+          - Explicit dependencies (dependency injection)
+
+          ## Security Standards
+          - Never hardcode secrets or credentials
+          - Validate input at boundaries
+          - Use environment variables for configuration
+          - Follow principle of least privilege
+
+          ## Review Checklist
+          ### Functionality
+          - [ ] Does what it's supposed to do
+          - [ ] Edge cases handled
+          - [ ] Error cases handled
+          - [ ] No obvious bugs
+
+          ### Code Quality
+          - [ ] Clear, descriptive naming
+          - [ ] Functions small and focused
+          - [ ] No unnecessary complexity
+          - [ ] Follows coding standards
+          - [ ] DRY - no duplication
+
+          ### Security
+          - [ ] Input validation present
+          - [ ] No SQL injection vulnerabilities
+          - [ ] No XSS vulnerabilities
+          - [ ] No hardcoded secrets
+          - [ ] Sensitive data handled properly
+
+          ### Testing
+          - [ ] Tests present for new functionality
+          - [ ] Happy path covered
+          - [ ] Edge cases covered
+          - [ ] Error cases covered
+
+          ### Performance
+          - [ ] No obvious performance issues
+          - [ ] Efficient algorithms
+          - [ ] No unnecessary operations
+
+          ### Maintainability
+          - [ ] Easy to understand
+          - [ ] Complex logic documented
+          - [ ] Follows project conventions
+          [ ] Easy to modify/extend
+
+          ## Output Format
+          Provide your review in this EXACT format:
+
+          ## Code Review: [PR Title]
+
+          **Summary:** [Brief overview of changes]
+          **Assessment:** [Approve / Needs Work / Requires Changes]
+          **Coverage:** [XX%] (from CI)
+          **Lint Status:** [Pass/Fail] (from CI)
+          **Tests:** [Pass/Fail] (from CI)
+
+          ---
+
+          ### Issues Found
+
+          #### 🔴 Critical (Must Fix)
+          - **File:** `path/to/file.py:line`
+            **Issue:** [Description]
+            **Fix:** [Suggested fix]
+
+          #### 🟡 Warnings (Should Fix)
+          - **File:** `path/to/file.py:line`
+            **Issue:** [Description]
+            **Fix:** [Suggested fix]
+
+          #### 🔵 Suggestions (Nice to Have)
+          - **File:** `path/to/file.py:line`
+            **Issue:** [Description]
+            **Fix:** [Suggested fix]
+
+          ---
+
+          ### Positive Observations
+          - ✅ [Good practice observed]
+
+          ---
+
+          ### Recommendations
+          [Next steps, improvements, follow-up items]
+          PROMPT_EOF
+          
+          echo "context_ready=true" >> $GITHUB_OUTPUT
+
+      - name: Run OpenCode AI review
+        if: steps.context.outputs.context_ready == 'true'
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        with:
+          model: opencode/mimo-v2-omni-free
+          prompt: |
+            Read the review context from /tmp/review-context/review-prompt.md.
+            
+            Then review the PR changes in this repository. Focus on:
+            1. Code quality and adherence to project standards
+            2. Security vulnerabilities
+            3. Performance issues
+            4. Test coverage gaps
+            5. Maintainability concerns
+            
+            Provide a structured review following the format in the context file.
+            Be constructive and explain WHY each issue matters.
+
+      - name: Save AI review output
+        if: steps.context.outputs.context_ready == 'true'
+        run: |
+          # The OpenCode action outputs to stdout, capture it
+          echo "## AI Review Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Review has been posted on the PR." >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 4: Post Review Summary Comment
+  # ─────────────────────────────────────────────────────────────────────────
+  post-review:
+    name: Post Review Summary
+    runs-on: ubuntu-latest
+    needs: [lint, test, ai-review]
+    if: always()
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Build review summary
+        id: summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const lintIssues = '${{ needs.lint.outputs.lint_issues }}' === 'true';
+            const formatIssues = '${{ needs.lint.outputs.format_issues }}' === 'true';
+            const typeIssues = '${{ needs.lint.outputs.type_issues }}' === 'true';
+            const testsPassed = '${{ needs.test.outputs.tests_passed }}' === 'true';
+            const coverage = '${{ needs.test.outputs.coverage }}' || '0';
+            
+            const pr = context.payload.pull_request;
+            const prNumber = pr.number;
+            const prTitle = pr.title;
+            const author = pr.user.login;
+            
+            // Determine overall status
+            const hasIssues = lintIssues || formatIssues || typeIssues || !testsPassed;
+            const statusEmoji = hasIssues ? '⚠️' : '✅';
+            const statusText = hasIssues ? 'Issues Found' : 'All Checks Passed';
+            
+            // Build checklist items
+            const lintStatus = lintIssues ? '❌' : '✅';
+            const formatStatus = formatIssues ? '❌' : '✅';
+            const typeStatus = typeIssues ? '❌' : '✅';
+            const testStatus = testsPassed ? '✅' : '❌';
+            
+            let comment = `## ${statusEmoji} Code Review Summary\n\n`;
+            comment += `**PR:** #${prNumber} - ${prTitle}\n`;
+            comment += `**Author:** @${author}\n`;
+            comment += `**Status:** ${statusText}\n\n`;
+            
+            comment += `### Automated Checks\n\n`;
+            comment += `| Check | Status |\n`;
+            comment += `|-------|--------|\n`;
+            comment += `| Lint (Ruff) | ${lintStatus} |\n`;
+            comment += `| Format (Ruff) | ${formatStatus} |\n`;
+            comment += `| Type Check (MyPy) | ${typeStatus} |\n`;
+            comment += `| Unit Tests | ${testStatus} |\n`;
+            comment += `| Coverage | ${coverage}% |\n\n`;
+            
+            if (hasIssues) {
+              comment += `### ⚠️ Action Required\n\n`;
+              comment += `Please fix the following before merging:\n\n`;
+              
+              if (lintIssues) comment += `- [ ] Fix lint errors (run \`uv run ruff check .\`)\n`;
+              if (formatIssues) comment += `- [ ] Fix formatting (run \`uv run ruff format .\`)\n`;
+              if (typeIssues) comment += `- [ ] Fix type errors (run \`uv run mypy openagent_eval/\`)\n`;
+              if (!testsPassed) comment += `- [ ] Fix failing tests (run \`uv run pytest\`)\n`;
+              
+              comment += `\n`;
+            }
+            
+            comment += `### 📋 Review Checklist\n\n`;
+            comment += `- [ ] Code follows project standards\n`;
+            comment += `- [ ] Self-review completed\n`;
+            comment += `- [ ] Documentation updated (if applicable)\n`;
+            comment += `- [ ] Tests added/updated\n`;
+            comment += `- [ ] No new warnings introduced\n\n`;
+            
+            comment += `---\n`;
+            comment += `*Automated review by [OpenAgent Eval CI](https://github.com/${context.repo.owner}/${context.repo.repo})*\n`;
+            
+            core.setOutput('comment', comment);
+            core.setOutput('pr_number', prNumber);
+            core.setOutput('has_issues', hasIssues);
+
+      - name: Post comment on PR
+        if: steps.summary.outputs.comment != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `${{ steps.summary.outputs.comment }}`;
+            const prNumber = parseInt('${{ steps.summary.outputs.pr_number }}', 10);
+            
+            // Find and update existing review comment, or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && 
+              c.body.includes('## ✅ Code Review Summary') || 
+              c.body.includes('## ⚠️ Code Review Summary')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+              core.info(`📝 Updated existing review comment #${botComment.id}`);
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+              core.info(`💬 Created new review comment on PR #${prNumber}`);
+            }
+
+      - name: Set PR status check
+        if: steps.summary.outputs.has_issues == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.summary.outputs.pr_number }}', 10);
+            
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: 'failure',
+              context: 'Code Review',
+              description: 'Review found issues that need fixing',
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${prNumber}#issuecomment-new`
+            });
+            
+            core.info(`❌ Set commit status to failure for PR #${prNumber}`);
+
+      - name: Set PR status check (success)
+        if: steps.summary.outputs.has_issues == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: 'success',
+              context: 'Code Review',
+              description: 'All checks passed',
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${{ steps.summary.outputs.pr_number }}`
+            });
+            
+            core.info(`✅ Set commit status to success`);
