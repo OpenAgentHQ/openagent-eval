@@ -77,6 +77,11 @@ class NLIJudge:
         self._pipeline: Any = None
 
     @property
+    def model_name(self) -> str:
+        """Public accessor for the configured HuggingFace model name."""
+        return self._model_name
+
+    @property
     def pipeline(self) -> Any:
         """Lazily load the NLI pipeline (heavy import)."""
         if self._pipeline is None:

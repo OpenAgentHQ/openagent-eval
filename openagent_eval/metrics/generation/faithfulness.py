@@ -135,7 +135,7 @@ class Faithfulness(BaseMetric):
                 "method": "nli",
                 "claims_total": len(claims),
                 "claims_supported": supported,
-                "model": judge._model_name,
+                "model": judge.model_name,
             },
         )
 

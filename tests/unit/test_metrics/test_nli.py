@@ -218,6 +218,11 @@ class TestNLIJudge:
     def setup_method(self):
         self.judge = NLIJudge(model_name="test-model")
 
+    def test_model_name_property(self):
+        assert self.judge.model_name == "test-model"
+        default_judge = NLIJudge()
+        assert default_judge.model_name == NLIJudge.DEFAULT_MODEL
+
     def test_empty_premise(self):
         result = self.judge.evaluate(premise="", hypothesis="test")
         assert result.label == NLILabel.NEUTRAL
