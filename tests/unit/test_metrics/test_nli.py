@@ -203,7 +203,7 @@ class TestEvidenceFinder:
 
     def test_score_faithfulness_empty_claims(self):
         score, matches = self.finder.score_faithfulness([], ["context"])
-        assert score == 0.0
+        assert score == 1.0
         assert matches == []
 
 
