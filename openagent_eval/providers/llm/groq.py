@@ -275,7 +275,7 @@ class Groq(LLMProvider):
             )
             return LLMResponse(
                 content=content,
-                model=self.model,
+                model=request_params["model"],
                 usage=token_usage,
                 provider=self.name,
                 latency_ms=latency_ms,
