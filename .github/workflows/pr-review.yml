@@ -2,7 +2,7 @@
 # PR Review Workflow for OpenAgentHQ
 # Automatically reviews PRs using OpenCode AI when opened or updated.
 #
-# Trigger: pull_request → opened/synchronize/reopened/ready_for_review
+# Trigger: pull_request_target → opened/synchronize/reopened/ready_for_review
 # Permissions: id-token: write, contents: read, pull-requests: write, issues: write
 # Model: opencode/deepseek-v4-flash-free (@latest)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -10,7 +10,7 @@
 name: PR Review
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 
 # Cancel in-progress reviews for the same PR
@@ -36,6 +36,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
       - name: Configure git identity
