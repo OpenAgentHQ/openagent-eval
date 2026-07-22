@@ -39,44 +39,45 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - name: Configure git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Install OpenCode
+        run: curl -fsSL https://opencode.ai/install | bash
 
       - name: Run OpenCode PR Review
-        uses: anomalyco/opencode/github@latest
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-        with:
-          model: opencode/deepseek-v4-flash-free
-          prompt: |
-            Review this pull request thoroughly. Provide a structured code review covering:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REVIEW=$(opencode run --model opencode/deepseek-v4-flash-free --prompt "
+          Review this pull request thoroughly. Provide a structured code review covering:
 
-            ## Summary
-            Brief summary of what this PR does.
+          ## Summary
+          Brief summary of what this PR does.
 
-            ## Issues Found
-            For each issue found, categorize it:
-            - [BUG] — Logic errors, race conditions, edge cases
-            - [SECURITY] — Vulnerabilities, injection, secrets exposure
-            - [PERFORMANCE] — Inefficiency, N+1 queries, memory issues
-            - [STYLE] — Readability, naming, code organization
-            - [TEST] — Missing tests, weak assertions, coverage gaps
+          ## Issues Found
+          For each issue found, categorize it:
+          - [BUG] — Logic errors, race conditions, edge cases
+          - [SECURITY] — Vulnerabilities, injection, secrets exposure
+          - [PERFORMANCE] — Inefficiency, N+1 queries, memory issues
+          - [STYLE] — Readability, naming, code organization
+          - [TEST] — Missing tests, weak assertions, coverage gaps
 
-            Each issue should include:
-            - File path and line number
-            - Severity: LOW / MEDIUM / HIGH
-            - Description of the problem
-            - Suggested fix
+          Each issue should include:
+          - File path and line number
+          - Severity: LOW / MEDIUM / HIGH
+          - Description of the problem
+          - Suggested fix
 
-            ## Positive Notes
-            Highlight what was done well (good patterns, clean code, proper tests).
+          ## Positive Notes
+          Highlight what was done well (good patterns, clean code, proper tests).
 
-            ## Verdict
-            - APPROVE — No blocking issues
-            - COMMENT — Minor suggestions, no blockers
-            - REQUEST CHANGES — Blocking issues that must be fixed
+          ## Verdict
+          - APPROVE — No blocking issues
+          - COMMENT — Minor suggestions, no blockers
+          - REQUEST CHANGES — Blocking issues that must be fixed
 
-            Be specific and actionable. Reference actual code from the diff.
-            If no issues are found, say "No issues found. Good job!"
+          Be specific and actionable. Reference actual code from the diff.
+          If no issues are found, say 'No issues found. Good job!'
+          ")
+
+          # Post review as comment using GitHub CLI
+          gh pr comment ${{ github.event.pull_request.number }} --body "$REVIEW"
