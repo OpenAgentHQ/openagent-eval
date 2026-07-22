@@ -173,9 +173,12 @@ class ComparisonReport(ReportGenerator):
         Returns:
             Path to the written file.
         """
-        path = self._prepare_output_file(output_path)
-        if not str(path).endswith(".txt"):
+        path = Path(output_path)
+        if path.suffix == "":
             path = path / "comparison.txt"
+        elif path.suffix.lower() != ".txt":
+            path = path.with_suffix(".txt")
+        path = self._prepare_output_file(path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")
         return path

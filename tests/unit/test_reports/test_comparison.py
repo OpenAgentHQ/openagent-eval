@@ -196,6 +196,19 @@ class TestComparisonReport:
         content = result_path.read_text(encoding="utf-8")
         assert "Experiment Comparison Report" in content
 
+    def test_generate_to_file_replaces_non_txt_extension(
+        self, comparison: Any, tmp_path: Path
+    ) -> None:
+        """generate_to_file() replaces non-.txt suffixes with .txt."""
+        report = ComparisonReport()
+        output_path = tmp_path / "comparison.log"
+        result_path = report.generate_to_file(comparison, output_path)
+
+        assert result_path == tmp_path / "comparison.txt"
+        assert result_path.exists()
+        content = result_path.read_text(encoding="utf-8")
+        assert "Experiment Comparison Report" in content
+
     def test_generate_to_file_creates_directory(
         self, comparison: Any, tmp_path: Path
     ) -> None:

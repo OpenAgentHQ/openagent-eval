@@ -128,8 +128,10 @@ class JSONReport(ReportGenerator):
             Path to the written file.
         """
         path = Path(output_path)
-        if not str(path).endswith(".json"):
+        if path.suffix == "":
             path = path / "report.json"
+        elif path.suffix.lower() != ".json":
+            path = path.with_suffix(".json")
         path = self._prepare_output_file(path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")

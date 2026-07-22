@@ -137,6 +137,19 @@ class TestJSONReport:
         assert result_path.exists()
         assert str(result_path).endswith(".json")
 
+    def test_generate_to_file_replaces_non_json_extension(
+        self, evaluation_report: Any, tmp_path: Path
+    ) -> None:
+        """generate_to_file() replaces non-.json suffixes with .json."""
+        report = JSONReport()
+        output_path = tmp_path / "report.txt"
+        result_path = report.generate_to_file(evaluation_report, output_path)
+
+        assert result_path == tmp_path / "report.json"
+        assert result_path.exists()
+        data = json.loads(result_path.read_text(encoding="utf-8"))
+        assert "metadata" in data
+
     def test_generate_to_file_creates_directory(
         self, evaluation_report: Any, tmp_path: Path
     ) -> None:

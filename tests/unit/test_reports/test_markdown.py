@@ -109,6 +109,19 @@ class TestMarkdownReport:
         assert result_path.exists()
         assert str(result_path).endswith(".md")
 
+    def test_generate_to_file_replaces_non_md_extension(
+        self, evaluation_report: Any, tmp_path: Path
+    ) -> None:
+        """generate_to_file() replaces non-.md suffixes with .md."""
+        report = MarkdownReport()
+        output_path = tmp_path / "report.txt"
+        result_path = report.generate_to_file(evaluation_report, output_path)
+
+        assert result_path == tmp_path / "report.md"
+        assert result_path.exists()
+        content = result_path.read_text(encoding="utf-8")
+        assert "## Summary" in content
+
     def test_generate_to_file_creates_directory(
         self, evaluation_report: Any, tmp_path: Path
     ) -> None:

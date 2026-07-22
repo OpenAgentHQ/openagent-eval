@@ -177,8 +177,10 @@ class MarkdownReport(ReportGenerator):
             Path to the written file.
         """
         path = Path(output_path)
-        if not str(path).endswith(".md"):
+        if path.suffix == "":
             path = path / "report.md"
+        elif path.suffix.lower() != ".md":
+            path = path.with_suffix(".md")
         path = self._prepare_output_file(path)
         content = self.generate(report)
         path.write_text(content, encoding="utf-8")
