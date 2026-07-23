@@ -198,8 +198,9 @@ class CorpusAuditor:
                         doc = self._load_single_file(file_path)
                         if doc:
                             documents.append(doc)
-                        if len(documents) >= self.max_documents:
-                            break
+                    if len(documents) >= self.max_documents:
+                        del documents[self.max_documents :]
+                        break
 
         return documents
 
