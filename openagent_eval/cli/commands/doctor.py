@@ -30,7 +30,20 @@ def doctor_command(
         help="Test API connectivity (requires API keys).",
     ),
 ) -> None:
-    """Check environment and dependencies for OpenAgent Eval."""
+    """Check environment, dependencies, and API connectivity for OpenAgent Eval.
+
+    Args:
+        verbose (bool): Show detailed system, Python, and version information.
+            Defaults to False.
+        check_api (bool): Test connectivity to available API endpoints.
+            Defaults to False.
+
+    Returns:
+        None. Prints environment status tables and recommendations directly to the console.
+
+    Example:
+        $ oaeval doctor --check-api
+    """
     ctx = get_context()
 
     if verbose:

@@ -105,6 +105,7 @@ class DiagnosisAnalyzer:
 
         for item in results:
             scores = self._extract_scores(item)
+            contexts = self._extract_validated_contexts(item)
             question = scores.question
 
             # Run blame attribution
@@ -119,12 +120,17 @@ class DiagnosisAnalyzer:
                     blame_key = failure.blame.value
                     blame_counts[blame_key] = blame_counts.get(blame_key, 0) + 1
 
+            metadata = item.get("metadata")
+
+            if not isinstance(metadata, dict):
+                metadata = None
+
             # Run chunking analysis
             if scores.context_count > 0:
                 chunking_issues = self._chunking_analyzer.analyze(
-                    question,
-                    item.get("contexts", []) or [],
-                    item.get("metadata"),
+                        question,
+                        contexts,
+                        metadata,
                 )
                 all_chunking_issues.extend(chunking_issues)
 
@@ -135,11 +141,11 @@ class DiagnosisAnalyzer:
         # Build recommendations
         recommendations = self._build_recommendations(blame_counts, failure_counts)
 
-        # Compute overall health
-        if not results:
-            overall_health = 1.0
-        else:
-            overall_health = healthy_count / len(results)
+        overall_health = (
+            1.0
+            if not results
+            else healthy_count / len(results)
+        )
 
         return DiagnosisReport(
             total_items=len(results),
@@ -189,19 +195,44 @@ class DiagnosisAnalyzer:
             else:
                 generation_scores[key] = val
 
-        contexts = item.get("contexts", []) or []
-        if not isinstance(contexts, list):
-            contexts = []
+        raw_contexts = item.get("contexts", []) or []
+
+        if not isinstance(raw_contexts, list):
+            contexts: list[str] = []
+        else:
+            contexts = [
+                context
+                for context in raw_contexts
+                if isinstance(context, str)
+            ]
 
         return ComponentScores(
             question=question,
             retrieval_scores=retrieval_scores,
             generation_scores=generation_scores,
             context_count=len(contexts),
-            context_lengths=[len(str(c)) for c in contexts],
+            context_lengths=[len(c) for c in contexts],
             answer_length=len(str(item.get("answer", ""))),
             latency_ms=metadata.get("latency_ms"),
         )
+
+
+    def _extract_validated_contexts(
+        self,
+        item: dict[str, object],
+    ) -> list[str]:
+        """Extract validated context strings from an evaluation item."""
+
+        raw_contexts = item.get("contexts", []) or []
+
+        if not isinstance(raw_contexts, list):
+            return []
+
+        return [
+            context
+            for context in raw_contexts
+            if isinstance(context, str)
+        ]
 
     def _build_recommendations(
         self,
