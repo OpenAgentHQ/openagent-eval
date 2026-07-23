@@ -27,8 +27,8 @@ class TestBlameAttribution:
     # Healthy cases
     # ------------------------------------------------------------------
 
-    def test_healthy_item_returns_unknown(self) -> None:
-        """An item with good scores should return UNKNOWN blame."""
+    def test_healthy_item_returns_none(self) -> None:
+        """An item with good scores should return NONE blame (no failures)."""
         scores = ComponentScores(
             question="What is Python?",
             retrieval_scores={"context_precision": 0.9, "context_recall": 0.85},
@@ -38,7 +38,8 @@ class TestBlameAttribution:
             answer_length=500,
         )
         result = self.blamer.analyze(scores)
-        assert result.target == BlameTarget.UNKNOWN
+        assert result.target == BlameTarget.NONE
+        assert result.confidence == 1.0
         assert len(result.failure_modes) == 0
 
     def test_empty_scores_returns_empty_retrieval(self) -> None:
@@ -162,8 +163,8 @@ class TestBlameAttribution:
             answer_length=300,
         )
         result = self.blamer.analyze(scores)
-        # May blame chunking or unknown depending on thresholds
-        assert result.target in (BlameTarget.CHUNKING, BlameTarget.UNKNOWN)
+        # May blame chunking or none depending on thresholds
+        assert result.target in (BlameTarget.CHUNKING, BlameTarget.NONE)
 
     def test_uneven_context_lengths(self) -> None:
         """Highly uneven context lengths should detect chunking issue."""

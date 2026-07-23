@@ -31,12 +31,17 @@ class FailureMode(str, Enum):
 
 
 class BlameTarget(str, Enum):
-    """Which component is blamed for a failure."""
+    """Which component is blamed for a failure.
+
+    NONE indicates analysis completed with no failures detected.
+    UNKNOWN is reserved for cases where blame could not be determined.
+    """
 
     RETRIEVAL = "retrieval"
     GENERATION = "generation"
     CHUNKING = "chunking"
     DATASET = "dataset"
+    NONE = "none"
     UNKNOWN = "unknown"
 
 

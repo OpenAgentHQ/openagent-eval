@@ -129,7 +129,7 @@ class DiagnosisAnalyzer:
                 all_chunking_issues.extend(chunking_issues)
 
             # Check if item is healthy
-            if blame_result.target == BlameTarget.UNKNOWN:
+            if blame_result.target == BlameTarget.NONE:
                 healthy_count += 1
 
         # Build recommendations

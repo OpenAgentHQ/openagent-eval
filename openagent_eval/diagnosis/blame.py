@@ -225,8 +225,8 @@ class BlameAttribution:
         """Determine the primary blame target from all detected failures."""
         if not failures:
             return BlameResult(
-                target=BlameTarget.UNKNOWN,
-                confidence=0.0,
+                target=BlameTarget.NONE,
+                confidence=1.0,
                 reason="No failures detected.",
                 failure_modes=[],
             )

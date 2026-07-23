@@ -32,6 +32,7 @@ _BLAME_LABELS: dict[str, str] = {
     BlameTarget.GENERATION.value: "[yellow]Generation[/yellow]",
     BlameTarget.CHUNKING.value: "[cyan]Chunking[/cyan]",
     BlameTarget.DATASET.value: "[magenta]Dataset[/magenta]",
+    BlameTarget.NONE.value: "[green]Healthy[/green]",
     BlameTarget.UNKNOWN.value: "[dim]Unknown[/dim]",
 }
 
