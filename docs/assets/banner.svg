@@ -2,16 +2,16 @@
   <title>OpenAgent Eval — pytest-level simplicity for AI evaluation</title>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#141833"/>
-      <stop offset="0.55" stop-color="#191f42"/>
-      <stop offset="1" stop-color="#1d2450"/>
+      <stop offset="0" stop-color="#0a0a0c"/>
+      <stop offset="0.55" stop-color="#0d0d11"/>
+      <stop offset="1" stop-color="#101014"/>
     </linearGradient>
     <radialGradient id="glowA" cx="0.18" cy="0.2" r="0.5">
-      <stop offset="0" stop-color="#5c6bc0" stop-opacity="0.28"/>
+      <stop offset="0" stop-color="#5c6bc0" stop-opacity="0.14"/>
       <stop offset="1" stop-color="#5c6bc0" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="glowB" cx="0.9" cy="0.92" r="0.55">
-      <stop offset="0" stop-color="#7c5cf0" stop-opacity="0.22"/>
+      <stop offset="0" stop-color="#7c5cf0" stop-opacity="0.11"/>
       <stop offset="1" stop-color="#7c5cf0" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="logo" x1="0" y1="0" x2="1" y2="1">
@@ -27,8 +27,8 @@
       <stop offset="1" stop-color="#4ade80"/>
     </linearGradient>
     <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#111634"/>
-      <stop offset="1" stop-color="#0d1128"/>
+      <stop offset="0" stop-color="#16161e"/>
+      <stop offset="1" stop-color="#121218"/>
     </linearGradient>
   </defs>
 
@@ -50,25 +50,25 @@
     <text x="208" y="220" font-size="58" font-weight="800" fill="#ffffff" letter-spacing="-1.2">OpenAgent Eval</text>
 
     <!-- tagline -->
-    <text x="90" y="302" font-size="31" font-weight="400" fill="#aeb6e4">pytest-level simplicity for AI evaluation</text>
+    <text x="90" y="302" font-size="31" font-weight="400" fill="#b8bff0">pytest-level simplicity for AI evaluation</text>
 
     <!-- feature line -->
-    <text x="90" y="346" font-size="20" font-weight="500" fill="#8b93c8" letter-spacing="0.3">Local-first  ·  Framework-agnostic  ·  18+ metrics</text>
+    <text x="90" y="346" font-size="20" font-weight="500" fill="#9ba3d6" letter-spacing="0.3">Local-first  ·  Framework-agnostic  ·  18+ metrics</text>
 
     <!-- score-bar motif -->
     <g font-size="17" font-weight="500">
       <!-- retrieval 0.88 -->
-      <text x="90" y="410" fill="#9aa2d4">retrieval</text>
+      <text x="90" y="410" fill="#aab1dd">retrieval</text>
       <rect x="250" y="397" width="280" height="13" rx="6.5" fill="#232a54"/>
       <rect x="250" y="397" width="246" height="13" rx="6.5" fill="url(#bar)"/>
       <text x="548" y="410" fill="#4ade80" font-weight="700">0.88</text>
       <!-- generation 0.93 -->
-      <text x="90" y="452" fill="#9aa2d4">generation</text>
+      <text x="90" y="452" fill="#aab1dd">generation</text>
       <rect x="250" y="439" width="280" height="13" rx="6.5" fill="#232a54"/>
       <rect x="250" y="439" width="260" height="13" rx="6.5" fill="url(#bar)"/>
       <text x="548" y="452" fill="#4ade80" font-weight="700">0.93</text>
       <!-- overall 0.91 -->
-      <text x="90" y="494" fill="#9aa2d4">overall</text>
+      <text x="90" y="494" fill="#aab1dd">overall</text>
       <rect x="250" y="481" width="280" height="13" rx="6.5" fill="#232a54"/>
       <rect x="250" y="481" width="255" height="13" rx="6.5" fill="url(#bar)"/>
       <text x="548" y="494" fill="#4ade80" font-weight="700">0.91</text>
@@ -77,12 +77,12 @@
 
   <!-- ===================== RIGHT: terminal card ===================== -->
   <g>
-    <rect x="792" y="150" width="416" height="344" rx="18" fill="url(#card)" stroke="#2c3566" stroke-width="1.5"/>
+    <rect x="792" y="150" width="416" height="344" rx="18" fill="url(#card)" stroke="#2e2e44" stroke-width="1.5"/>
     <!-- title bar -->
     <circle cx="822" cy="184" r="6" fill="#ff5f56" fill-opacity="0.85"/>
     <circle cx="844" cy="184" r="6" fill="#ffbd2e" fill-opacity="0.85"/>
     <circle cx="866" cy="184" r="6" fill="#27c93f" fill-opacity="0.85"/>
-    <text x="1180" y="189" text-anchor="end" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#6b74a8">evaluation report</text>
+    <text x="1180" y="189" text-anchor="end" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#7b84b8">evaluation report</text>
     <line x1="792" y1="212" x2="1208" y2="212" stroke="#262d55" stroke-width="1.5"/>
 
     <g font-family="'SFMono-Regular', 'JetBrains Mono', 'DejaVu Sans Mono', Consolas, Menlo, monospace" font-size="18">
