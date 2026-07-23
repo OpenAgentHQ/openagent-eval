@@ -171,3 +171,118 @@ class TestCorpusAuditor:
 
         assert "staleness_threshold_days" in report.metadata
         assert report.metadata["staleness_threshold_days"] == 180
+
+
+class TestCorpusAuditorJsonl:
+    """Regression coverage for JSONL loading (issue #57).
+
+    A ``.jsonl`` corpus file is loaded as one ``CorpusDocument`` per
+    non-empty, valid JSON line (via ``_load_jsonl_documents``), rather
+    than as a single document. These tests lock the merged behavior of
+    commit 4e6fbbb so a regression to whole-file loading is caught.
+    """
+
+    @pytest.mark.asyncio
+    async def test_jsonl_one_document_per_line(self, tmp_path):
+        """Each non-empty line of a .jsonl file becomes its own document."""
+        jsonl_file = tmp_path / "data.jsonl"
+        jsonl_file.write_text(
+            '{"id": 1, "text": "first"}\n'
+            '{"id": 2, "text": "second"}\n'
+            '{"id": 3, "text": "third"}\n'
+        )
+
+        auditor = CorpusAuditor(checks=["staleness"])
+        report = await auditor.audit(str(jsonl_file))
+
+        # Three lines -> three documents (not one whole-file document).
+        assert report.total_documents == 3
+
+    def test_jsonl_document_shape(self, tmp_path):
+        """Loaded JSONL docs carry per-line content, ids, and metadata."""
+        jsonl_file = tmp_path / "data.jsonl"
+        jsonl_file.write_text(
+            '{"id": 1, "text": "first"}\n'
+            '{"id": 2, "text": "second"}\n'
+        )
+
+        auditor = CorpusAuditor(checks=["staleness"])
+        docs = auditor._load_documents(jsonl_file)
+
+        assert len(docs) == 2
+        assert docs[0].content == '{"id": 1, "text": "first"}'
+        assert docs[1].content == '{"id": 2, "text": "second"}'
+        assert docs[0].doc_id == f"{jsonl_file}:L1"
+        assert docs[1].doc_id == f"{jsonl_file}:L2"
+        assert docs[0].metadata["extension"] == ".jsonl"
+        assert docs[0].metadata["filename"] == "data.jsonl"
+        assert docs[0].metadata["line_number"] == 1
+        assert docs[1].metadata["line_number"] == 2
+
+    @pytest.mark.asyncio
+    async def test_jsonl_skips_empty_and_whitespace_lines(self, tmp_path):
+        """Blank and whitespace-only lines are skipped."""
+        jsonl_file = tmp_path / "data.jsonl"
+        jsonl_file.write_text(
+            '{"id": 1}\n'
+            "\n"
+            "   \n"
+            "\t\n"
+            '{"id": 2}\n'
+        )
+
+        auditor = CorpusAuditor(checks=["staleness"])
+        report = await auditor.audit(str(jsonl_file))
+
+        # Two valid lines; three blank/whitespace lines dropped.
+        assert report.total_documents == 2
+
+    def test_jsonl_skips_malformed_line_silently(self, tmp_path):
+        """A line that is not valid JSON is skipped without raising."""
+        jsonl_file = tmp_path / "data.jsonl"
+        jsonl_file.write_text(
+            '{"id": 1}\n'
+            "not valid json {\n"
+            '{"id": 2}\n'
+        )
+
+        auditor = CorpusAuditor(checks=["staleness"])
+        # Must not raise; the malformed line is dropped, valid ones kept.
+        docs = auditor._load_documents(jsonl_file)
+
+        assert len(docs) == 2
+        assert [d.metadata["line_number"] for d in docs] == [1, 3]
+
+    @pytest.mark.asyncio
+    async def test_json_file_loads_as_single_document(self, tmp_path):
+        """A .json file is still loaded as one document (no routing regression)."""
+        json_file = tmp_path / "data.json"
+        json_file.write_text('[{"id": 1}, {"id": 2}, {"id": 3}]')
+
+        auditor = CorpusAuditor(checks=["staleness"])
+        report = await auditor.audit(str(json_file))
+
+        # Whole .json file -> exactly one document.
+        assert report.total_documents == 1
+
+    def test_json_file_document_extension(self, tmp_path):
+        """The single .json document keeps its .json extension metadata."""
+        json_file = tmp_path / "data.json"
+        json_file.write_text('{"key": "value"}')
+
+        auditor = CorpusAuditor(checks=["staleness"])
+        docs = auditor._load_documents(json_file)
+
+        assert len(docs) == 1
+        assert docs[0].metadata["extension"] == ".json"
+
+    @pytest.mark.asyncio
+    async def test_jsonl_respects_max_documents(self, tmp_path):
+        """max_documents caps the number of JSONL lines loaded."""
+        jsonl_file = tmp_path / "data.jsonl"
+        jsonl_file.write_text("".join(f'{{"id": {i}}}\n' for i in range(10)))
+
+        auditor = CorpusAuditor(checks=["staleness"], max_documents=4)
+        report = await auditor.audit(str(jsonl_file))
+
+        assert report.total_documents == 4
