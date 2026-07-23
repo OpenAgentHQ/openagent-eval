@@ -305,6 +305,58 @@ class TestNDCG:
         assert result.score < 1.0
         assert result.score > 0.0
 
+    # -------------------------------------------------------------- #
+    # #223 regression: DCG discount is off by one                     #
+    # -------------------------------------------------------------- #
+    def test_dcg_discount_single_relevant_by_rank(self):
+        """#223: single relevant doc among 3 (k=3) must score by position.
+
+        With exactly one relevant document the ideal DCG is 1/log2(2) = 1.0,
+        so NDCG equals the position discount of the retrieved relevant doc:
+            rank 1: 1/log2(2) = 1.0
+            rank 2: 1/log2(3) = 0.63093
+            rank 3: 1/log2(4) = 0.5
+        The old off-by-one discount gave rank 2 a divisor of log2(2) = 1.0,
+        making it indistinguishable from rank 1 (both 1.0).
+        """
+        gt = ["rel"]
+        rank1 = self.metric.evaluate(
+            retrieved_contexts=["rel", "x", "y"], ground_truth_contexts=gt, k=3
+        )
+        rank2 = self.metric.evaluate(
+            retrieved_contexts=["x", "rel", "y"], ground_truth_contexts=gt, k=3
+        )
+        rank3 = self.metric.evaluate(
+            retrieved_contexts=["x", "y", "rel"], ground_truth_contexts=gt, k=3
+        )
+        assert rank1.score == pytest.approx(1.0)
+        assert rank2.score == pytest.approx(0.6309297535714575)
+        assert rank3.score == pytest.approx(0.5)
+
+    def test_dcg_ndcg_strictly_decreases_with_rank(self):
+        """#223: NDCG must strictly decrease as the relevant doc moves down."""
+        gt = ["rel"]
+        scores = [
+            self.metric.evaluate(
+                retrieved_contexts=(["x"] * i + ["rel"] + ["x"] * (2 - i)),
+                ground_truth_contexts=gt,
+                k=3,
+            ).score
+            for i in range(3)
+        ]
+        assert scores[0] > scores[1] > scores[2]
+
+    def test_idcg_normalization_perfect_ranking_is_one(self):
+        """#223: the fixed discount is used for IDCG too, so a perfectly
+        ranked result (all relevant docs at the top) still scores exactly 1.0.
+        """
+        result = self.metric.evaluate(
+            retrieved_contexts=["a", "b", "c"],
+            ground_truth_contexts=["a", "b", "c"],
+            k=3,
+        )
+        assert result.score == pytest.approx(1.0)
+
 
 # ------------------------------------------------------------------ #
 # L20 regression: RecallAtK uses distinct ground truth count           #
