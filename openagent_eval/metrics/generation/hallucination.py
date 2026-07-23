@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from loguru import logger
+
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 
 
@@ -54,10 +56,8 @@ class HallucinationDetection(BaseMetric):
         # runtime error (missing API key, model init failure, etc.).
         try:
             return self._evaluate_with_deepeval(answer, contexts)
-        except ImportError:
-            pass
-        except Exception:
-            pass  # DeepEval runtime failure → use local fallback
+        except (ImportError, Exception) as e:
+            logger.debug("DeepEval hallucination unavailable, using fallback: {}", e)
 
         # Fallback: word coverage
         return self._evaluate_simple(answer, contexts)
