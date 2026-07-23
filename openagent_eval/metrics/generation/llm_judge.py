@@ -6,6 +6,8 @@ quality dimension, returning a score based on LLM judgment.
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,6 +15,13 @@ from loguru import logger
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 from openagent_eval.providers.base.llm import LLMProvider
+
+_JSON_SCORE_INSTRUCTION = (
+    'Respond with ONLY a JSON object on a single line: {{"score": <number from 0.0 to 1.0>}}'
+)
+_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IGNORECASE)
+_SCORE_LABEL_RE = re.compile(r"score[\"'\s:]*(\d+\.?\d*)", re.IGNORECASE)
+_BARE_DECIMAL_RE = re.compile(r"^\s*(\d+\.?\d*)\s*$")
 
 
 @dataclass(frozen=True)
@@ -41,7 +50,7 @@ FAITHFULNESS_CRITERIA = JudgeCriteria(
         "Score from 0.0 (not supported at all) to 1.0 (fully supported).\n\n"
         "Context: {premise}\n\n"
         "Answer: {hypothesis}\n\n"
-        "Score:"
+        f"{_JSON_SCORE_INSTRUCTION}"
     ),
 )
 
@@ -53,7 +62,7 @@ RELEVANCY_CRITERIA = JudgeCriteria(
         "Score from 0.0 (completely irrelevant) to 1.0 (fully addresses the question).\n\n"
         "Question: {premise}\n\n"
         "Answer: {hypothesis}\n\n"
-        "Score:"
+        f"{_JSON_SCORE_INSTRUCTION}"
     ),
 )
 
@@ -66,7 +75,7 @@ COMPREHENSIVENESS_CRITERIA = JudgeCriteria(
         "Score from 0.0 (very incomplete) to 1.0 (fully comprehensive).\n\n"
         "Topic: {premise}\n\n"
         "Answer: {hypothesis}\n\n"
-        "Score:"
+        f"{_JSON_SCORE_INSTRUCTION}"
     ),
 )
 
@@ -164,29 +173,70 @@ class LLMJudgeMetric(BaseMetric):
 
     def _parse_score(self, response: str) -> float:
         """Parse numeric score from LLM response text."""
-        import re
+        text = response.strip()
+        if not text:
+            logger.warning("LLM judge: empty response, using default score 0.5")
+            return 0.5
 
-        # Try to find a decimal number
-        match = re.search(r'(\d+\.?\d*)', response.strip())
-        if match:
-            score = float(match.group(1))
-            # Normalize to 0-1 range if needed
-            if score > 1.0:
-                # Could be percentage (85 -> 0.85) or scale (8.5 -> 0.85)
-                if score <= 10.0:
-                    score = score / 10.0
-                else:
-                    score = min(score / 100.0, 1.0)
-            return max(0.0, min(1.0, score))
+        for candidate in self._json_score_candidates(text):
+            try:
+                payload = json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(payload, dict):
+                normalized = {str(key).lower(): value for key, value in payload.items()}
+                if "score" in normalized:
+                    try:
+                        score = float(normalized["score"])
+                    except (TypeError, ValueError):
+                        logger.warning(
+                            "LLM judge: invalid JSON score value in response: {}",
+                            response[:200],
+                        )
+                        continue
+                    return self._clamp_normalized_score(score)
 
-        # Fallback: check for keywords
-        response_lower = response.lower()
-        if any(word in response_lower for word in ["yes", "true", "fully", "completely", "excellent"]):
-            return 1.0
-        if any(word in response_lower for word in ["no", "false", "not at all", "poor"]):
-            return 0.0
+        label_match = _SCORE_LABEL_RE.search(text)
+        if label_match:
+            logger.warning(
+                "LLM judge: parsed score from non-JSON labeled response: {}",
+                response[:200],
+            )
+            return self._clamp_normalized_score(float(label_match.group(1)))
 
-        return 0.5  # Default neutral score
+        bare_match = _BARE_DECIMAL_RE.match(text)
+        if bare_match:
+            logger.warning(
+                "LLM judge: parsed score from bare numeric response: {}",
+                response[:200],
+            )
+            return self._clamp_normalized_score(float(bare_match.group(1)))
+
+        logger.warning(
+            "LLM judge: failed to parse score from response, using default 0.5: {}",
+            response[:200],
+        )
+        return 0.5
+
+    @staticmethod
+    def _json_score_candidates(text: str) -> list[str]:
+        candidates: list[str] = []
+        fence_match = _JSON_FENCE_RE.search(text)
+        if fence_match:
+            candidates.append(fence_match.group(1))
+        candidates.append(text)
+        return candidates
+
+    @staticmethod
+    def _clamp_normalized_score(score: float) -> float:
+        if score > 1.0:
+            if score <= 10.0:
+                score = score / 10.0
+            elif score <= 100.0:
+                score = score / 100.0
+            else:
+                score = min(score / 100.0, 1.0)
+        return max(0.0, min(1.0, score))
 
 
 class AsyncLLMJudgeMetric(LLMJudgeMetric):
