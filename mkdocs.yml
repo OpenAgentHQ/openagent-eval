@@ -183,6 +183,9 @@ nav:
       - Report Output Formats: reports-output-formats.md
   - Examples:
       - examples/index.md
+      - Colab Quickstart: examples/colab.md
+      - RAG Evaluation: examples/rag.md
+      - Corpus Health Auditor: examples/corpus.md
   - Community:
       - Contributing: contributing.md
       - Roadmap: roadmap.md
