@@ -235,6 +235,6 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 <div align="center">
 
-**Built with care by the [OpenAgent](https://github.com/OpenAgentHQ) community.**
+**Built with care by the [OpenAgentHQ](https://github.com/OpenAgentHQ) community.**
 
 </div>
