@@ -1,5 +1,8 @@
 <div align="center">
 
+<!-- Social-card PNG (1280x640) also available at ./docs/assets/banner.png -->
+![OpenAgent Eval — pytest-level simplicity for AI evaluation](./docs/assets/banner.svg)
+
 # OpenAgent Eval
 
 **The open-source evaluation framework for RAG systems and AI Agents.**

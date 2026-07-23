@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="OpenAgent Eval — pytest-level simplicity for AI evaluation">
+  <title>OpenAgent Eval — pytest-level simplicity for AI evaluation</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#141833"/>
+      <stop offset="0.55" stop-color="#191f42"/>
+      <stop offset="1" stop-color="#1d2450"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.18" cy="0.2" r="0.5">
+      <stop offset="0" stop-color="#5c6bc0" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#5c6bc0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.9" cy="0.92" r="0.55">
+      <stop offset="0" stop-color="#7c5cf0" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#7c5cf0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="logo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5c6bc0"/>
+      <stop offset="1" stop-color="#3949ab"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c8cf0"/>
+      <stop offset="1" stop-color="#4ade80"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5c6bc0"/>
+      <stop offset="1" stop-color="#4ade80"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#111634"/>
+      <stop offset="1" stop-color="#0d1128"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#glowA)"/>
+  <rect width="1280" height="640" fill="url(#glowB)"/>
+  <rect x="0" y="0" width="1280" height="4" fill="url(#accent)"/>
+
+  <!-- ===================== LEFT: identity ===================== -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+
+    <!-- logo mark (matches repo logo.svg) -->
+    <rect x="88" y="150" width="96" height="96" rx="22" fill="url(#logo)"/>
+    <path d="M118 183 h36 M118 199 h36 M118 215 h22" stroke="#ffffff" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle cx="160" cy="215" r="5.5" fill="#ffffff"/>
+
+    <!-- wordmark -->
+    <text x="208" y="220" font-size="58" font-weight="800" fill="#ffffff" letter-spacing="-1.2">OpenAgent Eval</text>
+
+    <!-- tagline -->
+    <text x="90" y="302" font-size="31" font-weight="400" fill="#aeb6e4">pytest-level simplicity for AI evaluation</text>
+
+    <!-- feature line -->
+    <text x="90" y="346" font-size="20" font-weight="500" fill="#8b93c8" letter-spacing="0.3">Local-first  ·  Framework-agnostic  ·  18+ metrics</text>
+
+    <!-- score-bar motif -->
+    <g font-size="17" font-weight="500">
+      <!-- retrieval 0.88 -->
+      <text x="90" y="410" fill="#9aa2d4">retrieval</text>
+      <rect x="250" y="397" width="280" height="13" rx="6.5" fill="#232a54"/>
+      <rect x="250" y="397" width="246" height="13" rx="6.5" fill="url(#bar)"/>
+      <text x="548" y="410" fill="#4ade80" font-weight="700">0.88</text>
+      <!-- generation 0.93 -->
+      <text x="90" y="452" fill="#9aa2d4">generation</text>
+      <rect x="250" y="439" width="280" height="13" rx="6.5" fill="#232a54"/>
+      <rect x="250" y="439" width="260" height="13" rx="6.5" fill="url(#bar)"/>
+      <text x="548" y="452" fill="#4ade80" font-weight="700">0.93</text>
+      <!-- overall 0.91 -->
+      <text x="90" y="494" fill="#9aa2d4">overall</text>
+      <rect x="250" y="481" width="280" height="13" rx="6.5" fill="#232a54"/>
+      <rect x="250" y="481" width="255" height="13" rx="6.5" fill="url(#bar)"/>
+      <text x="548" y="494" fill="#4ade80" font-weight="700">0.91</text>
+    </g>
+  </g>
+
+  <!-- ===================== RIGHT: terminal card ===================== -->
+  <g>
+    <rect x="792" y="150" width="416" height="344" rx="18" fill="url(#card)" stroke="#2c3566" stroke-width="1.5"/>
+    <!-- title bar -->
+    <circle cx="822" cy="184" r="6" fill="#ff5f56" fill-opacity="0.85"/>
+    <circle cx="844" cy="184" r="6" fill="#ffbd2e" fill-opacity="0.85"/>
+    <circle cx="866" cy="184" r="6" fill="#27c93f" fill-opacity="0.85"/>
+    <text x="1180" y="189" text-anchor="end" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#6b74a8">evaluation report</text>
+    <line x1="792" y1="212" x2="1208" y2="212" stroke="#262d55" stroke-width="1.5"/>
+
+    <g font-family="'SFMono-Regular', 'JetBrains Mono', 'DejaVu Sans Mono', Consolas, Menlo, monospace" font-size="18">
+      <!-- command -->
+      <text x="820" y="252" fill="#4ade80">$</text>
+      <text x="840" y="252" fill="#d5daf5">oaeval run config.yaml</text>
+
+      <!-- metric rows -->
+      <g font-size="17">
+        <!-- faithfulness -->
+        <path d="M818 290 l4 5 l9 -12" stroke="#4ade80" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="842" y="296" fill="#c3c9ee">faithfulness</text>
+        <text x="1180" y="296" text-anchor="end" fill="#4ade80" font-weight="700">0.94</text>
+        <!-- answer_relevancy -->
+        <path d="M818 330 l4 5 l9 -12" stroke="#4ade80" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="842" y="336" fill="#c3c9ee">answer_relevancy</text>
+        <text x="1180" y="336" text-anchor="end" fill="#4ade80" font-weight="700">0.91</text>
+        <!-- context_recall -->
+        <path d="M818 370 l4 5 l9 -12" stroke="#4ade80" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="842" y="376" fill="#c3c9ee">context_recall</text>
+        <text x="1180" y="376" text-anchor="end" fill="#4ade80" font-weight="700">0.88</text>
+        <!-- context_precision -->
+        <path d="M818 410 l4 5 l9 -12" stroke="#4ade80" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="842" y="416" fill="#c3c9ee">context_precision</text>
+        <text x="1180" y="416" text-anchor="end" fill="#4ade80" font-weight="700">0.92</text>
+      </g>
+
+      <line x1="820" y1="440" x2="1180" y2="440" stroke="#262d55" stroke-width="1.2"/>
+      <text x="820" y="470" font-size="15" fill="#4ade80" font-weight="700">4 passed<tspan fill="#7079a8" font-weight="400">   ·   report → reports/latest</tspan></text>
+    </g>
+  </g>
+</svg>
