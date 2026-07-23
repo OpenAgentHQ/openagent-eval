@@ -59,6 +59,8 @@ uv sync
 oaeval init --interactive
 ```
 
+![oaeval interactive wizard](static/openagent-eval.png)
+
 ### 2. Validate Configuration
 
 ```bash
