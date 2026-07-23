@@ -103,7 +103,24 @@ def init_command(
         help="Use interactive wizard or defaults.",
     ),
 ) -> None:
-    """Create a new evaluation configuration file."""
+    """Create a new evaluation configuration file interactively or using defaults.
+
+    Args:
+        config_path (str): The file path where the configuration YAML should be created.
+            Defaults to 'config.yaml'.
+        force (bool): Overwrite the configuration file if it already exists.
+            Defaults to False.
+        interactive (bool): Run an interactive wizard to configure the settings.
+            Defaults to True.
+
+    Returns:
+        None. Writes the YAML configuration file to the disk.
+        Raises ConfigurationError if the configuration file cannot be created/written.
+        Raises typer.Exit if creation is aborted or completed.
+
+    Example:
+        $ oaeval init --config my_config.yaml --no-interactive
+    """
     ctx = get_context()
     path = Path(config_path)
 

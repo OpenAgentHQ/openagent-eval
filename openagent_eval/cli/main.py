@@ -165,13 +165,18 @@ def completion_command(
         help="Shell to generate completion for (bash, zsh, fish).",
     ),
 ) -> None:
-    """Generate shell completion script.
+    """Generate shell completion script for oaeval.
 
-    Install completion by running the generated script:
+    Args:
+        shell (str): Shell type to generate completion for. Supported values
+            are 'bash', 'zsh', or 'fish'.
 
-        oaeval completion bash >> ~/.bashrc
-        oaeval completion zsh >> ~/.zshrc
-        oaeval completion fish > ~/.config/fish/completions/oaeval.fish
+    Returns:
+        None. Prints the generated shell completion script to standard output.
+        Raises typer.Exit(code=1) if the specified shell is not supported.
+
+    Example:
+        $ oaeval completion bash >> ~/.bashrc
     """
     console = Console()
     if shell not in ("bash", "zsh", "fish"):

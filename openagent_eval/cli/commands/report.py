@@ -34,7 +34,23 @@ def report_command(
         help="Directory where reports are stored (default: ./reports).",
     ),
 ) -> None:
-    """View evaluation reports."""
+    """View and display evaluation reports in various formats.
+
+    Args:
+        report_id (str): Report ID (UUID) or 'latest' to view the most recent report.
+        output (str): Output format to render the report. Must be one of:
+            'terminal', 'markdown', 'html', or 'json'. Defaults to 'terminal'.
+        output_dir (str | None): Directory where reports are stored. If not specified,
+            defaults to the project's standard reports directory (./reports).
+
+    Returns:
+        None. Renders the report content directly to the console.
+        Raises typer.Exit(code=1) if report directory is missing or the ID is invalid.
+        Raises typer.Exit(code=2) if the report format requested is not supported.
+
+    Example:
+        $ oaeval report latest --output markdown
+    """
     ctx = get_context()
 
     console.print("[bold blue]OpenAgent Eval[/bold blue] - Report Viewer")
