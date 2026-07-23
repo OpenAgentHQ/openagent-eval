@@ -1,6 +1,6 @@
 [project]
 name = "openagent-eval"
-version = "0.4.7"
+version = "0.4.8"
 description = "Open-source CLI framework for evaluating RAG systems and AI Agents"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -119,6 +119,7 @@ packages = ["openagent_eval"]
 [tool.hatch.build.targets.sdist]
 include = [
     "openagent_eval/",
+    "openagent_eval/reports/",
     "LICENSE",
     "README.md",
     "CHANGELOG.md",

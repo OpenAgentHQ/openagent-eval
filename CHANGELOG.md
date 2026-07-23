@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.4.8] - 2026-07-24
+
+### Fixed
+
+- **Missing Reports Subpackage in sdist** — anchor `reports/` in `.gitignore` to root-only and add explicit sdist include for `openagent_eval/reports/`; 0.4.7 wheel/sdist shipped without the `reports` subpackage, making all CLI commands fail at import (#233)
+
+---
+
 ## [0.4.7] - 2026-07-24
 
 ### Fixed
@@ -445,7 +453,8 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ## Links
 
-[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.7...HEAD
+[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.8...HEAD
+[0.4.8]: https://github.com/openagenthq/openagent-eval/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/openagenthq/openagent-eval/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/openagenthq/openagent-eval/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/openagenthq/openagent-eval/compare/v0.4.4...v0.4.5
