@@ -21,7 +21,20 @@ def validate_command(
         help="Path to configuration file. Auto-discovered if not provided.",
     ),
 ) -> None:
-    """Validate configuration without running evaluation."""
+    """Validate configuration file syntax, schema, datasets, and providers.
+
+    Args:
+        config_path (str | None): Path to the YAML configuration file. If not provided,
+            auto-discovery will search for standard config filenames in the current directory.
+            Defaults to None.
+
+    Returns:
+        None. Prints validation results step-by-step and a final status summary.
+        Raises typer.Exit(code=2) if validation errors are found or files are missing.
+
+    Example:
+        $ oaeval validate config.yaml
+    """
     # Get config path (explicit or auto-discovered)
     try:
         path = get_config_path(config_path)
