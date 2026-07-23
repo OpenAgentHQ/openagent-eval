@@ -6,6 +6,8 @@ quality dimension, returning a score based on LLM judgment.
 
 from __future__ import annotations
 
+import asyncio
+import inspect
 import json
 import re
 from dataclasses import dataclass
@@ -23,6 +25,37 @@ _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IG
 _JSON_OBJECT_RE = re.compile(r"\{[^{}]*\}")
 _SCORE_LABEL_RE = re.compile(r"score\s*[:=]\s*(\d+\.?\d*)", re.IGNORECASE)
 _BARE_DECIMAL_RE = re.compile(r"^\s*(\d+\.?\d*)\s*$")
+
+
+def _run_coroutine_blocking(coro: Any) -> Any:
+    """Run a coroutine to completion from a synchronous context.
+
+    Works whether or not an asyncio event loop is already running. This mirrors
+    the pattern in ``openagent_eval.cicd.plugin``: if there is no running loop
+    we drive the coroutine directly with ``asyncio.run``; if we are already
+    inside a running loop (e.g. the async evaluation pipeline), running the
+    coroutine on that same loop would raise ``RuntimeError`` (or deadlock via
+    ``run_coroutine_threadsafe``), so we execute it in a separate thread that
+    owns its own fresh event loop.
+
+    Args:
+        coro: The coroutine object to run.
+
+    Returns:
+        The value the coroutine resolves to.
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        # No loop running in this thread — safe to drive the coroutine here.
+        return asyncio.run(coro)
+
+    # A loop is already running in this thread. Hand the coroutine off to a
+    # worker thread with its own event loop so we do not touch the live one.
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result()
 
 
 @dataclass(frozen=True)
@@ -146,13 +179,12 @@ class LLMJudgeMetric(BaseMetric):
         )
 
         try:
-            import asyncio
-            import inspect
-
             response = self._provider.generate(prompt)
-            # Handle both sync and async providers
+            # Handle both sync and async providers. When ``generate`` is a
+            # coroutine we must drive it to completion even if we are already
+            # inside a running event loop (the async evaluation pipeline).
             if inspect.iscoroutine(response):
-                response = asyncio.get_event_loop().run_until_complete(response)
+                response = _run_coroutine_blocking(response)
             score = self._parse_score(response)
         except Exception as e:
             logger.error("LLM judge failed: {}", e)
