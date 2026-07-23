@@ -198,8 +198,13 @@ class CorpusAuditor:
                         doc = self._load_single_file(file_path)
                         if doc:
                             documents.append(doc)
-                        if len(documents) >= self.max_documents:
-                            break
+                    # Enforce the cumulative max_documents cap across every
+                    # parsed file. _load_jsonl_documents only caps within a
+                    # single file, so without trimming here a directory of
+                    # .jsonl files would blow past the limit (#224).
+                    if len(documents) >= self.max_documents:
+                        documents = documents[: self.max_documents]
+                        break
 
         return documents
 
