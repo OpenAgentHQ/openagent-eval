@@ -22,10 +22,11 @@ def _dcg(relevances: list[int], k: int) -> float:
         DCG score.
     """
     relevances = relevances[:k]
-    return sum(
-        rel / (1.0 if i == 0 else _log2(i + 1))
-        for i, rel in enumerate(relevances)
-    )
+    # Standard DCG discount: log2(rank + 1) with 1-indexed rank. With a
+    # 0-indexed enumerate() that is log2(i + 2), which gives log2(2) = 1.0 at
+    # rank 1 (no special case needed) and a strictly increasing discount for
+    # every later position.
+    return sum(rel / _log2(i + 2) for i, rel in enumerate(relevances))
 
 
 def _log2(x: float) -> float:
