@@ -169,7 +169,7 @@ class TestDiagnosisPipeline:
             answer_length=200,
         )
         result = blamer.analyze(healthy)
-        assert result.target == BlameTarget.UNKNOWN
+        assert result.target == BlameTarget.NONE
 
         # Test empty retrieval
         empty = ComponentScores(
