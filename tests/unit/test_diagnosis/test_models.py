@@ -38,9 +38,9 @@ class TestFailureMode:
 class TestBlameTarget:
     """Tests for BlameTarget enum."""
 
-    def test_has_five_targets(self) -> None:
-        """BlameTarget should have exactly 5 targets."""
-        assert len(BlameTarget) == 5
+    def test_has_six_targets(self) -> None:
+        """BlameTarget should have exactly 6 targets."""
+        assert len(BlameTarget) == 6
 
     def test_values(self) -> None:
         """BlameTarget values should be descriptive strings."""
@@ -48,6 +48,7 @@ class TestBlameTarget:
         assert BlameTarget.GENERATION.value == "generation"
         assert BlameTarget.CHUNKING.value == "chunking"
         assert BlameTarget.DATASET.value == "dataset"
+        assert BlameTarget.NONE.value == "none"
         assert BlameTarget.UNKNOWN.value == "unknown"
 
 

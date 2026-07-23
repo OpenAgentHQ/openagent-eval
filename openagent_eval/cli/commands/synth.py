@@ -125,27 +125,40 @@ def synth_command(
         help="Show detailed generation progress.",
     ),
 ) -> None:
-    """Generate synthetic test cases from a corpus or text.
+    """Generate synthetic evaluation datasets from a corpus or inline text.
 
-    Creates Q&A test cases and adversarial scenarios for RAG evaluation.
-    Requires an LLM provider for question generation.
+    Args:
+        corpus (str | None): Path to the corpus directory or file. Defaults to None.
+        text (str | None): Inline text to generate from. Alternative to --corpus.
+            Defaults to None.
+        count (int): Number of standard test cases to generate. Defaults to 10.
+        adversarial (bool): Generate adversarial test cases. Defaults to False.
+        adversarial_count (int): Number of adversarial cases per type per chunk.
+            Defaults to 1.
+        adversarial_types (str | None): Comma-separated list of adversarial types to generate.
+            Defaults to None.
+        output (str | None): Output JSON file path. If None, prints a summary.
+            Defaults to None.
+        llm_provider (str): LLM provider to use for generation (e.g. 'openai', 'gemini').
+            Defaults to 'openai'.
+        llm_model (str): LLM model name to use for generation. Defaults to 'gpt-4o-mini'.
+        chunk_size (int): Maximum chunk size in characters. Defaults to 2000.
+        chunk_overlap (int): Overlap between consecutive chunks in characters. Defaults to 200.
+        max_concurrent (int): Maximum concurrent LLM API calls. Defaults to 5.
+        output_format (str): Output format for the dataset ('huggingface', 'json', 'jsonl').
+            Defaults to 'huggingface'.
+        verbose (bool): Show detailed generation progress and sample test cases.
+            Defaults to False.
 
-    Examples:
+    Returns:
+        None. Saves the synthetic dataset to the specified output file, prints a summary
+        to the console, or outputs JSON to standard output.
+        Raises typer.Exit(code=2) if arguments are contradictory or invalid, or if LLM
+        provider creation fails.
+        Raises typer.Exit(code=1) if the synthesis generation process fails.
 
-        # Generate 100 test cases from a knowledge base
-        oaeval synth --corpus ./knowledge_base/ --count 100
-
-        # Generate with adversarial test cases
-        oaeval synth --corpus ./knowledge_base/ --count 50 --adversarial
-
-        # Generate only unanswerable and misleading questions
-        oaeval synth --corpus ./docs/ --adversarial --types unanswerable,misleading
-
-        # Generate from inline text
-        oaeval synth --text "Your document content here..." --count 10
-
-        # Save to file
-        oaeval synth --corpus ./docs/ --count 20 --output dataset.json
+    Example:
+        $ oaeval synth --corpus ./kb/ --count 20 --adversarial --output dataset.json
     """
     ctx = get_context()
 

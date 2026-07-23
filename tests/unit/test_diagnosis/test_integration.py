@@ -7,8 +7,10 @@ and chunking analysis to a final DiagnosisReport.
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 from openagent_eval.diagnosis import DiagnosisAnalyzer
 from openagent_eval.diagnosis.blame import BlameAttribution
@@ -167,7 +169,7 @@ class TestDiagnosisPipeline:
             answer_length=200,
         )
         result = blamer.analyze(healthy)
-        assert result.target == BlameTarget.UNKNOWN
+        assert result.target == BlameTarget.NONE
 
         # Test empty retrieval
         empty = ComponentScores(
@@ -218,6 +220,51 @@ class TestDiagnosisPipeline:
         assert len(deserialized["recommendations"]) == len(report.recommendations)
 
 
+    def test_chunking_receives_validated_contexts(self) -> None:
+        """Chunking analyzer should receive only validated string contexts."""
+
+        analyzer = DiagnosisAnalyzer()
+
+        captured: dict[str, object] = {}
+
+        def fake_chunking(
+            question: str,
+            contexts: list[str],
+            metadata: dict[str, float] | None,
+        ) -> list:
+            captured["question"] = question
+            captured["contexts"] = contexts
+            captured["metadata"] = metadata
+            return []
+
+        analyzer._chunking_analyzer.analyze = fake_chunking  # type: ignore[method-assign]
+
+        results = [
+            {
+                "question": "What is Python?",
+                "answer": "Python is a programming language.",
+                "contexts": [
+                    "Python is a programming language.",
+                    {"content": "invalid"},
+                    123,
+                    None,
+                ],
+                "metrics": {},
+                "metadata": {},
+            }
+        ]
+
+        analyzer.analyze(results)
+
+        assert captured["question"] == "What is Python?"
+        assert captured["metadata"] == {}
+        assert captured["contexts"] == [
+            "Python is a programming language."
+        ]
+        assert len(captured["contexts"]) == 1
+
+
+
 class TestDiagnosisReportFileOutput:
     """Test saving diagnosis report to file."""
 
@@ -252,3 +299,4 @@ class TestDiagnosisReportFileOutput:
 
         assert loaded["total_items"] == 1
         assert loaded["overall_health"] == 1.0
+

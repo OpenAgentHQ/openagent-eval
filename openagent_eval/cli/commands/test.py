@@ -56,15 +56,26 @@ def test_command(
 ) -> None:
     """Run evaluation as a CI/CD test with threshold gating.
 
-    This command runs the evaluation pipeline and checks results against
-    configured thresholds. It exits with code 0 if all thresholds pass,
-    or code 1 if any required threshold fails.
+    Args:
+        config_path (str): Path to the evaluation configuration file.
+        threshold (list[str]): Threshold gates in the format 'metric:operator:value'
+            (e.g., 'faithfulness:gte:0.8'). Supported operators are gt, gte, lt, lte, eq, neq.
+            Defaults to an empty list.
+        fail_on_error (bool): Fail the test suite if an evaluation error occurs.
+            Defaults to True.
+        timeout (int): Timeout in seconds for the evaluation run. Defaults to 300.
+        verbose (bool): Show detailed threshold results and debug logging. Defaults to False.
+        json_output (bool): Output test results as a JSON string to standard output.
+            Defaults to False.
 
-    \b
-    Examples:
-        oaeval test config.yaml -t faithfulness:gte:0.8
-        oaeval test config.yaml -t faithfulness:gte:0.8 -t answer_relevancy:gte:0.7
-        oaeval test config.yaml --timeout 600 --json
+    Returns:
+        None. Displays a summary table and gate results to the console, or outputs JSON.
+        Raises typer.Exit(code=0) if all thresholds pass.
+        Raises typer.Exit(code=1) if any threshold fails or if evaluation errors occur (and fail_on_error is True).
+        Raises typer.Exit(code=2) if configuration loading, threshold arguments, or operators are invalid.
+
+    Example:
+        $ oaeval test config.yaml -t faithfulness:gte:0.8 -t answer_relevancy:gte:0.7 --json
     """
     from openagent_eval.cli.utils.discovery import get_config_path
 
