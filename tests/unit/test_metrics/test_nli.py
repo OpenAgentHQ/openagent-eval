@@ -316,23 +316,78 @@ class TestLLMJudgeMetric:
 
     def test_llm_judge_parse_score_decimal(self):
         metric = LLMJudgeMetric(provider=self.mock_provider)
-        score = metric._parse_score("The score is 0.85")
+        score = metric._parse_score('{"score": 0.85}')
         assert score == 0.85
+
+    def test_llm_judge_parse_score_plain_decimal_backward_compat(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score("0.92")
+        assert score == 0.92
+
+    def test_llm_judge_parse_score_labeled_fallback(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score("Score: 0.85")
+        assert score == 0.85
+
+    def test_llm_judge_parse_score_case_insensitive_json_key(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score('{"Score": 0.77}')
+        assert score == 0.77
+
+    def test_llm_judge_parse_score_empty_response(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score("   ")
+        assert score == 0.5
+
+    def test_llm_judge_parse_score_invalid_json_value(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score('{"score": "high"}')
+        assert score == 0.5
+
+    def test_llm_judge_parse_score_malformed_json_falls_back(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score('{"score" 0.85}')
+        assert score == 0.5
+
+    def test_llm_judge_parse_score_malformed_json_falls_back_to_labeled(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score('{"score" 0.85} Score: 0.85')
+        assert score == 0.85
+
+    def test_llm_judge_parse_score_ten_point_scale(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score('{"score": 8.5}')
+        assert score == 0.85
+
+    def test_llm_judge_parse_score_json_with_fence(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score('```json\n{"score": 0.72}\n```')
+        assert score == 0.72
 
     def test_llm_judge_parse_score_percentage(self):
         metric = LLMJudgeMetric(provider=self.mock_provider)
-        score = metric._parse_score("85%")
+        score = metric._parse_score('{"score": 85}')
         assert score == 0.85  # 85 / 100
 
     def test_llm_judge_parse_score_keyword_yes(self):
         metric = LLMJudgeMetric(provider=self.mock_provider)
         score = metric._parse_score("Yes, the answer is excellent")
-        assert score == 1.0
+        assert score == 0.5
 
     def test_llm_judge_parse_score_keyword_no(self):
         metric = LLMJudgeMetric(provider=self.mock_provider)
         score = metric._parse_score("No, not at all")
-        assert score == 0.0
+        assert score == 0.5
+
+    def test_llm_judge_parse_score_avoids_false_keyword_match(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score("This is not excellent but acceptable")
+        assert score == 0.5
+
+    def test_llm_judge_parse_score_prefers_json_over_ambiguous_text(self):
+        metric = LLMJudgeMetric(provider=self.mock_provider)
+        score = metric._parse_score('There are 5 reasons why this is a score of 9 {"score": 0.9}')
+        assert score == 0.9
 
     def test_llm_judge_parse_score_neutral(self):
         metric = LLMJudgeMetric(provider=self.mock_provider)
@@ -340,7 +395,7 @@ class TestLLMJudgeMetric:
         assert score == 0.5
 
     def test_llm_judge_evaluate_success(self):
-        self.mock_provider.generate.return_value = "0.92"
+        self.mock_provider.generate.return_value = '{"score": 0.92}'
         metric = LLMJudgeMetric(provider=self.mock_provider)
         result = metric.evaluate(premise="context", hypothesis="answer")
         assert result.score == 0.92
