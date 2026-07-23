@@ -31,7 +31,21 @@ def delete_command(
         help="Skip confirmation prompt.",
     ),
 ) -> None:
-    """Delete evaluation reports."""
+    """Delete a specific evaluation report or all reports.
+
+    Args:
+        report_id (str): The ID of the report to delete, or 'all' to delete all reports.
+        output_dir (str | None): Directory where reports are stored. If not specified,
+            defaults to the project's standard reports directory (./reports).
+        force (bool): Skip confirmation prompt. Defaults to False.
+
+    Returns:
+        None. Deletes the report files on the disk.
+        Raises typer.Exit(code=1) if report files are missing or OS/permission errors occur.
+
+    Example:
+        $ oaeval delete latest --force
+    """
     console.print("[bold blue]OpenAgent Eval[/bold blue] - Delete Reports\n")
 
     manager = ReportManager()

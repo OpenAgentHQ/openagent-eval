@@ -53,7 +53,28 @@ def list_command(
         help="Search reports by config path or ID.",
     ),
 ) -> None:
-    """List previous evaluation runs."""
+    """List previous evaluation runs with filtering and sorting options.
+
+    Args:
+        limit (int): Maximum number of evaluations to show. Defaults to 10.
+        output (str | None): Filter reports by output format (e.g. 'terminal', 'markdown', 'html', 'json').
+            Defaults to None.
+        output_dir (str | None): Directory where reports are stored. If not specified,
+            defaults to the project's standard reports directory (./reports).
+        sort (Literal["date", "score", "cost"]): Field to sort reports by: 'date', 'score', or 'cost'.
+            Defaults to 'date'.
+        reverse (bool): Reverse the sort order (ascending instead of descending). Defaults to False.
+        search (str | None): Search term to filter reports by config path or report ID.
+            Defaults to None.
+
+    Returns:
+        None. Prints a formatted table/list of reports to the console, or outputs JSON
+        to standard output if configured.
+        Raises typer.Exit(code=1) if listing reports fails.
+
+    Example:
+        $ oaeval list --limit 5 --sort score --reverse
+    """
     ctx = get_context()
 
     console.print("[bold blue]OpenAgent Eval[/bold blue] - Evaluation History\n")

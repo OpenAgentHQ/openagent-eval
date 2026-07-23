@@ -127,18 +127,34 @@ def audit_command(
         help="Enable verbose output.",
     ),
 ) -> None:
-    """Audit corpus health before connecting to RAG.
+    """Audit the health of a RAG document corpus for quality and coherence.
 
-    Scans the knowledge base for contradictions, staleness, duplicates,
-    and thematic coverage gaps. Run this BEFORE connecting to RAG.
+    Args:
+        corpus_path (str | None): Path to the corpus directory or file.
+            Falls back to 'corpus.path' from the config file if not provided.
+            Defaults to None.
+        config_path (str | None): Path to a YAML config file whose 'corpus:' section
+            provides settings. Defaults to None.
+        checks (str | None): Comma-separated checks to perform (contradiction,
+            staleness, duplicate, coverage). Defaults to None.
+        staleness_days (int | None): Threshold in days to mark a document as stale.
+            Defaults to None.
+        similarity_threshold (float | None): Threshold (0.0-1.0) to detect duplicates.
+            Defaults to None.
+        max_documents (int | None): Maximum number of documents to audit. Defaults to None.
+        output (str | None): Output format. Use 'json' for machine-readable JSON,
+            or omit for standard terminal format. Defaults to None.
+        verbose (bool): Show detailed audit metrics and diagnostic summaries.
+            Defaults to False.
+
+    Returns:
+        None. Displays a health score and a list of detected corpus issues to the console,
+        or outputs JSON to standard output.
+        Raises typer.Exit(code=2) if config loading, corpus paths, or checks are invalid.
+        Raises typer.Exit(code=3) if the audit process runs into execution failures.
 
     Example:
-
-        oaeval audit ./knowledge_base/
-
-        oaeval audit ./docs/ --checks contradiction,staleness
-
-        oaeval audit ./kb/ --staleness-days 180
+        $ oaeval audit ./knowledge_base/ --checks contradiction,duplicate --verbose
     """
     ctx = get_context()
 

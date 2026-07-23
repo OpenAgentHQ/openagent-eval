@@ -61,7 +61,28 @@ def run_command(
         help="Comma-separated list of metrics to run (overrides config).",
     ),
 ) -> None:
-    """Run evaluation pipeline with the specified configuration."""
+    """Run evaluation pipeline with the specified configuration.
+
+    Args:
+        config_path (str | None): Path to the YAML configuration file. If not provided,
+            auto-discovery will search for standard config filenames in the current directory.
+            Defaults to None.
+        output (str): Override the output report format (terminal, markdown, html, json).
+            Defaults to None.
+        verbose (bool): Enable verbose output, showing the evaluation plan and detailed progress.
+            Defaults to False.
+        dry_run (bool): Validate the configuration and print the evaluation plan without
+            executing the pipeline. Defaults to False.
+        metrics (str | None): A comma-separated list of metrics to execute, overriding
+            the configuration settings. Defaults to None.
+
+    Returns:
+        None. Generates evaluation reports and saves them to the configured directory.
+        Raises typer.Exit(code=2) if configuration loading or validation fails.
+
+    Example:
+        $ oaeval run config.yaml --output html --verbose
+    """
     ctx = get_context()
 
     # Merge command-level verbose with global

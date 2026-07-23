@@ -77,15 +77,27 @@ def diagnose_command(
         help="Show detailed failure information.",
     ),
 ) -> None:
-    """Diagnose evaluation failures and attribute blame.
+    """Diagnose evaluation failures and attribute blame to specific components.
 
-    Loads an evaluation report and analyzes each item to determine
-    which component (retrieval, generation, or chunking) caused failures.
+    Args:
+        report_path (str): Path to the evaluation report JSON file.
+        output (str): Output format. Must be either 'terminal' or 'json'.
+            Defaults to 'terminal'.
+        threshold (float): Minimum confidence threshold for failure detection (0.0-1.0).
+            Defaults to 0.3.
+        max_recommendations (int): Maximum number of recommendations to show in the report.
+            Defaults to 5.
+        verbose (bool): Show detailed failure information for each item.
+            Defaults to False.
+
+    Returns:
+        None. Prints a formatted diagnosis report to the console or outputs JSON
+        to standard output.
+        Raises typer.Exit(code=2) if the report file does not exist, is not a JSON
+        file, or cannot be parsed.
 
     Example:
-
-        oaeval diagnose reports/eval_2024_01_15.json
-        oaeval diagnose reports/eval_2024_01_15.json --threshold 0.5
+        $ oaeval diagnose reports/eval_report.json --threshold 0.5 --verbose
     """
     ctx = get_context()
     path = Path(report_path)

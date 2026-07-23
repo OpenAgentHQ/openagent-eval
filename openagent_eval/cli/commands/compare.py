@@ -38,7 +38,24 @@ def compare_command(
         help="Directory where reports are stored (default: ./reports).",
     ),
 ) -> None:
-    """Compare two evaluation experiments side by side."""
+    """Compare two evaluation experiments side by side.
+
+    Args:
+        experiment_a (str): First experiment ID (UUID) or name/path.
+        experiment_b (str): Second experiment ID (UUID) or name/path.
+        metrics (list[str] | None): Specific metrics to compare. If None, compares all.
+            Defaults to None.
+        output_dir (str | None): Directory where reports are stored. If not specified,
+            defaults to the project's standard reports directory (./reports).
+
+    Returns:
+        None. Prints a side-by-side terminal comparison report, or outputs JSON
+        to standard output if configured.
+        Raises typer.Exit(code=1) if either experiment ID or path is invalid.
+
+    Example:
+        $ oaeval compare latest latest^
+    """
     ctx = get_context()
 
     console.print("[bold blue]OpenAgent Eval[/bold blue] - Experiment Comparison")
