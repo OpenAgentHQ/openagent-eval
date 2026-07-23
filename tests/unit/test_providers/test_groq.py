@@ -233,6 +233,62 @@ class TestGroqGenerate:
 
 
 # ---------------------------------------------------------------------------
+# generate_with_usage() tests
+# ---------------------------------------------------------------------------
+class TestGroqGenerateWithUsage:
+    """Tests for Groq.generate_with_usage()."""
+
+    @pytest.mark.asyncio
+    async def test_generate_with_usage_returns_llm_response(
+        self, provider_with_key: Groq, mock_groq_client
+    ):
+        """generate_with_usage() returns an LLMResponse with usage metadata."""
+        mock_usage = MagicMock()
+        mock_usage.prompt_tokens = 10
+        mock_usage.completion_tokens = 20
+        mock_usage.total_tokens = 30
+
+        mock_completion = MagicMock()
+        mock_completion.choices = [MagicMock(message=MagicMock(content="Groq response"))]
+        mock_completion.usage = mock_usage
+
+        mock_groq_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+
+        result = await provider_with_key.generate_with_usage("Test prompt")
+
+        assert result.content == "Groq response"
+        assert result.model == "llama-3.3-70b-versatile"
+        assert result.provider == "groq"
+        assert result.usage.total_tokens == 30
+        assert result.latency_ms >= 0.0
+
+    @pytest.mark.asyncio
+    async def test_generate_with_usage_model_override(
+        self, provider_with_key: Groq, mock_groq_client
+    ):
+        """generate_with_usage() reflects a per-call model override."""
+        mock_usage = MagicMock()
+        mock_usage.prompt_tokens = 5
+        mock_usage.completion_tokens = 5
+        mock_usage.total_tokens = 10
+
+        mock_completion = MagicMock()
+        mock_completion.choices = [MagicMock(message=MagicMock(content="ok"))]
+        mock_completion.usage = mock_usage
+
+        mock_groq_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+
+        result = await provider_with_key.generate_with_usage(
+            "Test prompt", model="mixtral-8x7b-32768"
+        )
+
+        assert result.model == "mixtral-8x7b-32768"
+        call_args = mock_groq_client.chat.completions.create.call_args
+        params = call_args.kwargs if call_args.kwargs else call_args[1]
+        assert params["model"] == "mixtral-8x7b-32768"
+
+
+# ---------------------------------------------------------------------------
 # get_token_count() tests
 # ---------------------------------------------------------------------------
 class TestGroqTokenCount:

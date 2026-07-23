@@ -129,7 +129,7 @@ class AnswerRelevancy(BaseMetric):
             metadata={
                 "method": "nli",
                 "label": result.label.value,
-                "model": judge._model_name,
+                "model": judge.model_name,
             },
         )
 

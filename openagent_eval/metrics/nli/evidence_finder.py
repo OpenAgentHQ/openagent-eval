@@ -116,7 +116,7 @@ class EvidenceFinder:
             Tuple of (faithfulness_score, list_of_matches).
         """
         if not claims:
-            return 0.0, []
+            return 1.0, []
 
         matches = self.find_evidence_batch(claims, contexts)
         supported = sum(

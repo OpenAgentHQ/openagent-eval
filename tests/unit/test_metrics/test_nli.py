@@ -203,7 +203,7 @@ class TestEvidenceFinder:
 
     def test_score_faithfulness_empty_claims(self):
         score, matches = self.finder.score_faithfulness([], ["context"])
-        assert score == 0.0
+        assert score == 1.0
         assert matches == []
 
 
@@ -217,6 +217,11 @@ class TestNLIJudge:
 
     def setup_method(self):
         self.judge = NLIJudge(model_name="test-model")
+
+    def test_model_name_property(self):
+        assert self.judge.model_name == "test-model"
+        default_judge = NLIJudge()
+        assert default_judge.model_name == NLIJudge.DEFAULT_MODEL
 
     def test_empty_premise(self):
         result = self.judge.evaluate(premise="", hypothesis="test")
