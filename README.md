@@ -3,8 +3,6 @@
 <!-- Social-card PNG (1280x640) also available at ./docs/assets/banner.png -->
 ![OpenAgent Eval — pytest-level simplicity for AI evaluation](./docs/assets/banner.svg)
 
-# OpenAgent Eval
-
 **The open-source evaluation framework for RAG systems and AI Agents.**
 
 [![PyPI Version](https://img.shields.io/pypi/v/openagent-eval?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/openagent-eval/)
@@ -235,6 +233,6 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 <div align="center">
 
-**Built with care by the [OpenAgent](https://github.com/OpenAgentHQ) community.**
+**Built with care by the [OpenAgentHQ](https://github.com/OpenAgentHQ) community.**
 
 </div>

@@ -1,46 +1,31 @@
 # Examples
 
-Worked examples showing how to use OpenAgent Eval in practice.
+Worked examples showing how to use OpenAgent Eval in practice. Each tutorial is a
+runnable Jupyter notebook in the
+[`examples/`](https://github.com/OpenAgentHQ/openagent-eval/tree/main/examples)
+directory of the repository.
 
-## RAG Evaluation Tutorial
+| Tutorial | What it covers | Run it |
+|----------|----------------|--------|
+| [Colab Quickstart](colab.md) | Zero-setup, end-to-end evaluation that runs in the browser — no API keys required | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/OpenAgentHQ/openagent-eval/blob/main/examples/openagent_eval_colab_tutorial.ipynb) |
+| [RAG Evaluation](rag.md) | A complete RAG pipeline scored with all 18 retrieval, generation, performance and cost metrics | Local Jupyter |
+| [Corpus Health Auditor](corpus.md) | Corpus health checks (staleness, duplicates, coverage, contradiction), failure diagnosis and synthetic test-case generation | Local Jupyter |
 
-A hands-on Jupyter notebook that walks through a complete RAG evaluation:
-
-- Loading a dataset
-- Configuring an LLM and retriever
-- Running retrieval and generation metrics
-- Interpreting the results
-
-**Download:** [`rag_evaluation_tutorial.ipynb`](https://github.com/OpenAgentHQ/openagent-eval/blob/main/examples/rag_evaluation_tutorial.ipynb)
-
-### What you'll learn
-
-| Section | Topic |
-|---------|-------|
-| 1 | Setting up the environment and config |
-| 2 | Loading and inspecting a dataset |
-| 3 | Configuring LLM providers (OpenAI, Ollama, Mock) |
-| 4 | Configuring retriever providers (Chroma, Memory, BM25) |
-| 5 | Running the evaluation pipeline |
-| 6 | Understanding retrieval metrics (precision, recall, MRR, NDCG) |
-| 7 | Understanding generation metrics (faithfulness, relevancy, hallucination) |
-| 8 | Running all 18 metrics together |
-| 9 | Interpreting the report output |
-
-### Prerequisites
+## Running the notebooks locally
 
 ```bash
 pip install openagent-eval jupyter
+git clone https://github.com/OpenAgentHQ/openagent-eval
+cd openagent-eval/examples
+jupyter notebook
 ```
 
-### Quick start
-
-```bash
-cd examples/
-jupyter notebook rag_evaluation_tutorial.ipynb
-```
+The [Colab Quickstart](colab.md) needs no local setup at all — open it directly in
+your browser.
 
 ## More examples
 
-See the [scripts/](https://github.com/OpenAgentHQ/openagent-eval/tree/main/scripts) directory
-in the repository for additional runnable examples.
+For copy-paste snippets covering common workflows, see the
+[Quickstart](../quickstart.md). The
+[`scripts/`](https://github.com/OpenAgentHQ/openagent-eval/tree/main/scripts)
+directory in the repository holds additional runnable examples.

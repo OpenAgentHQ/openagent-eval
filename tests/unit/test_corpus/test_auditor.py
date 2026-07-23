@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 
 import pytest
 
@@ -108,6 +109,43 @@ class TestCorpusAuditor:
         report = await auditor.audit(str(corpus_dir))
 
         assert report.total_documents <= 3
+
+    def test_max_documents_cap_across_jsonl_files(self, tmp_path):
+        """#224: the cap must apply cumulatively across .jsonl files.
+
+        Two .jsonl files of 3 valid lines each (6 documents available) with
+        max_documents=2 must load exactly 2 — the old code only enforced the
+        cap in the non-jsonl branch, so it counted per-file and returned 4.
+        """
+        corpus_dir = tmp_path / "corpus"
+        corpus_dir.mkdir()
+        for name in ("a", "b"):
+            lines = [f'{{"text": "{name}{i}"}}' for i in range(3)]
+            (corpus_dir / f"{name}.jsonl").write_text(
+                "\n".join(lines), encoding="utf-8"
+            )
+
+        auditor = CorpusAuditor(checks=["staleness"], max_documents=2)
+        documents = auditor._load_documents(Path(corpus_dir))
+
+        assert len(documents) == 2
+
+    def test_max_documents_cap_across_mixed_directory(self, tmp_path):
+        """#224: the cap applies across a mix of .jsonl and .txt files."""
+        corpus_dir = tmp_path / "corpus"
+        corpus_dir.mkdir()
+        # Sorted rglob visits a.jsonl (3 lines) before b.txt / c.txt.
+        (corpus_dir / "a.jsonl").write_text(
+            "\n".join(f'{{"text": "a{i}"}}' for i in range(3)),
+            encoding="utf-8",
+        )
+        (corpus_dir / "b.txt").write_text("plain text b", encoding="utf-8")
+        (corpus_dir / "c.txt").write_text("plain text c", encoding="utf-8")
+
+        auditor = CorpusAuditor(checks=["staleness"], max_documents=2)
+        documents = auditor._load_documents(Path(corpus_dir))
+
+        assert len(documents) == 2
 
     @pytest.mark.asyncio
     async def test_load_documents_skips_empty_files(self, tmp_path):
