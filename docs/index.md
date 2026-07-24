@@ -8,8 +8,8 @@ hide:
 
 <div class="oae-hero">
   <div class="oae-hero__copy">
-    <span class="oae-badge">v0.1.0 · Local-first · Apache 2.0</span>
-    <h1>The pytest of AI evaluation</h1>
+    <span class="oae-badge">v0.1.0 · local-first · apache-2.0</span>
+    <h1>The pytest of AI <em>evaluation</em></h1>
     <p class="oae-lede">
       Open-source, local-first framework for evaluating RAG systems and AI agents.
       A clean CLI, a typed Python SDK, and a pluggable metric &amp; provider architecture —
@@ -19,10 +19,22 @@ hide:
       <a href="installation.md" class="md-button md-button--primary">Get Started</a>
       <a href="https://github.com/OpenAgentHQ/openagent-eval" class="md-button">GitHub</a>
     </div>
-    <div class="oae-install">pip install openagent-eval</div>
   </div>
-  <div class="oae-hero__art">
-    <img src="assets/hero.svg" alt="OpenAgent Eval pipeline: config to engine to report" loading="lazy">
+  <div class="oae-terminal">
+    <div class="oae-terminal__bar">
+      <span class="oae-terminal__dot"></span>
+      <span class="oae-terminal__dot"></span>
+      <span class="oae-terminal__dot oae-terminal__dot--accent"></span>
+      <span class="oae-terminal__title">oaeval — zsh</span>
+    </div>
+    <div class="oae-terminal__body">
+      <p><span class="oae-prompt">$</span>pip install openagent-eval</p>
+      <p><span class="oae-prompt">$</span>oaeval init</p>
+      <p class="oae-out">wrote config.yaml</p>
+      <p><span class="oae-prompt">$</span>oaeval run config.yaml</p>
+      <p class="oae-out">12 cases · faithfulness, context_recall, latency</p>
+      <p class="oae-ok">report saved — faithfulness 0.87 · recall 0.92</p>
+    </div>
   </div>
 </div>
 
@@ -133,9 +145,18 @@ Metric names map to the built-in registry (`openagent_eval.metrics.METRIC_REGIST
   <h2>Bring your own, or use what ships</h2>
 </div>
 
-| LLM Providers | Retriever Providers | Embedders |
-| --- | --- | --- |
-| OpenAI, Google Gemini, Anthropic, Groq, OpenRouter, Ollama, Mock | Chroma, Memory, BM25, FAISS, Qdrant, Pinecone, Weaviate, Elasticsearch, PGVector, HTTP, Mock | Sentence-Transformers, Mock |
+<div class="grid cards oae-features" markdown>
+
+- :material-brain: **[LLM Providers](providers/llm/index.md)**
+  OpenAI, Anthropic, Gemini, Groq, OpenRouter, Ollama — plus a Mock provider for offline tests.
+
+- :material-database-search: **[Retrievers](providers/retrievers/index.md)**
+  Chroma, Qdrant, Pinecone, Weaviate, FAISS, PGVector, Elasticsearch, BM25, Memory, HTTP, Mock.
+
+- :material-vector-point: **[Embedders](providers/embedders/index.md)**
+  Sentence-Transformers ships in the box; bring your own via the provider base classes.
+
+</div>
 
 Bring your own by implementing the provider base classes — see [API Reference](api.md).
 

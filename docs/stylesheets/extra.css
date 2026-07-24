@@ -1,87 +1,275 @@
 /* ===========================================================================
    OpenAgent Eval — Design System
-   Inspired by LangChain docs: clean, minimal, professional
+   Dark-first, anchored to the org's near-black / off-white mark, with a single
+   "signal vermilion" accent — the color of instrument needles and test probes:
+   measurement, not decoration.
    =========================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
-
+/* ---------------------------------------------------------------------------
+   Design tokens
+   --------------------------------------------------------------------------- */
 :root {
   /* Brand */
-  --oae-brand: #3949ab;
-  --oae-brand-600: #3f51b5;
-  --oae-brand-300: #7986cb;
+  --oae-black: #0b0c0e;            /* near-black — the mark's tile        */
+  --oae-paper: #fcfcfa;            /* off-white — warm paper              */
+  --oae-ink:   #f2f2ee;            /* off-white ink on dark surfaces      */
+  --oae-accent: #ff5d3b;           /* signal vermilion (dark scheme)      */
+  --oae-accent-light: #c4370f;     /* signal vermilion, AA on paper       */
 
-  /* Signal accent */
-  --oae-signal: #ffb300;
-  --oae-signal-soft: rgba(255, 179, 0, 0.14);
-
-  /* Motion */
+  /* Motion — one ease, used sparingly */
   --oae-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --oae-rise: 0.7s var(--oae-ease) both;
+  --oae-rise: 0.6s var(--oae-ease) both;
 }
 
 /* ---------------------------------------------------------------------------
-   Typography — clean hierarchy like LangChain
+   Light scheme — off-white paper, near-black ink
    --------------------------------------------------------------------------- */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color:            #fcfcfa;
+  --md-default-fg-color:            #15171a;
+  --md-default-fg-color--light:     #474b50;
+  --md-default-fg-color--lighter:   #82868b;
+  --md-default-fg-color--lightest:  #e3e3dc;
+
+  --md-primary-fg-color:            #fcfcfa;   /* header band  */
+  --md-primary-bg-color:            #15171a;   /* header ink   */
+
+  --md-accent-fg-color:             #c4370f;   /* AA 5.2:1 on paper */
+  --md-accent-bg-color:             rgba(196, 55, 15, 0.08);
+
+  --md-code-bg-color:               #f2f2ec;
+  --md-code-fg-color:               #1c1f23;
+
+  --md-footer-bg-color:             #0b0c0e;
+  --md-footer-fg-color:             #f2f2ee;
+  --md-footer-fg-color--light:      #b7b8b2;
+  --md-footer-fg-color--lighter:    #7f827c;
+
+  --md-typeset-a-color:             #c4370f;
+
+  --oae-accent: var(--oae-accent-light);
+  --oae-card-bg: #ffffff;
+  --oae-hairline: #e3e3dc;
+  --oae-hover-shadow: 0 6px 18px rgba(11, 12, 14, 0.07);
+}
+
+/* ---------------------------------------------------------------------------
+   Dark scheme — the primary experience: near-black, instrument-lit
+   --------------------------------------------------------------------------- */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color:            #0b0c0e;
+  --md-default-fg-color:            #ecece8;
+  --md-default-fg-color--light:     #b4b6b0;
+  --md-default-fg-color--lighter:   #787b75;
+  --md-default-fg-color--lightest:  #26282b;
+
+  --md-primary-fg-color:            #0b0c0e;
+  --md-primary-bg-color:            #ecece8;
+
+  --md-accent-fg-color:             #ff5d3b;   /* AA ~6.4:1 on near-black */
+  --md-accent-bg-color:             rgba(255, 93, 59, 0.14);
+
+  --md-code-bg-color:               #131518;
+  --md-code-fg-color:               #e6e6e1;
+
+  --md-footer-bg-color:             #060708;
+  --md-footer-fg-color:             #ecece8;
+  --md-footer-fg-color--light:      #9ea19a;
+  --md-footer-fg-color--lighter:    #5f625c;
+
+  --md-typeset-a-color:             #ff7a5c;
+
+  --oae-accent: #ff5d3b;
+  --oae-card-bg: #101214;
+  --oae-hairline: #26282b;
+  --oae-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------------------------------------------------------------------------
+   Typography — Space Grotesk display / Inter body / JetBrains Mono code.
+   Scale intent: compact content headings (~1.25 ratio), oversized tight-lead
+   display for the hero, mono for anything the machine says.
+   --------------------------------------------------------------------------- */
+.md-typeset {
+  line-height: 1.65;
+}
+
 .md-typeset h1,
 .md-typeset h2,
 .md-typeset h3 {
   font-family: "Space Grotesk", var(--md-text-font, "Inter"), sans-serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .md-typeset h1 {
   font-weight: 700;
-  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-size: 1.95rem;
+  line-height: 1.12;
 }
 
 .md-typeset h2 {
   font-weight: 600;
-  font-size: clamp(1.4rem, 2.8vw, 2rem);
-  margin-top: 2rem;
-  margin-bottom: 0.8rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  margin-top: 2.4rem;
+  margin-bottom: 0.7rem;
 }
 
 .md-typeset h3 {
   font-weight: 600;
-  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-size: 1.12rem;
+  line-height: 1.3;
 }
 
-/* Eyebrow label */
+/* Eyebrow — machine-register label: mono, tracked out, vermilion */
 .oae-eyebrow {
   display: inline-block;
-  font-family: "Space Grotesk", sans-serif;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-family: "JetBrains Mono", var(--md-code-font, monospace);
+  font-size: 0.66rem;
+  font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--oae-signal);
-  margin-bottom: 0.4rem;
+  color: var(--oae-accent);
+  margin-bottom: 0.35rem;
+}
+
+.oae-eyebrow::before {
+  content: "▸ ";
 }
 
 /* ---------------------------------------------------------------------------
-   Landing hero — two-column with clean atmosphere
+   Header & chrome — flat bands, hairline seams, no gradients
+   --------------------------------------------------------------------------- */
+.md-header {
+  box-shadow: none;
+  border-bottom: 1px solid var(--oae-hairline);
+}
+
+.md-tabs {
+  border-bottom: 1px solid var(--oae-hairline);
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  color: var(--oae-accent);
+}
+
+.md-announce {
+  background: var(--oae-black);
+  color: var(--oae-ink);
+  border-bottom: 1px solid #26282b;
+}
+
+.md-announce a {
+  color: var(--oae-accent);
+}
+
+/* Active nav marker — vermilion tick instead of a wash */
+.md-nav__link--active,
+.md-nav__link:active {
+  color: var(--oae-accent);
+}
+
+/* Focus — visible, on-brand */
+:focus-visible {
+  outline: 2px solid var(--oae-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--oae-accent);
+  color: #0b0c0e;
+}
+
+/* ---------------------------------------------------------------------------
+   Buttons — inverted mark tiles; vermilion on hover
+   --------------------------------------------------------------------------- */
+.md-typeset .md-button {
+  border-radius: 0.45rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  font-weight: 600;
+  letter-spacing: 0;
+  transition: border-color 0.15s var(--oae-ease), background-color 0.15s var(--oae-ease),
+    color 0.15s var(--oae-ease);
+}
+
+.md-typeset .md-button--primary {
+  background: var(--md-default-fg-color);
+  border-color: var(--md-default-fg-color);
+  color: var(--md-default-bg-color);
+}
+
+.md-typeset .md-button--primary:hover,
+.md-typeset .md-button--primary:focus {
+  background: var(--oae-accent);
+  border-color: var(--oae-accent);
+  color: #0b0c0e;
+}
+
+.md-typeset .md-button:not(.md-button--primary):hover,
+.md-typeset .md-button:not(.md-button--primary):focus {
+  border-color: var(--oae-accent);
+  color: var(--oae-accent);
+}
+
+/* ---------------------------------------------------------------------------
+   Code blocks — one consistent treatment: hairline frame, quiet radius,
+   comfortable measure; copy button appears on hover
+   --------------------------------------------------------------------------- */
+.md-typeset .highlight,
+.md-typeset .highlighttable {
+  border: 1px solid var(--oae-hairline);
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+.md-typeset pre {
+  padding: 0.85rem 1rem;
+}
+
+.md-typeset code {
+  font-size: 0.82em;
+}
+
+.md-typeset .linenodiv pre {
+  color: var(--md-default-fg-color--lighter);
+}
+
+.md-typeset [id^="__code"] .md-clipboard {
+  color: var(--md-default-fg-color--lighter);
+}
+
+.md-typeset [id^="__code"] .md-clipboard:hover {
+  color: var(--oae-accent);
+}
+
+/* Inline code — quiet chip, mono at 90% */
+.md-typeset code:not(.highlight code) {
+  border-radius: 0.3rem;
+  padding: 0.1em 0.35em;
+}
+
+/* ---------------------------------------------------------------------------
+   Landing hero — copy left, live terminal right
    --------------------------------------------------------------------------- */
 .oae-hero {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
-  gap: 2.5rem;
+  gap: 2.75rem;
   align-items: center;
-  padding: 2.5rem 0 1rem;
+  padding: 2.75rem 0 1.25rem;
   position: relative;
 }
 
-/* Subtle gradient mesh — lighter, like LangChain */
-.oae-hero::before {
+/* Faint instrument glow — dark scheme only, masked away from content */
+[data-md-color-scheme="slate"] .oae-hero::before {
   content: "";
   position: absolute;
-  inset: -2rem -4rem 0 -4rem;
+  inset: -3rem -5rem 0 -5rem;
   z-index: -1;
-  background-image:
-    radial-gradient(circle at 18% 20%, rgba(57, 73, 171, 0.06), transparent 42%),
-    radial-gradient(circle at 82% 12%, rgba(255, 179, 0, 0.06), transparent 40%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
-          mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  background-image: radial-gradient(circle at 78% 8%, rgba(255, 93, 59, 0.09), transparent 45%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
+          mask-image: linear-gradient(to bottom, #000 50%, transparent);
   pointer-events: none;
 }
 
@@ -90,15 +278,16 @@
 .oae-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.28rem 0.7rem;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--oae-brand);
-  background: var(--oae-signal-soft);
-  border: 1px solid rgba(255, 179, 0, 0.35);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--md-default-fg-color--light);
+  background: transparent;
+  border: 1px solid var(--oae-hairline);
 }
 
 .oae-badge::before {
@@ -106,81 +295,127 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--oae-signal);
-  box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.25);
+  background: var(--oae-accent);
+  box-shadow: 0 0 0 3px var(--md-accent-bg-color);
 }
 
 .oae-hero h1 {
-  font-size: clamp(2.1rem, 4.4vw, 3.3rem);
-  line-height: 1.04;
-  margin: 1rem 0 0.6rem;
+  font-size: clamp(2.3rem, 5vw, 3.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  margin: 1.1rem 0 0.7rem;
+}
+
+/* The measured word carries the signal */
+.oae-hero h1 em {
+  font-style: normal;
+  color: var(--oae-accent);
 }
 
 .oae-lede {
-  font-size: 1.08rem;
-  line-height: 1.6;
-  color: var(--md-default-fg-color, #4a5070);
-  opacity: 0.78;
-  max-width: 34rem;
-  margin: 0 0 1.4rem;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--md-default-fg-color--light);
+  max-width: 33rem;
+  margin: 0 0 1.5rem;
 }
 
 .oae-cta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0;
 }
 
-/* Install chip — clean terminal style */
-.oae-install {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.92rem;
-  background: var(--md-code-background-color, #f6f8fa);
-  color: var(--md-code-color, #1a1f36);
-  padding: 0.6rem 0.95rem;
+.md-typeset .oae-hero .md-button { margin: 0; }
+
+/* ---------------------------------------------------------------------------
+   Terminal — the hero artifact. Always near-black in both schemes: a terminal
+   is a terminal. Self-contained token colors, so it never depends on the
+   active pygments palette.
+   --------------------------------------------------------------------------- */
+.oae-terminal {
   border-radius: 0.6rem;
-  border: 1px solid var(--md-default-fg-color--lightest, #e1e4e8);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #26282b;
+  background: #0e1013;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  font-family: "JetBrains Mono", monospace;
 }
 
-.oae-install::before {
-  content: "$";
-  color: var(--oae-signal);
+[data-md-color-scheme="default"] .oae-terminal {
+  box-shadow: 0 16px 40px rgba(11, 12, 14, 0.16);
+}
+
+.oae-terminal__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid #1d2023;
+}
+
+.oae-terminal__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2e3134;
+}
+
+.oae-terminal__dot--accent { background: var(--oae-accent); }
+
+.oae-terminal__title {
+  margin-left: auto;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: #5f625c;
+}
+
+.oae-terminal__body {
+  padding: 1rem 1.1rem 1.15rem;
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.75;
+}
+
+.oae-terminal__body p {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #e6e6e1;
+}
+
+.oae-terminal .oae-prompt {
+  color: var(--oae-accent);
+  font-weight: 700;
+  margin-right: 0.5em;
+  user-select: none;
+}
+
+.oae-terminal .oae-out { color: #8b8e88; }
+
+.oae-terminal .oae-ok { color: #f2f2ee; }
+
+.oae-terminal .oae-ok::before {
+  content: "✓ ";
+  color: var(--oae-accent);
   font-weight: 700;
 }
 
-/* Hero art panel */
-.oae-hero__art { position: relative; }
-
-.oae-hero__art img {
-  width: 100%;
-  height: auto;
-  border-radius: 0.75rem;
-  border: 1px solid var(--md-default-fg-color--lightest, #e1e4e8);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  background: var(--md-default-fg-color--lightest, #f6f8fa);
-}
-
 /* ---------------------------------------------------------------------------
-   Staggered hero reveal
+   Staggered hero reveal — one rise, then stillness
    --------------------------------------------------------------------------- */
 .oae-hero__copy > *,
-.oae-hero__art {
+.oae-terminal {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(12px);
   animation: oae-rise var(--oae-rise);
 }
 
 .oae-hero__copy > *:nth-child(1) { animation-delay: 0.05s; }
-.oae-hero__copy > *:nth-child(2) { animation-delay: 0.13s; }
-.oae-hero__copy > *:nth-child(3) { animation-delay: 0.21s; }
-.oae-hero__copy > *:nth-child(4) { animation-delay: 0.29s; }
-.oae-hero__copy > *:nth-child(5) { animation-delay: 0.37s; }
-.oae-hero__art { animation-delay: 0.30s; }
+.oae-hero__copy > *:nth-child(2) { animation-delay: 0.12s; }
+.oae-hero__copy > *:nth-child(3) { animation-delay: 0.19s; }
+.oae-hero__copy > *:nth-child(4) { animation-delay: 0.26s; }
+.oae-terminal { animation-delay: 0.3s; }
 
 @keyframes oae-rise {
   to { opacity: 1; transform: translateY(0); }
@@ -188,71 +423,86 @@
 
 @media (prefers-reduced-motion: reduce) {
   .oae-hero__copy > *,
-  .oae-hero__art {
+  .oae-terminal {
     opacity: 1;
     transform: none;
     animation: none;
   }
+  .md-typeset .oae-features.grid.cards > ul > li,
+  .md-typeset .md-button {
+    transition: none;
+  }
 }
 
 /* ---------------------------------------------------------------------------
-   Section rhythm — generous whitespace like LangChain
+   Section rhythm
    --------------------------------------------------------------------------- */
 .oae-section {
-  padding: 2.5rem 0 0.5rem;
+  padding: 2.75rem 0 0.5rem;
 }
 
 .oae-section h2 {
-  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-size: clamp(1.4rem, 2.4vw, 1.8rem);
   margin-top: 0;
 }
 
+/* Section dividers — hairlines, not rules of ink */
+.md-typeset hr {
+  border-bottom: 1px solid var(--oae-hairline);
+  margin: 2.5rem 0 0;
+}
+
 /* ---------------------------------------------------------------------------
-   Feature cards — clean, subtle, LangChain-inspired
+   Feature cards — borders over shadows, generous air, quiet lift on hover
    --------------------------------------------------------------------------- */
 .md-typeset .oae-features.grid.cards > ul {
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .md-typeset .oae-features.grid.cards > ul > li {
-  border: 1px solid var(--md-default-fg-color--lightest, #e1e4e8);
-  border-radius: 0.75rem;
-  padding: 1.25rem 1.4rem;
-  background: var(--md-default-bg-color, #ffffff);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s var(--oae-ease), box-shadow 0.2s var(--oae-ease),
-    border-color 0.2s var(--oae-ease);
+  border: 1px solid var(--oae-hairline);
+  border-radius: 0.6rem;
+  padding: 1.3rem 1.4rem;
+  background: var(--oae-card-bg);
+  box-shadow: none;
+  transition: transform 0.18s var(--oae-ease), border-color 0.18s var(--oae-ease),
+    box-shadow 0.18s var(--oae-ease);
 }
 
 .md-typeset .oae-features.grid.cards > ul > li:hover {
   transform: translateY(-2px);
-  border-color: var(--oae-brand-300);
-  box-shadow: 0 4px 12px rgba(57, 73, 171, 0.12);
+  border-color: var(--oae-accent);
+  box-shadow: var(--oae-hover-shadow);
+}
+
+/* Card icon — the vermilion signal */
+.md-typeset .oae-features.grid.cards > ul > li .twemoji {
+  color: var(--oae-accent);
 }
 
 /* Card heading */
 .md-typeset .oae-features.grid.cards > ul > li > p:first-child {
+  font-family: "Space Grotesk", sans-serif;
   font-weight: 600;
-  color: var(--md-default-fg-color, #1a1f36);
-  font-size: 1rem;
-  margin-bottom: 0.3rem;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.35rem;
 }
 
-/* Card body text */
+/* Card body */
 .md-typeset .oae-features.grid.cards > ul > li > p:last-child {
-  color: var(--md-default-fg-color, #4a5070);
-  opacity: 0.78;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 /* ---------------------------------------------------------------------------
-   Provider / metric chips — clean, minimal
+   Chips — mono register labels
    --------------------------------------------------------------------------- */
 .oae-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.45rem;
   margin: 0.4rem 0 0;
   padding: 0;
   list-style: none;
@@ -260,31 +510,23 @@
 
 .oae-chips li {
   font-family: "JetBrains Mono", monospace;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   padding: 0.25rem 0.6rem;
-  border-radius: 0.4rem;
-  background: var(--md-code-background-color, #f6f8fa);
-  border: 1px solid var(--md-default-fg-color--lightest, #e1e4e8);
-  color: var(--md-code-color, #1a1f36);
+  border-radius: 0.35rem;
+  background: transparent;
+  border: 1px solid var(--oae-hairline);
+  color: var(--md-default-fg-color--light);
 }
 
 /* ---------------------------------------------------------------------------
-   Misc polish
+   Misc
    --------------------------------------------------------------------------- */
-::selection {
-  background: var(--oae-signal-soft);
-  color: var(--md-default-fg-color, #1a1f36);
-}
-
 .md-typeset .oae-center { text-align: center; }
-
-.md-typeset .oae-hero .md-button { margin: 0; }
 
 /* Responsive: stack the hero on small screens */
 @media (max-width: 60em) {
   .oae-hero {
     grid-template-columns: 1fr;
-    gap: 1.8rem;
+    gap: 1.75rem;
   }
-  .oae-hero__art { order: -1; }
 }

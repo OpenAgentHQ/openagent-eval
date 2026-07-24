@@ -31,19 +31,19 @@ theme:
     text: Inter
     code: JetBrains Mono
   palette:
-    # Light mode
+    # Light mode — off-white paper, near-black ink
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: white
+      accent: deep orange
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-    # Dark mode
+    # Dark mode (primary experience) — near-black, off-white ink
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: black
+      accent: deep orange
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
