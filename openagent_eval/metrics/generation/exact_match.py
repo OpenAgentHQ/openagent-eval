@@ -39,8 +39,8 @@ class ExactMatch(BaseMetric):
                 metadata={"match": False},
             )
 
-        normalized_answer = answer.strip().lower()
-        normalized_truth = ground_truth.strip().lower()
+        normalized_answer = " ".join(answer.lower().split())
+        normalized_truth = " ".join(ground_truth.lower().split())
         match = normalized_answer == normalized_truth
         score = 1.0 if match else 0.0
 
