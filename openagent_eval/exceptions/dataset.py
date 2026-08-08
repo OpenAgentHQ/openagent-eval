@@ -81,7 +81,7 @@ class InvalidDatasetError(DatasetError):
         error_details = details or {}
         if data_format:
             error_details["format"] = data_format
-        if line_number:
+        if line_number is not None:
             error_details["line_number"] = line_number
 
         super().__init__(message=message, dataset_path=dataset_path, details=error_details)

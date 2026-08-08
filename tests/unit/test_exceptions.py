@@ -90,6 +90,20 @@ class TestDatasetError:
         assert error.data_format == "json"
         assert error.line_number == 10
 
+    def test_invalid_dataset_error_preserves_zero_line_number(self) -> None:
+        """Test that line_number=0 is retained in error details and str representation."""
+        error = InvalidDatasetError("Invalid line", line_number=0)
+        assert error.line_number == 0
+        assert error.details["line_number"] == 0
+        assert "line_number=0" in str(error)
+
+    def test_invalid_dataset_error_omits_none_line_number(self) -> None:
+        """Test that line_number=None is excluded from error details."""
+        error = InvalidDatasetError("Invalid format", data_format="json")
+        assert error.line_number is None
+        assert "line_number" not in error.details
+        assert "line_number" not in str(error)
+
     def test_validation_error(self) -> None:
         """Test dataset validation error."""
         error = DatasetValidationError(
@@ -129,6 +143,14 @@ class TestMetricError:
         error = MetricTimeoutError("Timed out immediately", timeout_seconds=0.0)
         assert error.timeout_seconds == 0.0
         assert error.details["timeout_seconds"] == 0.0
+        assert "timeout_seconds=0.0" in str(error)
+
+    def test_timeout_error_omits_none_timeout(self) -> None:
+        """Test that timeout_seconds=None is excluded from error details."""
+        error = MetricTimeoutError("Timed out")
+        assert error.timeout_seconds is None
+        assert "timeout_seconds" not in error.details
+        assert "timeout_seconds" not in str(error)
 
 
 class TestDiagnosisError:
@@ -236,3 +258,23 @@ class TestCLIError:
         error = ValidationError("Invalid input", field="config_path", value="missing.yaml")
         assert error.field == "config_path"
         assert error.value == "missing.yaml"
+
+    def test_validation_error_preserves_empty_string_field_and_value(self) -> None:
+        """Test that empty string field and value are retained in error details and str representation."""
+        error = ValidationError("Validation failed", field="", value="")
+        assert error.field == ""
+        assert error.value == ""
+        assert error.details["field"] == ""
+        assert error.details["value"] == ""
+        assert "field=" in str(error)
+        assert "value=" in str(error)
+
+    def test_validation_error_omits_none_field_and_value(self) -> None:
+        """Test that field=None and value=None are excluded from error details."""
+        error = ValidationError("Validation failed")
+        assert error.field is None
+        assert error.value is None
+        assert "field" not in error.details
+        assert "value" not in error.details
+        assert "field" not in str(error)
+        assert "value" not in str(error)
