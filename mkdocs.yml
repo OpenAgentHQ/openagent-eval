@@ -179,6 +179,7 @@ nav:
   - Guide:
       - Architecture: architecture.md
       - CLI Reference: cli.md
+      - Configuration Reference: config-reference.md
       - Plugin Development: plugin-development.md
       - Environment Variables: environment-variables.md
       - API Reference: api.md
