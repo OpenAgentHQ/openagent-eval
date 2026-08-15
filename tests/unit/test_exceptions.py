@@ -31,6 +31,13 @@ from openagent_eval.exceptions import (
 )
 
 
+class FalsyException(Exception):
+    """Exception whose truthiness is false despite being an exception."""
+
+    def __bool__(self) -> bool:
+        return False
+
+
 class TestOpenAgentEvalError:
     """Tests for the base exception class."""
 
@@ -342,6 +349,12 @@ class TestFalsyDetailRecording:
         error = CorpusAuditError("Audit failed", original_error=ValueError("boom"))
         assert "original_error" in error.details
 
+    def test_corpus_audit_error_preserves_falsy_original_error(self) -> None:
+        original_error = FalsyException("boom")
+        error = CorpusAuditError("Audit failed", original_error=original_error)
+        assert "original_error" in error.details
+        assert error.original_error is original_error
+
     def test_corpus_audit_error_omits_none_parameters(self) -> None:
         error = CorpusAuditError("Audit failed")
         assert "analyzer_name" not in error.details
@@ -395,6 +408,12 @@ class TestFalsyDetailRecording:
         error = MetricExecutionError("Failed", original_error=ValueError("boom"))
         assert "original_error" in error.details
 
+    def test_metric_execution_error_preserves_falsy_original_error(self) -> None:
+        original_error = FalsyException("boom")
+        error = MetricExecutionError("Failed", original_error=original_error)
+        assert "original_error" in error.details
+        assert error.original_error is original_error
+
     def test_metric_execution_error_omits_none_original_error(self) -> None:
         error = MetricExecutionError("Failed")
         assert "original_error" not in error.details
@@ -420,6 +439,12 @@ class TestFalsyDetailRecording:
     def test_plugin_load_error_records_original_error(self) -> None:
         error = PluginLoadError("Failed to load", original_error=ImportError("boom"))
         assert "original_error" in error.details
+
+    def test_plugin_load_error_preserves_falsy_original_error(self) -> None:
+        original_error = FalsyException("boom")
+        error = PluginLoadError("Failed to load", original_error=original_error)
+        assert "original_error" in error.details
+        assert error.original_error is original_error
 
     def test_plugin_load_error_omits_none_original_error(self) -> None:
         error = PluginLoadError("Failed to load")
@@ -449,6 +474,12 @@ class TestFalsyDetailRecording:
         )
         assert "original_error" in error.details
 
+    def test_provider_connection_error_preserves_falsy_original_error(self) -> None:
+        original_error = FalsyException("boom")
+        error = ProviderConnectionError("Failed to connect", original_error=original_error)
+        assert "original_error" in error.details
+        assert error.original_error is original_error
+
     def test_provider_connection_error_omits_none_original_error(self) -> None:
         error = ProviderConnectionError("Failed to connect")
         assert "original_error" not in error.details
@@ -456,6 +487,12 @@ class TestFalsyDetailRecording:
     def test_provider_execution_error_records_original_error(self) -> None:
         error = ProviderExecutionError("API call failed", original_error=RuntimeError("boom"))
         assert "original_error" in error.details
+
+    def test_provider_execution_error_preserves_falsy_original_error(self) -> None:
+        original_error = FalsyException("boom")
+        error = ProviderExecutionError("API call failed", original_error=original_error)
+        assert "original_error" in error.details
+        assert error.original_error is original_error
 
     def test_provider_execution_error_omits_none_original_error(self) -> None:
         error = ProviderExecutionError("API call failed")
@@ -466,6 +503,12 @@ class TestFalsyDetailRecording:
     def test_synthesis_execution_error_records_original_error(self) -> None:
         error = SynthesisExecutionError("Synthesis failed", original_error=RuntimeError("boom"))
         assert "original_error" in error.details
+
+    def test_synthesis_execution_error_preserves_falsy_original_error(self) -> None:
+        original_error = FalsyException("boom")
+        error = SynthesisExecutionError("Synthesis failed", original_error=original_error)
+        assert "original_error" in error.details
+        assert error.original_error is original_error
 
     def test_synthesis_execution_error_omits_none_original_error(self) -> None:
         error = SynthesisExecutionError("Synthesis failed")
