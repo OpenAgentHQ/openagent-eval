@@ -190,7 +190,7 @@ OpenAgent Eval includes the following built-in plugins:
 - `answer_relevancy` - LLM-based relevancy evaluation
 - `hallucination` - Hallucination detection
 - `semantic_similarity` - Sentence transformer similarity
-- `exact_match` - Exact string matching
+- `exact_match` - Case-insensitive, whitespace-normalized exact matching
 - `f1_score` - Token-level F1
 - `bleu` - BLEU score
 - `rouge` - ROUGE score

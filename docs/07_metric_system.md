@@ -241,6 +241,10 @@ class ExactMatch(BaseMetric):
     description = "Whether answer exactly matches ground truth"
     
     def evaluate(self, answer: str, ground_truth: str) -> MetricResult:
+        if not ground_truth:
+            return MetricResult(score=0.0, reason="No ground truth provided",
+                                metadata={"match": False})
+
         normalized_answer = " ".join(answer.lower().split())
         normalized_truth = " ".join(ground_truth.lower().split())
         match = normalized_answer == normalized_truth
