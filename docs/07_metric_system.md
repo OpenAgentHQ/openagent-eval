@@ -238,7 +238,7 @@ class SemanticSimilarity(BaseMetric):
 ```python
 class ExactMatch(BaseMetric):
     name = "exact_match"
-    description = "Whether answer exactly matches ground truth"
+    description = "Binary metric: 1 if answer matches non-empty ground truth; 0 otherwise"
     
     def evaluate(self, answer: str, ground_truth: str) -> MetricResult:
         if not ground_truth:
@@ -249,7 +249,8 @@ class ExactMatch(BaseMetric):
         normalized_truth = " ".join(ground_truth.lower().split())
         match = normalized_answer == normalized_truth
         return MetricResult(score=1.0 if match else 0.0, 
-                          reason="Exact match" if match else "No match")
+                          reason="Exact match" if match else "No match",
+                          metadata={"match": match})
 ```
 
 ### F1 Score

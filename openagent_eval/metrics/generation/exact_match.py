@@ -1,6 +1,7 @@
 """Exact Match metric.
 
-Measures whether the generated answer exactly matches the ground truth.
+Measures whether the generated answer exactly matches the ground truth using
+case-insensitive comparison and whitespace normalization.
 """
 
 from __future__ import annotations
