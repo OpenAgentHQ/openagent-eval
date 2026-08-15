@@ -28,7 +28,7 @@ class CLIError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if command:
+        if command is not None:
             error_details["command"] = command
 
         super().__init__(message=message, details=error_details)

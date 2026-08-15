@@ -28,7 +28,7 @@ class PluginError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if plugin_name:
+        if plugin_name is not None:
             error_details["plugin_name"] = plugin_name
 
         super().__init__(message=message, details=error_details)
@@ -52,7 +52,7 @@ class PluginNotFoundError(PluginError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if available_plugins:
+        if available_plugins is not None:
             error_details["available_plugins"] = available_plugins
 
         message = f"Plugin not found: {plugin_name}"
@@ -86,7 +86,7 @@ class PluginLoadError(PluginError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if original_error:
+        if original_error is not None:
             error_details["original_error"] = str(original_error)
 
         super().__init__(message=message, plugin_name=plugin_name, details=error_details)

@@ -28,7 +28,7 @@ class CorpusError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if corpus_path:
+        if corpus_path is not None:
             error_details["corpus_path"] = corpus_path
 
         super().__init__(message=message, details=error_details)
@@ -72,7 +72,7 @@ class CorpusValidationError(CorpusError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if validation_errors:
+        if validation_errors is not None:
             error_details["validation_errors"] = validation_errors
 
         super().__init__(message=message, corpus_path=corpus_path, details=error_details)
@@ -100,9 +100,9 @@ class CorpusAuditError(CorpusError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if analyzer_name:
+        if analyzer_name is not None:
             error_details["analyzer_name"] = analyzer_name
-        if original_error:
+        if original_error is not None:
             error_details["original_error"] = str(original_error)
 
         super().__init__(message=message, corpus_path=corpus_path, details=error_details)

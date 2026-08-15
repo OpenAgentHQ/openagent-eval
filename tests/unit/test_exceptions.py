@@ -6,6 +6,9 @@ from openagent_eval.exceptions import (
     CLIError,
     CommandError,
     ConfigurationError,
+    CorpusAuditError,
+    CorpusError,
+    CorpusValidationError,
     DatasetError,
     DatasetNotFoundError,
     DatasetValidationError,
@@ -23,6 +26,7 @@ from openagent_eval.exceptions import (
     ProviderError,
     ProviderExecutionError,
     ProviderNotFoundError,
+    SynthesisExecutionError,
     ValidationError,
 )
 
@@ -278,3 +282,191 @@ class TestCLIError:
         assert "value" not in error.details
         assert "field" not in str(error)
         assert "value" not in str(error)
+
+
+class TestFalsyDetailRecording:
+    """Explicitly-supplied falsy values (not None) must be recorded in .details.
+
+    Guards must distinguish "not supplied" (None) from a falsy value such as
+    "", 0, False or []. Only None may be dropped from .details.
+    """
+
+    # --- config.py ---
+
+    def test_configuration_error_preserves_empty_config_path(self) -> None:
+        error = ConfigurationError("Invalid config", config_path="")
+        assert "config_path" in error.details
+
+    def test_configuration_error_preserves_empty_field(self) -> None:
+        error = ConfigurationError("Invalid config", field="")
+        assert "field" in error.details
+
+    def test_configuration_error_omits_none_parameters(self) -> None:
+        error = ConfigurationError("Invalid config")
+        assert "config_path" not in error.details
+        assert "field" not in error.details
+
+    # --- cli.py ---
+
+    def test_cli_error_preserves_empty_command(self) -> None:
+        error = CLIError("Invalid command", command="")
+        assert "command" in error.details
+
+    def test_cli_error_omits_none_command(self) -> None:
+        error = CLIError("Invalid command")
+        assert "command" not in error.details
+
+    # --- corpus.py ---
+
+    def test_corpus_error_preserves_empty_corpus_path(self) -> None:
+        error = CorpusError("Corpus error", corpus_path="")
+        assert "corpus_path" in error.details
+
+    def test_corpus_error_omits_none_corpus_path(self) -> None:
+        error = CorpusError("Corpus error")
+        assert "corpus_path" not in error.details
+
+    def test_corpus_validation_error_preserves_empty_validation_errors(self) -> None:
+        error = CorpusValidationError("Validation failed", validation_errors=[])
+        assert "validation_errors" in error.details
+
+    def test_corpus_validation_error_omits_none_validation_errors(self) -> None:
+        error = CorpusValidationError("Validation failed")
+        assert "validation_errors" not in error.details
+
+    def test_corpus_audit_error_preserves_empty_analyzer_name(self) -> None:
+        error = CorpusAuditError("Audit failed", analyzer_name="")
+        assert "analyzer_name" in error.details
+
+    def test_corpus_audit_error_records_original_error(self) -> None:
+        error = CorpusAuditError("Audit failed", original_error=ValueError("boom"))
+        assert "original_error" in error.details
+
+    def test_corpus_audit_error_omits_none_parameters(self) -> None:
+        error = CorpusAuditError("Audit failed")
+        assert "analyzer_name" not in error.details
+        assert "original_error" not in error.details
+
+    # --- dataset.py ---
+
+    def test_dataset_error_preserves_empty_dataset_path(self) -> None:
+        error = DatasetError("Dataset error", dataset_path="")
+        assert "dataset_path" in error.details
+
+    def test_dataset_error_omits_none_dataset_path(self) -> None:
+        error = DatasetError("Dataset error")
+        assert "dataset_path" not in error.details
+
+    def test_invalid_dataset_error_preserves_empty_data_format(self) -> None:
+        error = InvalidDatasetError("Invalid format", data_format="")
+        assert "format" in error.details
+
+    def test_invalid_dataset_error_omits_none_data_format(self) -> None:
+        error = InvalidDatasetError("Invalid format")
+        assert "format" not in error.details
+
+    def test_dataset_validation_error_preserves_empty_validation_errors(self) -> None:
+        error = DatasetValidationError("Validation failed", validation_errors=[])
+        assert "validation_errors" in error.details
+
+    def test_dataset_validation_error_omits_none_validation_errors(self) -> None:
+        error = DatasetValidationError("Validation failed")
+        assert "validation_errors" not in error.details
+
+    # --- metric.py ---
+
+    def test_metric_error_preserves_empty_metric_name(self) -> None:
+        error = MetricError("Metric error", metric_name="")
+        assert "metric_name" in error.details
+
+    def test_metric_error_omits_none_metric_name(self) -> None:
+        error = MetricError("Metric error")
+        assert "metric_name" not in error.details
+
+    def test_metric_not_found_error_preserves_empty_available_metrics(self) -> None:
+        error = MetricNotFoundError("my_metric", available_metrics=[])
+        assert "available_metrics" in error.details
+
+    def test_metric_not_found_error_omits_none_available_metrics(self) -> None:
+        error = MetricNotFoundError("my_metric")
+        assert "available_metrics" not in error.details
+
+    def test_metric_execution_error_records_original_error(self) -> None:
+        error = MetricExecutionError("Failed", original_error=ValueError("boom"))
+        assert "original_error" in error.details
+
+    def test_metric_execution_error_omits_none_original_error(self) -> None:
+        error = MetricExecutionError("Failed")
+        assert "original_error" not in error.details
+
+    # --- plugin.py ---
+
+    def test_plugin_error_preserves_empty_plugin_name(self) -> None:
+        error = PluginError("Plugin error", plugin_name="")
+        assert "plugin_name" in error.details
+
+    def test_plugin_error_omits_none_plugin_name(self) -> None:
+        error = PluginError("Plugin error")
+        assert "plugin_name" not in error.details
+
+    def test_plugin_not_found_error_preserves_empty_available_plugins(self) -> None:
+        error = PluginNotFoundError("my_plugin", available_plugins=[])
+        assert "available_plugins" in error.details
+
+    def test_plugin_not_found_error_omits_none_available_plugins(self) -> None:
+        error = PluginNotFoundError("my_plugin")
+        assert "available_plugins" not in error.details
+
+    def test_plugin_load_error_records_original_error(self) -> None:
+        error = PluginLoadError("Failed to load", original_error=ImportError("boom"))
+        assert "original_error" in error.details
+
+    def test_plugin_load_error_omits_none_original_error(self) -> None:
+        error = PluginLoadError("Failed to load")
+        assert "original_error" not in error.details
+
+    # --- provider.py ---
+
+    def test_provider_error_preserves_empty_provider_name(self) -> None:
+        error = ProviderError("Provider error", provider_name="")
+        assert "provider_name" in error.details
+
+    def test_provider_error_omits_none_provider_name(self) -> None:
+        error = ProviderError("Provider error")
+        assert "provider_name" not in error.details
+
+    def test_provider_not_found_error_preserves_empty_available_providers(self) -> None:
+        error = ProviderNotFoundError("my_provider", available_providers=[])
+        assert "available_providers" in error.details
+
+    def test_provider_not_found_error_omits_none_available_providers(self) -> None:
+        error = ProviderNotFoundError("my_provider")
+        assert "available_providers" not in error.details
+
+    def test_provider_connection_error_records_original_error(self) -> None:
+        error = ProviderConnectionError(
+            "Failed to connect", original_error=ConnectionError("boom")
+        )
+        assert "original_error" in error.details
+
+    def test_provider_connection_error_omits_none_original_error(self) -> None:
+        error = ProviderConnectionError("Failed to connect")
+        assert "original_error" not in error.details
+
+    def test_provider_execution_error_records_original_error(self) -> None:
+        error = ProviderExecutionError("API call failed", original_error=RuntimeError("boom"))
+        assert "original_error" in error.details
+
+    def test_provider_execution_error_omits_none_original_error(self) -> None:
+        error = ProviderExecutionError("API call failed")
+        assert "original_error" not in error.details
+
+    # --- synthesis.py ---
+
+    def test_synthesis_execution_error_records_original_error(self) -> None:
+        error = SynthesisExecutionError("Synthesis failed", original_error=RuntimeError("boom"))
+        assert "original_error" in error.details
+
+    def test_synthesis_execution_error_omits_none_original_error(self) -> None:
+        error = SynthesisExecutionError("Synthesis failed")
+        assert "original_error" not in error.details
