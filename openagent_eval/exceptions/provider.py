@@ -31,7 +31,7 @@ class ProviderError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if provider_name:
+        if provider_name is not None:
             error_details["provider_name"] = provider_name
 
         super().__init__(message=message, details=error_details)
@@ -68,7 +68,7 @@ class ProviderNotFoundError(ProviderError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if available_providers:
+        if available_providers is not None:
             error_details["available_providers"] = available_providers
 
         message = f"Provider not found: {provider_name}"
@@ -104,7 +104,7 @@ class ProviderConnectionError(ProviderError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if original_error:
+        if original_error is not None:
             error_details["original_error"] = str(original_error)
 
         super().__init__(message=message, provider_name=provider_name, details=error_details)
@@ -136,7 +136,7 @@ class ProviderExecutionError(ProviderError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if original_error:
+        if original_error is not None:
             error_details["original_error"] = str(original_error)
 
         super().__init__(message=message, provider_name=provider_name, details=error_details)

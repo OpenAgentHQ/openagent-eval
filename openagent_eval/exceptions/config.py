@@ -31,9 +31,9 @@ class ConfigurationError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if config_path:
+        if config_path is not None:
             error_details["config_path"] = config_path
-        if field:
+        if field is not None:
             error_details["field"] = field
 
         super().__init__(message=message, details=error_details)
