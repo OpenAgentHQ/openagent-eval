@@ -36,6 +36,18 @@ Evaluating RAG systems shouldn't require a PhD or a cloud account. OpenAgent Eva
 
 ---
 
+## Demo
+
+<div align="center">
+
+<video src="https://github.com/OpenAgentHQ/openagent-eval/raw/main/docs/assets/oaeval-demo.mp4" poster="./docs/assets/oaeval-demo-poster.png" controls muted playsinline width="100%"></video>
+
+*Install → configure → validate → run → report — the whole workflow, narrated, in about a minute.*
+
+</div>
+
+---
+
 ## Installation
 
 ```bash
