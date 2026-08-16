@@ -41,6 +41,14 @@ class TestExactMatch:
         )
         assert result.score == 1.0
 
+    def test_internal_whitespace_normalized(self):
+        """Match collapses internal whitespace."""
+        result = self.metric.evaluate(
+            answer="hello  world",
+            ground_truth="hello world",
+        )
+        assert result.score == 1.0
+
     def test_no_match(self):
         """Answer does not match ground truth."""
         result = self.metric.evaluate(

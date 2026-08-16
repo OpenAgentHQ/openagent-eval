@@ -1,6 +1,7 @@
 """Exact Match metric.
 
-Measures whether the generated answer exactly matches the ground truth.
+Measures whether the generated answer exactly matches the ground truth using
+case-insensitive comparison and whitespace normalization.
 """
 
 from __future__ import annotations
@@ -11,13 +12,14 @@ from openagent_eval.metrics.base import BaseMetric, MetricResult
 
 
 class ExactMatch(BaseMetric):
-    """Binary metric: 1 if answer exactly matches ground truth.
+    """Binary metric: 1 if answer matches non-empty ground truth; 0 otherwise.
 
-    Comparison is case-insensitive and whitespace-normalized.
+    Comparison is case-insensitive and whitespace-normalized. An empty ground
+    truth always scores 0.
     """
 
     name = "exact_match"
-    description = "Binary metric: 1 if answer exactly matches ground truth"
+    description = "Binary metric: 1 if answer matches non-empty ground truth; 0 otherwise"
 
     def evaluate(self, **kwargs: Any) -> MetricResult:
         """Evaluate exact match.
@@ -39,8 +41,8 @@ class ExactMatch(BaseMetric):
                 metadata={"match": False},
             )
 
-        normalized_answer = answer.strip().lower()
-        normalized_truth = ground_truth.strip().lower()
+        normalized_answer = " ".join(answer.lower().split())
+        normalized_truth = " ".join(ground_truth.lower().split())
         match = normalized_answer == normalized_truth
         score = 1.0 if match else 0.0
 
