@@ -172,6 +172,26 @@ class TestROUGE:
         )
         assert result.score < 0.5
 
+    def test_fallback_sensitive_to_repetition(self, monkeypatch):
+        """Fallback recall counts occurrences, not unique word types."""
+        def _force_fallback(*args, **kwargs):
+            raise ImportError("force fallback path")
+
+        monkeypatch.setattr(self.metric, "_evaluate_with_hf", _force_fallback)
+
+        partial = self.metric.evaluate(
+            answer="cat",
+            ground_truth="cat cat cat",
+        )
+        full = self.metric.evaluate(
+            answer="cat cat cat",
+            ground_truth="cat cat cat",
+        )
+
+        assert partial.score == pytest.approx(1 / 3)
+        assert full.score == 1.0
+        assert partial.metadata["method"] == "simple_recall"
+
 
 class TestSemanticSimilarity:
     """Tests for SemanticSimilarity metric."""
