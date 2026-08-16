@@ -60,7 +60,9 @@ uv sync
 oaeval init --interactive
 ```
 
-![oaeval interactive wizard](static/openagent-eval.png)
+![oaeval init --interactive wizard demo](docs/assets/oaeval-init-demo.gif)
+
+The wizard walks you through your dataset path, LLM provider and model, retriever, metric preset, and report format, then writes a ready-to-run `config.yaml`.
 
 ### 2. Validate Configuration
 
