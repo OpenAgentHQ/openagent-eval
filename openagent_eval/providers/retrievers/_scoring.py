@@ -9,7 +9,10 @@ so all retrievers funnel their raw scores through the helpers here.
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def normalize_distance(distance: float, space: str = "cosine") -> float:

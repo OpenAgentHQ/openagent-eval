@@ -33,7 +33,9 @@ class ContextPrecision(BaseMetric):
             MetricResult with precision score.
         """
         retrieved = [normalize_context(c) for c in kwargs.get("retrieved_contexts", [])]
-        ground_truth = [normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])]
+        ground_truth = [
+            normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])
+        ]
 
         if not retrieved:
             return MetricResult(
@@ -50,9 +52,7 @@ class ContextPrecision(BaseMetric):
             )
 
         ground_truth_set = set(ground_truth)
-        relevant_count = sum(
-            1 for ctx in retrieved if ctx in ground_truth_set
-        )
+        relevant_count = sum(1 for ctx in retrieved if ctx in ground_truth_set)
         score = relevant_count / len(retrieved)
 
         return MetricResult(

@@ -6,7 +6,6 @@ all analyzers to final report generation.
 
 from __future__ import annotations
 
-
 import pytest
 
 from openagent_eval.corpus.auditor import CorpusAuditor
@@ -96,9 +95,7 @@ class TestCorpusAuditPipeline:
 
         assert report.total_documents == 3
         assert len(report.issues) > 0
-        assert any(
-            issue.issue_type == IssueType.STALENESS for issue in report.issues
-        )
+        assert any(issue.issue_type == IssueType.STALENESS for issue in report.issues)
 
     @pytest.mark.asyncio
     async def test_full_audit_all_checks(self, unhealthy_corpus):

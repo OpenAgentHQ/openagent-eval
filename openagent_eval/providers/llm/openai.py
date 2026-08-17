@@ -263,9 +263,7 @@ class OpenAIProvider(LLMProvider):
                 original_error=e,
             ) from e
 
-    async def generate_with_usage(
-        self, prompt: str, **kwargs: Any
-    ) -> LLMResponse:
+    async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate a response with detailed token usage information.
 
         This method extends generate() to return a full LLMResponse object

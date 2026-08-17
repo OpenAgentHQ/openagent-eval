@@ -13,35 +13,35 @@ All metrics implement the BaseMetric interface and return MetricResult.
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 from openagent_eval.metrics.cost import TokenCountMetric
 from openagent_eval.metrics.generation import (
-    AnswerRelevancy,
-    BERTScore,
     BLEU,
+    ROUGE,
+    AnswerRelevancy,
+    AsyncLLMJudgeMetric,
+    BERTScore,
     ExactMatch,
     F1Score,
     Faithfulness,
     HallucinationDetection,
-    LLMJudgeMetric,
-    AsyncLLMJudgeMetric,
     JudgeCriteria,
-    ROUGE,
+    LLMJudgeMetric,
     SemanticSimilarity,
 )
 from openagent_eval.metrics.nli import (
-    NLIJudge,
-    NLIResult,
-    NLILabel,
-    ClaimExtractor,
     Claim,
+    ClaimExtractor,
     EvidenceFinder,
     EvidenceMatch,
+    NLIJudge,
+    NLILabel,
+    NLIResult,
 )
 from openagent_eval.metrics.performance import LatencyMetric
 from openagent_eval.metrics.retrieval import (
+    MRR,
+    NDCG,
     ContextPrecision,
     ContextRecall,
     HitRate,
-    MRR,
-    NDCG,
     PrecisionAtK,
     RecallAtK,
 )
@@ -122,9 +122,7 @@ def get_metric(name: str) -> type[BaseMetric]:
     """
     if name not in METRIC_REGISTRY:
         available = ", ".join(sorted(METRIC_REGISTRY.keys()))
-        raise KeyError(
-            f"Metric '{name}' not found. Available metrics: {available}"
-        )
+        raise KeyError(f"Metric '{name}' not found. Available metrics: {available}")
     return METRIC_REGISTRY[name]
 
 

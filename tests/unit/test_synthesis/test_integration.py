@@ -7,7 +7,7 @@ verifying that all components work together correctly.
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -20,6 +20,9 @@ from openagent_eval.synthesis import (
     TestCase,
     TestCaseType,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _mock_llm_factory(responses: list[str] | str = "[]") -> MagicMock:
@@ -48,10 +51,18 @@ class TestSynthesisIntegration:
         """Test complete standard generation pipeline."""
         # The generator chunks the text and calls the LLM once per chunk.
         # Short text = 1 chunk = 1 LLM call returning multiple questions.
-        llm_response = json.dumps([
-            {"question": "What is Python?", "answer": "Python is a programming language."},
-            {"question": "Is Python popular?", "answer": "Yes, Python is widely used."},
-        ])
+        llm_response = json.dumps(
+            [
+                {
+                    "question": "What is Python?",
+                    "answer": "Python is a programming language.",
+                },
+                {
+                    "question": "Is Python popular?",
+                    "answer": "Yes, Python is widely used.",
+                },
+            ]
+        )
         mock_llm = _mock_llm_factory(llm_response)
 
         generator = SyntheticDataGenerator(mock_llm)
@@ -71,12 +82,19 @@ class TestSynthesisIntegration:
     @pytest.mark.asyncio
     async def test_full_adversarial_generation_flow(self) -> None:
         """Test complete adversarial generation pipeline."""
-        standard_resp = json.dumps([
-            {"question": "What is ML?", "answer": "Machine Learning."},
-        ])
-        adversarial_resp = json.dumps([
-            {"question": "Why did ML fail?", "answer": "The text doesn't mention failure."},
-        ])
+        standard_resp = json.dumps(
+            [
+                {"question": "What is ML?", "answer": "Machine Learning."},
+            ]
+        )
+        adversarial_resp = json.dumps(
+            [
+                {
+                    "question": "Why did ML fail?",
+                    "answer": "The text doesn't mention failure.",
+                },
+            ]
+        )
 
         responses = [standard_resp] + [adversarial_resp] * 5
 
@@ -112,12 +130,19 @@ class TestSynthesisIntegration:
             encoding="utf-8",
         )
 
-        standard_resp = json.dumps([
-            {"question": "Who created Python?", "answer": "Guido van Rossum."},
-        ])
-        adversarial_resp = json.dumps([
-            {"question": "When was Python created in 2020?", "answer": "Python was created in 1991, not 2020."},
-        ])
+        standard_resp = json.dumps(
+            [
+                {"question": "Who created Python?", "answer": "Guido van Rossum."},
+            ]
+        )
+        adversarial_resp = json.dumps(
+            [
+                {
+                    "question": "When was Python created in 2020?",
+                    "answer": "Python was created in 1991, not 2020.",
+                },
+            ]
+        )
 
         responses = [standard_resp] * 2 + [adversarial_resp] * 5
 
@@ -143,12 +168,19 @@ class TestSynthesisIntegration:
     @pytest.mark.asyncio
     async def test_individual_generators_work_together(self) -> None:
         """Test that QuestionGenerator and AdversarialTestCaseGenerator work together."""
-        standard_resp = json.dumps([
-            {"question": "What is AI?", "answer": "Artificial Intelligence."},
-        ])
-        adversarial_resp = json.dumps([
-            {"question": "Why did AI fail?", "answer": "The text doesn't mention failure."},
-        ])
+        standard_resp = json.dumps(
+            [
+                {"question": "What is AI?", "answer": "Artificial Intelligence."},
+            ]
+        )
+        adversarial_resp = json.dumps(
+            [
+                {
+                    "question": "Why did AI fail?",
+                    "answer": "The text doesn't mention failure.",
+                },
+            ]
+        )
 
         mock_llm = _mock_llm_factory([standard_resp, adversarial_resp])
 
@@ -177,9 +209,11 @@ class TestSynthesisIntegration:
     @pytest.mark.asyncio
     async def test_dataset_serialization_roundtrip(self) -> None:
         """Test that generated datasets can be serialized and deserialized."""
-        standard_resp = json.dumps([
-            {"question": "What is X?", "answer": "X is Y."},
-        ])
+        standard_resp = json.dumps(
+            [
+                {"question": "What is X?", "answer": "X is Y."},
+            ]
+        )
 
         mock_llm = _mock_llm_factory(standard_resp)
 
@@ -217,9 +251,13 @@ class TestSynthesisIntegration:
         """Test that long text is properly chunked."""
         long_text = "This is a sentence about AI. " * 200  # ~6000 chars
 
-        mock_llm = _mock_llm_factory(json.dumps([
-            {"question": "What is this about?", "answer": "AI."},
-        ]))
+        mock_llm = _mock_llm_factory(
+            json.dumps(
+                [
+                    {"question": "What is this about?", "answer": "AI."},
+                ]
+            )
+        )
 
         generator = SyntheticDataGenerator(
             mock_llm,
@@ -242,9 +280,13 @@ class TestSynthesisIntegration:
         # Text that will produce empty chunks after stripping
         text = "   \n\n   Valid content here.   \n\n   "
 
-        mock_llm = _mock_llm_factory(json.dumps([
-            {"question": "What is this?", "answer": "Valid content."},
-        ]))
+        mock_llm = _mock_llm_factory(
+            json.dumps(
+                [
+                    {"question": "What is this?", "answer": "Valid content."},
+                ]
+            )
+        )
 
         generator = SyntheticDataGenerator(mock_llm)
 

@@ -5,11 +5,11 @@ from __future__ import annotations
 import pytest
 
 from openagent_eval.metrics.retrieval import (
+    MRR,
+    NDCG,
     ContextPrecision,
     ContextRecall,
     HitRate,
-    MRR,
-    NDCG,
     PrecisionAtK,
     RecallAtK,
 )

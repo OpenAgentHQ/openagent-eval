@@ -82,7 +82,9 @@ class TestChromaRetrieverInit:
 
     def test_init_connection_error(self):
         """Retriever raises ProviderConnectionError on init failure."""
-        with patch("openagent_eval.providers.retrievers.chroma.chromadb") as mock_chroma:
+        with patch(
+            "openagent_eval.providers.retrievers.chroma.chromadb"
+        ) as mock_chroma:
             mock_chroma.Client.side_effect = Exception("Connection failed")
             with pytest.raises(ProviderConnectionError, match="Failed to initialize"):
                 ChromaRetriever(collection_name="test")
@@ -167,7 +169,9 @@ class TestChromaRetrieve:
         assert docs[0].score == 0.0  # Clamped to 0.0
 
     @pytest.mark.asyncio
-    async def test_retrieve_passes_query_to_collection(self, retriever: ChromaRetriever):
+    async def test_retrieve_passes_query_to_collection(
+        self, retriever: ChromaRetriever
+    ):
         """retrieve() passes query and k to collection.query()."""
         await retriever.retrieve("test query", k=3)
         retriever._collection.query.assert_called_once_with(

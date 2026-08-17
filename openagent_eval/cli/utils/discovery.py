@@ -91,8 +91,12 @@ def get_config_path(explicit_path: str | None = None) -> Path:
     if explicit_path:
         path = Path(explicit_path)
         if not path.exists():
-            console.print(f"[red]Error:[/red] Configuration file not found: {explicit_path}")
-            console.print("[dim]Tip: Run 'oaeval init' to create a configuration file[/dim]")
+            console.print(
+                f"[red]Error:[/red] Configuration file not found: {explicit_path}"
+            )
+            console.print(
+                "[dim]Tip: Run 'oaeval init' to create a configuration file[/dim]"
+            )
             raise typer.Exit(code=2)
         return path
 
@@ -100,8 +104,12 @@ def get_config_path(explicit_path: str | None = None) -> Path:
     found = find_config_file()
     if found is None:
         console.print("[red]Error:[/red] No configuration file found")
-        console.print("[dim]Searched for: config.yaml, config.yml, oaeval.yaml, oaeval.yml[/dim]")
-        console.print("[dim]Tip: Run 'oaeval init' to create a configuration file[/dim]")
+        console.print(
+            "[dim]Searched for: config.yaml, config.yml, oaeval.yaml, oaeval.yml[/dim]"
+        )
+        console.print(
+            "[dim]Tip: Run 'oaeval init' to create a configuration file[/dim]"
+        )
         console.print("[dim]Or set OAEVAL_CONFIG environment variable[/dim]")
         raise typer.Exit(code=2)
 

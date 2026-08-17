@@ -8,10 +8,12 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from openagent_eval.core.engine import EvaluationReport
 from openagent_eval.reports.base import ReportGenerator
+
+if TYPE_CHECKING:
+    from openagent_eval.core.engine import EvaluationReport
 
 
 class HTMLReport(ReportGenerator):
@@ -99,23 +101,27 @@ class HTMLReport(ReportGenerator):
         # Compute overall score
         metrics = summary.get("metrics_summary", {})
         numeric_metric_values = [
-            value for value in metrics.values()
+            value
+            for value in metrics.values()
             if isinstance(value, (int, float)) and not isinstance(value, bool)
         ]
         overall_score = (
             sum(numeric_metric_values) / len(numeric_metric_values)
-            if numeric_metric_values else None
+            if numeric_metric_values
+            else None
         )
 
         # Format results for template, respecting the configured example limit
         max_examples = min(len(result.results), config.report.max_examples)
         results_data = []
         for eval_result in result.results[:max_examples]:
-            results_data.append({
-                "question": eval_result.question,
-                "answer": eval_result.answer,
-                "metrics": eval_result.metrics,
-            })
+            results_data.append(
+                {
+                    "question": eval_result.question,
+                    "answer": eval_result.answer,
+                    "metrics": eval_result.metrics,
+                }
+            )
 
         # Count errors by type
         error_types: dict[str, int] = {}
@@ -139,7 +145,9 @@ class HTMLReport(ReportGenerator):
 
         return self._render_template(context)
 
-    def generate_to_file(self, report: EvaluationReport, output_path: Path | str) -> Path:
+    def generate_to_file(
+        self, report: EvaluationReport, output_path: Path | str
+    ) -> Path:
         """Generate HTML report and write to file.
 
         Args:

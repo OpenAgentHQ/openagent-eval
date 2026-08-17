@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from typer.testing import CliRunner
+from typing import TYPE_CHECKING
 
 from openagent_eval.cli.main import app
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from typer.testing import CliRunner
 
 
 def test_run_missing_config(runner: CliRunner, tmp_path: Path) -> None:
@@ -24,9 +27,7 @@ def test_run_executes_pipeline(
     """run command loads config and executes evaluation pipeline."""
     # Update config to use the sample dataset
     config_content = sample_config.read_text(encoding="utf-8")
-    config_content = config_content.replace(
-        "data/questions.json", str(sample_dataset)
-    )
+    config_content = config_content.replace("data/questions.json", str(sample_dataset))
     sample_config.write_text(config_content, encoding="utf-8")
 
     result = runner.invoke(app, ["run", str(sample_config)])
@@ -42,9 +43,7 @@ def test_run_with_output_override(
 ) -> None:
     """run command respects --output flag."""
     config_content = sample_config.read_text(encoding="utf-8")
-    config_content = config_content.replace(
-        "data/questions.json", str(sample_dataset)
-    )
+    config_content = config_content.replace("data/questions.json", str(sample_dataset))
     sample_config.write_text(config_content, encoding="utf-8")
 
     result = runner.invoke(app, ["run", str(sample_config), "--output", "json"])

@@ -324,9 +324,7 @@ def _save_output(
         with open(path, "w", encoding="utf-8") as f:
             json.dump(dataset.to_dict(), f, indent=2)
 
-    console.print(
-        f"[green]Saved {dataset.total_count} test cases to {path}[/green]"
-    )
+    console.print(f"[green]Saved {dataset.total_count} test cases to {path}[/green]")
 
 
 def _display_summary(dataset: SyntheticDataset, verbose: bool) -> None:

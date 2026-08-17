@@ -19,7 +19,9 @@ class ExactMatch(BaseMetric):
     """
 
     name = "exact_match"
-    description = "Binary metric: 1 if answer matches non-empty ground truth; 0 otherwise"
+    description = (
+        "Binary metric: 1 if answer matches non-empty ground truth; 0 otherwise"
+    )
 
     def evaluate(self, **kwargs: Any) -> MetricResult:
         """Evaluate exact match.

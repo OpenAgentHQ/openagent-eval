@@ -75,7 +75,9 @@ class CorpusValidationError(CorpusError):
         if validation_errors is not None:
             error_details["validation_errors"] = validation_errors
 
-        super().__init__(message=message, corpus_path=corpus_path, details=error_details)
+        super().__init__(
+            message=message, corpus_path=corpus_path, details=error_details
+        )
         self.validation_errors = validation_errors or []
 
 
@@ -105,6 +107,8 @@ class CorpusAuditError(CorpusError):
         if original_error is not None:
             error_details["original_error"] = str(original_error)
 
-        super().__init__(message=message, corpus_path=corpus_path, details=error_details)
+        super().__init__(
+            message=message, corpus_path=corpus_path, details=error_details
+        )
         self.analyzer_name = analyzer_name
         self.original_error = original_error

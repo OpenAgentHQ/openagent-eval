@@ -21,7 +21,9 @@ class RecallAtK(BaseMetric):
     """Fraction of relevant contexts found within the top-K retrieved results."""
 
     name = "recall_at_k"
-    description = "Fraction of relevant contexts recovered in the top-K retrieved results"
+    description = (
+        "Fraction of relevant contexts recovered in the top-K retrieved results"
+    )
 
     def evaluate(self, **kwargs: Any) -> MetricResult:
         """Evaluate Recall@K.
@@ -35,7 +37,9 @@ class RecallAtK(BaseMetric):
             MetricResult with the recall@k score in [0, 1].
         """
         retrieved = [normalize_context(c) for c in kwargs.get("retrieved_contexts", [])]
-        ground_truth = [normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])]
+        ground_truth = [
+            normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])
+        ]
         k = kwargs.get("k", len(retrieved))
 
         if not ground_truth:
@@ -49,14 +53,22 @@ class RecallAtK(BaseMetric):
             return MetricResult(
                 score=0.0,
                 reason="No contexts retrieved",
-                metadata={"k": k, "relevant_total": len(ground_truth), "relevant_in_top_k": 0},
+                metadata={
+                    "k": k,
+                    "relevant_total": len(ground_truth),
+                    "relevant_in_top_k": 0,
+                },
             )
 
         if k <= 0:
             return MetricResult(
                 score=0.0,
                 reason=f"K is {k} (no contexts considered)",
-                metadata={"k": k, "relevant_total": len(ground_truth), "relevant_in_top_k": 0},
+                metadata={
+                    "k": k,
+                    "relevant_total": len(ground_truth),
+                    "relevant_in_top_k": 0,
+                },
             )
 
         top_k = retrieved[:k]

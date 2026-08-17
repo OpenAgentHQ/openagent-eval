@@ -59,7 +59,9 @@ class PluginNotFoundError(PluginError):
         if available_plugins:
             message += f". Available plugins: {', '.join(available_plugins)}"
 
-        super().__init__(message=message, plugin_name=plugin_name, details=error_details)
+        super().__init__(
+            message=message, plugin_name=plugin_name, details=error_details
+        )
         self.available_plugins = available_plugins or []
 
 
@@ -89,5 +91,7 @@ class PluginLoadError(PluginError):
         if original_error is not None:
             error_details["original_error"] = str(original_error)
 
-        super().__init__(message=message, plugin_name=plugin_name, details=error_details)
+        super().__init__(
+            message=message, plugin_name=plugin_name, details=error_details
+        )
         self.original_error = original_error

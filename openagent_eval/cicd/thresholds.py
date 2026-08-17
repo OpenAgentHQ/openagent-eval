@@ -9,10 +9,10 @@ from openagent_eval.cicd.models import (
     CICDConfig,
     EvaluationGate,
     GateBehavior,
-    ThresholdConfig,
-    ThresholdOperator,
     TestResult,
     TestStatus,
+    ThresholdConfig,
+    ThresholdOperator,
 )
 
 
@@ -155,9 +155,7 @@ class ThresholdEvaluator:
             failure_reasons=failure_reasons,
         )
 
-    def evaluate_all_gates(
-        self, metrics: dict[str, Any]
-    ) -> EvaluationResult:
+    def evaluate_all_gates(self, metrics: dict[str, Any]) -> EvaluationResult:
         """Evaluate all gates against the provided metrics.
 
         Args:
@@ -215,10 +213,7 @@ class ThresholdEvaluator:
         Returns:
             TestResult with status and gate results.
         """
-        if evaluation_result.passed:
-            status = TestStatus.PASSED
-        else:
-            status = TestStatus.FAILED
+        status = TestStatus.PASSED if evaluation_result.passed else TestStatus.FAILED
 
         gate_results_data = []
         for gr in evaluation_result.gate_results:
@@ -251,9 +246,7 @@ class ThresholdEvaluator:
         )
 
     @staticmethod
-    def _compare(
-        actual: float, operator: ThresholdOperator, threshold: float
-    ) -> bool:
+    def _compare(actual: float, operator: ThresholdOperator, threshold: float) -> bool:
         """Compare actual value against threshold.
 
         Args:

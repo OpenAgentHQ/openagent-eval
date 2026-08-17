@@ -7,7 +7,7 @@ performs fast approximate/exact similarity search in process.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -16,8 +16,10 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.retriever import Retriever
-from openagent_eval.providers.embedders.base import Embedder
 from openagent_eval.providers.models import Document
+
+if TYPE_CHECKING:
+    from openagent_eval.providers.embedders.base import Embedder
 
 
 class FAISSRetriever(Retriever):
@@ -76,9 +78,7 @@ class FAISSRetriever(Retriever):
                 self._docs = []  # metadata not stored in the index file
             else:
                 texts = [d.get("content", "") for d in self._raw_docs]
-                vectors = np.asarray(
-                    await self._embedder.embed(texts), dtype="float32"
-                )
+                vectors = np.asarray(await self._embedder.embed(texts), dtype="float32")
                 dim = vectors.shape[1]
                 self._index = (
                     faiss.IndexFlatL2(dim)
@@ -129,7 +129,7 @@ class FAISSRetriever(Retriever):
             ) from exc
 
         documents: list[Document] = []
-        for score, idx in zip(scores[0], indices[0]):
+        for score, idx in zip(scores[0], indices[0], strict=False):
             if idx < 0:
                 continue
             # FAISS returns distances; normalize to [0,1] (higher = better).

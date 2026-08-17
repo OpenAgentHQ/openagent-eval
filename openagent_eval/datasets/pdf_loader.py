@@ -16,12 +16,14 @@ Requires the optional ``pypdf`` dependency:
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.datasets.base import BaseDatasetLoader, Dataset, DatasetItem
 from openagent_eval.datasets.models import DatasetItemModel
 from openagent_eval.exceptions import DatasetValidationError, InvalidDatasetError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # Default question used when a PDF page is turned into a dataset item.
 DEFAULT_QUESTION_TEMPLATE = "Answer the user's question using the provided context."
@@ -197,9 +199,7 @@ class PDFDatasetLoader(BaseDatasetLoader):
 
         return raw_items
 
-    def _parse_data(
-        self, raw_items: list[dict[str, Any]], path: Path
-    ) -> Dataset:
+    def _parse_data(self, raw_items: list[dict[str, Any]], path: Path) -> Dataset:
         """Parse raw item dictionaries into a Dataset object.
 
         Args:

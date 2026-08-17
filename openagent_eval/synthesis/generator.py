@@ -207,9 +207,7 @@ class SyntheticDataGenerator:
         for i, (filename, chunk_idx, chunk) in enumerate(chunks):
             n = questions_per_chunk + (1 if i < remaining else 0)
             if n > 0:
-                task = asyncio.create_task(
-                    _generate_one(filename, chunk_idx, chunk, n)
-                )
+                task = asyncio.create_task(_generate_one(filename, chunk_idx, chunk, n))
                 tasks.append(task)
 
         results = await asyncio.gather(*tasks, return_exceptions=True)

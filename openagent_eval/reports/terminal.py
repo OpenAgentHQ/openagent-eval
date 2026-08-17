@@ -7,13 +7,16 @@ results as formatted console output with tables, panels, and colors.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from openagent_eval.core.engine import EvaluationReport
 from openagent_eval.reports.base import ReportGenerator
+
+if TYPE_CHECKING:
+    from openagent_eval.core.engine import EvaluationReport
 
 
 class TerminalReport(ReportGenerator):
@@ -97,7 +100,9 @@ class TerminalReport(ReportGenerator):
 
         return "\n".join(lines)
 
-    def generate_to_file(self, report: EvaluationReport, output_path: Path | str) -> Path:
+    def generate_to_file(
+        self, report: EvaluationReport, output_path: Path | str
+    ) -> Path:
         """Generate terminal report and write to file.
 
         Args:
@@ -186,7 +191,9 @@ class TerminalReport(ReportGenerator):
             example_table.add_column("#", style="dim")
             example_table.add_column("Question", max_width=40)
             example_table.add_column("Metrics", max_width=30)
-            for i, eval_result in enumerate(result.results[:config.report.max_examples], 1):
+            for i, eval_result in enumerate(
+                result.results[: config.report.max_examples], 1
+            ):
                 metrics_str = ", ".join(
                     f"{k}={v:.2f}" for k, v in eval_result.metrics.items()
                 )

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
-
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.reports.markdown import MarkdownReport
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestMarkdownReport:
@@ -86,9 +87,7 @@ class TestMarkdownReport:
         assert "## Summary" in result
         assert "| Total Items | 0 |" in result
 
-    def test_generate_to_file(
-        self, evaluation_report: Any, tmp_path: Path
-    ) -> None:
+    def test_generate_to_file(self, evaluation_report: Any, tmp_path: Path) -> None:
         """generate_to_file() writes to a .md file."""
         report = MarkdownReport()
         output_path = tmp_path / "report.md"

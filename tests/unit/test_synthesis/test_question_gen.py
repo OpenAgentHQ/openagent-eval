@@ -52,10 +52,18 @@ class TestQuestionGenerator:
     @pytest.mark.asyncio
     async def test_generate_success(self) -> None:
         """Test successful question generation."""
-        llm_response = json.dumps([
-            {"question": "What is Python?", "answer": "Python is a programming language."},
-            {"question": "Is Python popular?", "answer": "Yes, Python is widely used."},
-        ])
+        llm_response = json.dumps(
+            [
+                {
+                    "question": "What is Python?",
+                    "answer": "Python is a programming language.",
+                },
+                {
+                    "question": "Is Python popular?",
+                    "answer": "Yes, Python is widely used.",
+                },
+            ]
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = QuestionGenerator(mock_llm)
 
@@ -89,12 +97,14 @@ class TestQuestionGenerator:
     @pytest.mark.asyncio
     async def test_generate_filters_empty_questions(self) -> None:
         """Test that empty questions or answers are filtered out."""
-        llm_response = json.dumps([
-            {"question": "Valid?", "answer": "Valid answer."},
-            {"question": "", "answer": "No question."},
-            {"question": "No answer?", "answer": ""},
-            {"question": "Also valid?", "answer": "Also valid."},
-        ])
+        llm_response = json.dumps(
+            [
+                {"question": "Valid?", "answer": "Valid answer."},
+                {"question": "", "answer": "No question."},
+                {"question": "No answer?", "answer": ""},
+                {"question": "Also valid?", "answer": "Also valid."},
+            ]
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = QuestionGenerator(mock_llm)
 
@@ -134,11 +144,13 @@ class TestQuestionGenerator:
     @pytest.mark.asyncio
     async def test_generate_non_dict_items_filtered(self) -> None:
         """Test that non-dict items in the array are filtered out."""
-        llm_response = json.dumps([
-            "not a dict",
-            {"question": "Valid?", "answer": "Valid answer."},
-            42,
-        ])
+        llm_response = json.dumps(
+            [
+                "not a dict",
+                {"question": "Valid?", "answer": "Valid answer."},
+                42,
+            ]
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = QuestionGenerator(mock_llm)
 
@@ -225,8 +237,7 @@ class TestQuestionGenerator:
     async def test_generate_concatenated_json_objects(self) -> None:
         """Characterization: parser accepts concatenated JSON objects."""
         llm_response = (
-            '{"question": "Q1?", "answer": "A1."}'
-            '{"question": "Q2?", "answer": "A2."}'
+            '{"question": "Q1?", "answer": "A1."}{"question": "Q2?", "answer": "A2."}'
         )
         mock_llm = _make_mock_llm(llm_response)
         gen = QuestionGenerator(mock_llm)
@@ -253,7 +264,9 @@ class TestQuestionGenerator:
     @pytest.mark.asyncio
     async def test_generate_final_fallback_tier(self) -> None:
         """Characterization: parser uses final fallback for loose Q/A patterns."""
-        llm_response = 'Here is a question:\n"question": "Fallback?"\n"answer": "Fallback answer."'
+        llm_response = (
+            'Here is a question:\n"question": "Fallback?"\n"answer": "Fallback answer."'
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = QuestionGenerator(mock_llm)
 

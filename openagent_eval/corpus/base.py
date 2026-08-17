@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from openagent_eval.corpus.models import AuditReport, CorpusDocument
+if TYPE_CHECKING:
+    from openagent_eval.corpus.models import AuditReport, CorpusDocument
 
 
 class BaseCorpusAnalyzer(ABC):

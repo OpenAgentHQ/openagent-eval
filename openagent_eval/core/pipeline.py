@@ -14,10 +14,11 @@ from __future__ import annotations
 import inspect
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from openagent_eval.config.models import Config
-from openagent_eval.metrics.base import BaseMetric
+if TYPE_CHECKING:
+    from openagent_eval.config.models import Config
+    from openagent_eval.metrics.base import BaseMetric
 
 logger = logging.getLogger(__name__)
 

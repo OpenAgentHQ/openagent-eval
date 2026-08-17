@@ -57,7 +57,9 @@ def doctor_command(
     table.add_column("Status", style="bold")
     table.add_column("Details", style="dim")
 
-    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    python_version = (
+        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     python_ok = sys.version_info >= (3, 11)
     table.add_row(
         "Python",
@@ -176,7 +178,9 @@ def _test_api_connectivity(providers: list[str]) -> None:
                 # Any response means the endpoint is reachable
                 console.print(f"  [green]OK[/green] {provider}: reachable")
         except httpx.TimeoutException:
-            console.print(f"  [yellow]TIMEOUT[/yellow] {provider}: connection timed out")
+            console.print(
+                f"  [yellow]TIMEOUT[/yellow] {provider}: connection timed out"
+            )
         except httpx.ConnectError:
             console.print(f"  [red]FAILED[/red] {provider}: connection failed")
         except Exception as e:

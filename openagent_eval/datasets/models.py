@@ -27,12 +27,16 @@ class DatasetItemModel(BaseModel):
 
     question: str = Field(..., min_length=1, description="The question to evaluate")
     ground_truth: str | None = Field(None, description="The expected correct answer")
-    context: str | None = Field(None, description="The context provided to the RAG system")
+    context: str | None = Field(
+        None, description="The context provided to the RAG system"
+    )
     ground_truth_contexts: list[str] = Field(
         default_factory=list,
         description="Ground-truth relevant contexts for retrieval evaluation",
     )
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
     contexts: list[str] = Field(default_factory=list, description="Retrieved contexts")
 
     @field_validator("question")
@@ -77,11 +81,15 @@ class DatasetModel(BaseModel):
         description="List of dataset items",
     )
     name: str | None = Field(None, description="Dataset name")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Dataset metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Dataset metadata"
+    )
 
     @field_validator("items")
     @classmethod
-    def validate_items_not_empty(cls, v: list[DatasetItemModel]) -> list[DatasetItemModel]:
+    def validate_items_not_empty(
+        cls, v: list[DatasetItemModel]
+    ) -> list[DatasetItemModel]:
         """Validate that the dataset is not empty."""
         if not v:
             raise ValueError("Dataset cannot be empty")

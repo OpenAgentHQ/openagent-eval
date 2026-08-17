@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.exceptions import MetricExecutionError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class Executor:
@@ -41,11 +44,12 @@ class Executor:
             MetricExecutionError: If a coroutine times out. The first
                 failure cancels the remaining coroutines.
         """
+
         async def _run(coro: Any) -> Any:
             async with self._semaphore:
                 try:
                     return await asyncio.wait_for(coro, timeout=self.timeout)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     raise MetricExecutionError(
                         message=f"Task timed out after {self.timeout}s",
                         details={"timeout": self.timeout},

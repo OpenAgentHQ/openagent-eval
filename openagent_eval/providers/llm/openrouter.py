@@ -132,7 +132,7 @@ class OpenRouter(LLMProvider):
         """Return the configured OpenRouter model identifier."""
         return self.model
 
-    async def generate_with_usage(self, prompt: str, **kwargs: Any) -> "LLMResponse":
+    async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate a response and return it with token usage and latency.
 
         Sends the prompt to OpenRouter's API and returns an ``LLMResponse``.
@@ -191,7 +191,10 @@ class OpenRouter(LLMProvider):
                     raise ProviderExecutionError(
                         message=f"OpenRouter API error: {error_message}",
                         provider_name="openrouter",
-                        details={"status_code": response.status_code, "response": error_data},
+                        details={
+                            "status_code": response.status_code,
+                            "response": error_data,
+                        },
                     )
 
                 # Parse response
@@ -236,7 +239,7 @@ class OpenRouter(LLMProvider):
                 original_error=e,
             ) from e
 
-    def _extract_usage(self, result: dict[str, Any]) -> "TokenUsage":
+    def _extract_usage(self, result: dict[str, Any]) -> TokenUsage:
         """Extract token usage from an OpenRouter API response."""
         usage_data = result.get("usage") or {}
         return TokenUsage(

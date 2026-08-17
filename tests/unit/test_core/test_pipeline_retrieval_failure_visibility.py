@@ -63,9 +63,7 @@ async def test_retrieval_failure_is_visible_and_still_falls_back(
         parallel=False,
     )
 
-    pipeline = Pipeline(
-        config, retriever=_FailingRetriever(), llm=MockLLMProvider()
-    )
+    pipeline = Pipeline(config, retriever=_FailingRetriever(), llm=MockLLMProvider())
 
     with caplog.at_level(logging.WARNING, logger="openagent_eval.core.pipeline"):
         result = await pipeline.execute(

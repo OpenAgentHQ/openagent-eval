@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, SecretStr, field_validator
 
 
-class OutputFormat(str, Enum):
+class OutputFormat(StrEnum):
     """Output format for reports."""
 
     TERMINAL = "terminal"
@@ -20,12 +20,16 @@ class OutputFormat(str, Enum):
 class LLMConfig(BaseModel):
     """LLM provider configuration."""
 
-    provider: str = Field(..., description="LLM provider name (e.g., openai, gemini, anthropic)")
+    provider: str = Field(
+        ..., description="LLM provider name (e.g., openai, gemini, anthropic)"
+    )
     model: str = Field(..., description="Model identifier (e.g., gpt-4o)")
     api_key: SecretStr | None = Field(
         None, description="API key (can use environment variable)"
     )
-    temperature: float = Field(0.0, ge=0.0, le=2.0, description="Temperature for generation")
+    temperature: float = Field(
+        0.0, ge=0.0, le=2.0, description="Temperature for generation"
+    )
     max_tokens: int | None = Field(None, ge=1, description="Maximum tokens to generate")
 
     @field_validator("api_key")
@@ -41,8 +45,10 @@ class RetrieverConfig(BaseModel):
     """Retriever configuration."""
 
     provider: str = Field(..., description="Retriever provider name (e.g., chroma)")
-    settings: dict[str, Any] = Field(default_factory=dict, description="Provider-specific settings")
-    embedder: "EmbedderConfig | None" = Field(
+    settings: dict[str, Any] = Field(
+        default_factory=dict, description="Provider-specific settings"
+    )
+    embedder: EmbedderConfig | None = Field(
         None,
         description="Embedder config for retrievers that need local embeddings "
         "(e.g. memory, faiss, qdrant, pinecone, pgvector). Ignored by "
@@ -66,9 +72,7 @@ class EmbedderConfig(BaseModel):
     provider: str = Field(
         ..., description="Embedder provider name (e.g., sentence_transformers)"
     )
-    model: str = Field(
-        "all-MiniLM-L6-v2", description="Embedding model identifier"
-    )
+    model: str = Field("all-MiniLM-L6-v2", description="Embedding model identifier")
     settings: dict[str, Any] = Field(
         default_factory=dict, description="Provider-specific settings (e.g. device)"
     )
@@ -104,12 +108,14 @@ class DatasetConfig(BaseModel):
     """Dataset configuration."""
 
     path: str = Field(..., description="Path to dataset file")
-    format: str | None = Field(None, description="Dataset format (json, jsonl, csv, hf)")
+    format: str | None = Field(
+        None, description="Dataset format (json, jsonl, csv, hf)"
+    )
     limit: int | None = Field(None, ge=1, description="Maximum number of items to load")
     shuffle: bool = Field(False, description="Whether to shuffle the dataset")
 
 
-class CorpusCheckType(str, Enum):
+class CorpusCheckType(StrEnum):
     """Types of corpus checks that can be performed."""
 
     CONTRADICTION = "contradiction"
@@ -149,10 +155,15 @@ class CorpusConfig(BaseModel):
     model: str | None = Field(None, description="LLM model for contradiction detection")
     max_documents: int = Field(1000, ge=1, description="Maximum documents to audit")
     similarity_threshold: float = Field(
-        0.92, ge=0.0, le=1.0, description="Embedding similarity threshold for duplicate detection"
+        0.92,
+        ge=0.0,
+        le=1.0,
+        description="Embedding similarity threshold for duplicate detection",
     )
     staleness_days: int = Field(
-        365, ge=1, description="Documents older than this many days are flagged as stale"
+        365,
+        ge=1,
+        description="Documents older than this many days are flagged as stale",
     )
     embedding_model: str = Field(
         "all-MiniLM-L6-v2", description="Embedding model for duplicate detection"
@@ -180,8 +191,12 @@ class Config(BaseModel):
     metrics: MetricsConfig = Field(
         default_factory=MetricsConfig, description="Metrics configuration"
     )
-    report: ReportConfig = Field(default_factory=ReportConfig, description="Report configuration")
-    corpus: CorpusConfig | None = Field(None, description="Corpus audit configuration (optional)")
+    report: ReportConfig = Field(
+        default_factory=ReportConfig, description="Report configuration"
+    )
+    corpus: CorpusConfig | None = Field(
+        None, description="Corpus audit configuration (optional)"
+    )
 
     # Global settings
     verbose: bool = Field(False, description="Enable verbose output")

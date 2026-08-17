@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from openagent_eval.config.models import Config, DatasetConfig, LLMConfig, MetricsConfig
 from openagent_eval.core.engine import Engine
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.mark.integration
@@ -57,7 +60,11 @@ class TestPipelineIntegration:
             llm=LLMConfig(provider="openai", model="gpt-4o"),
         )
         assert config.retriever.provider == "chroma"
-        assert config.metrics.retrieval == ["context_precision", "context_recall", "mrr"]
+        assert config.metrics.retrieval == [
+            "context_precision",
+            "context_recall",
+            "mrr",
+        ]
 
     def test_metric_registry(self):
         """Test that metrics can be registered and retrieved."""

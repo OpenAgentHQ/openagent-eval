@@ -81,9 +81,7 @@ class Faithfulness(BaseMetric):
             self._cached_ragas_faith = ragas_faithfulness
         return self._cached_ragas_faith
 
-    def _evaluate_with_ragas(
-        self, answer: str, contexts: list[str]
-    ) -> MetricResult:
+    def _evaluate_with_ragas(self, answer: str, contexts: list[str]) -> MetricResult:
         """Evaluate using Ragas faithfulness."""
         from datasets import Dataset
 
@@ -103,9 +101,7 @@ class Faithfulness(BaseMetric):
             metadata={"method": "ragas"},
         )
 
-    def _evaluate_with_nli(
-        self, answer: str, contexts: list[str]
-    ) -> MetricResult:
+    def _evaluate_with_nli(self, answer: str, contexts: list[str]) -> MetricResult:
         """Evaluate using NLI-based claim verification."""
         from openagent_eval.metrics.nli import ClaimExtractor, EvidenceFinder, NLIJudge
 
@@ -124,8 +120,7 @@ class Faithfulness(BaseMetric):
         score, matches = finder.score_faithfulness(claims, contexts)
 
         supported = sum(
-            1 for m in matches
-            if m is not None and m.nli_result.entailed_score >= 0.5
+            1 for m in matches if m is not None and m.nli_result.entailed_score >= 0.5
         )
 
         return MetricResult(
@@ -139,9 +134,7 @@ class Faithfulness(BaseMetric):
             },
         )
 
-    def _evaluate_simple(
-        self, answer: str, contexts: list[str]
-    ) -> MetricResult:
+    def _evaluate_simple(self, answer: str, contexts: list[str]) -> MetricResult:
         """Simple word overlap fallback."""
         answer_words = set(answer.lower().split())
         context_text = " ".join(contexts).lower()

@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from openagent_eval.config.models import Config
 from openagent_eval.core.engine import Engine
 from openagent_eval.core.executor import Executor
 from openagent_eval.core.pipeline import EvaluationResult, Pipeline, PipelineResult
 from openagent_eval.core.registry import Registry
 from openagent_eval.exceptions import PluginNotFoundError
+
+if TYPE_CHECKING:
+    from openagent_eval.config.models import Config
 
 
 class TestRegistry:
@@ -78,7 +82,9 @@ class TestPipeline:
         assert pipeline.config is sample_config
 
     @pytest.mark.asyncio
-    async def test_execute(self, sample_config: Config, sample_dataset: list[dict]) -> None:
+    async def test_execute(
+        self, sample_config: Config, sample_dataset: list[dict]
+    ) -> None:
         """Test pipeline execution."""
         pipeline = Pipeline(sample_config)
         result = await pipeline.execute(sample_dataset)
@@ -139,7 +145,10 @@ class TestEngine:
 
     @pytest.mark.asyncio
     async def test_run_summary_counts_success_and_failure(
-        self, sample_config: Config, sample_dataset: list[dict], monkeypatch: pytest.MonkeyPatch
+        self,
+        sample_config: Config,
+        sample_dataset: list[dict],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """H10: successful_evaluations must not double-count failed items.
 

@@ -113,8 +113,16 @@ class Groq(LLMProvider):
                 or os.environ.get("GROQ_API_KEY")
             )
             model = getattr(config, "model", model) or model
-            temperature = getattr(config, "temperature", temperature) if getattr(config, "temperature", None) is not None else temperature
-            max_tokens = getattr(config, "max_tokens", max_tokens) if getattr(config, "max_tokens", None) is not None else max_tokens
+            temperature = (
+                getattr(config, "temperature", temperature)
+                if getattr(config, "temperature", None) is not None
+                else temperature
+            )
+            max_tokens = (
+                getattr(config, "max_tokens", max_tokens)
+                if getattr(config, "max_tokens", None) is not None
+                else max_tokens
+            )
         else:
             if api_key is None:
                 api_key = os.environ.get("GROQ_API_KEY")
@@ -238,9 +246,7 @@ class Groq(LLMProvider):
                 original_error=e,
             ) from e
 
-    async def generate_with_usage(
-        self, prompt: str, **kwargs: Any
-    ) -> LLMResponse:
+    async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate a response with detailed token usage information.
 
         Extends :meth:`generate` to return a full :class:`LLMResponse` object

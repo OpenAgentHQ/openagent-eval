@@ -59,7 +59,9 @@ class MetricNotFoundError(MetricError):
         if available_metrics:
             message += f". Available metrics: {', '.join(available_metrics)}"
 
-        super().__init__(message=message, metric_name=metric_name, details=error_details)
+        super().__init__(
+            message=message, metric_name=metric_name, details=error_details
+        )
         self.available_metrics = available_metrics or []
 
 
@@ -89,7 +91,9 @@ class MetricExecutionError(MetricError):
         if original_error is not None:
             error_details["original_error"] = str(original_error)
 
-        super().__init__(message=message, metric_name=metric_name, details=error_details)
+        super().__init__(
+            message=message, metric_name=metric_name, details=error_details
+        )
         self.original_error = original_error
 
 
@@ -119,5 +123,7 @@ class MetricTimeoutError(MetricError):
         if timeout_seconds is not None:
             error_details["timeout_seconds"] = timeout_seconds
 
-        super().__init__(message=message, metric_name=metric_name, details=error_details)
+        super().__init__(
+            message=message, metric_name=metric_name, details=error_details
+        )
         self.timeout_seconds = timeout_seconds

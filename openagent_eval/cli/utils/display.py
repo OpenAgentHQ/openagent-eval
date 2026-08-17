@@ -41,7 +41,9 @@ def display_run_result(
 
     console.print(f"[dim]Report saved to: {report_path}[/dim]")
     if format_file is not None:
-        console.print(f"[dim]{format_name.capitalize()} report saved to: {format_file}[/dim]")
+        console.print(
+            f"[dim]{format_name.capitalize()} report saved to: {format_file}[/dim]"
+        )
 
 
 def display_report_list(
@@ -93,7 +95,9 @@ def display_report_list(
         status = "OK"
         try:
             data = manager.load_report(report_id, output_dir)
-            config_name = data.get("config", {}).get("dataset", {}).get("path", "unknown")
+            config_name = (
+                data.get("config", {}).get("dataset", {}).get("path", "unknown")
+            )
             errors = data.get("errors", [])
             status = "[green]OK[/green]" if not errors else "[red]FAILED[/red]"
         except (FileNotFoundError, KeyError):

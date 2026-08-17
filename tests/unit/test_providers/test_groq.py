@@ -21,7 +21,9 @@ def _make_httpx_response(status_code: int = 200, text: str = "") -> httpx.Respon
     """Create a real httpx.Response for use in exception constructors."""
     return httpx.Response(
         status_code=status_code,
-        request=httpx.Request(method="POST", url="https://api.groq.com/openai/v1/chat/completions"),
+        request=httpx.Request(
+            method="POST", url="https://api.groq.com/openai/v1/chat/completions"
+        ),
         content=text.encode(),
     )
 
@@ -109,10 +111,14 @@ class TestGroqGenerate:
         mock_usage.total_tokens = 30
 
         mock_completion = MagicMock()
-        mock_completion.choices = [MagicMock(message=MagicMock(content="Groq response"))]
+        mock_completion.choices = [
+            MagicMock(message=MagicMock(content="Groq response"))
+        ]
         mock_completion.usage = mock_usage
 
-        mock_groq_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        mock_groq_client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         result = await provider_with_key.generate("Test prompt")
         assert result == "Groq response"
@@ -125,7 +131,9 @@ class TestGroqGenerate:
         mock_completion = MagicMock()
         mock_completion.choices = []
 
-        mock_groq_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        mock_groq_client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         with pytest.raises(ProviderExecutionError, match="No choices"):
             await provider_with_key.generate("Test prompt")
@@ -171,9 +179,7 @@ class TestGroqGenerate:
             await provider_with_key.generate("Test prompt")
 
     @pytest.mark.asyncio
-    async def test_generate_auth_error(
-        self, provider_with_key: Groq, mock_groq_client
-    ):
+    async def test_generate_auth_error(self, provider_with_key: Groq, mock_groq_client):
         """generate() raises ProviderConnectionError on auth error.
 
         Note: groq.AuthenticationError inherits from groq.APIStatusError,
@@ -223,7 +229,9 @@ class TestGroqGenerate:
         mock_completion.choices = [MagicMock(message=MagicMock(content="ok"))]
         mock_completion.usage = mock_usage
 
-        mock_groq_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        mock_groq_client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         await provider_with_key.generate("Test", model="mixtral-8x7b-32768")
 
@@ -249,10 +257,14 @@ class TestGroqGenerateWithUsage:
         mock_usage.total_tokens = 30
 
         mock_completion = MagicMock()
-        mock_completion.choices = [MagicMock(message=MagicMock(content="Groq response"))]
+        mock_completion.choices = [
+            MagicMock(message=MagicMock(content="Groq response"))
+        ]
         mock_completion.usage = mock_usage
 
-        mock_groq_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        mock_groq_client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         result = await provider_with_key.generate_with_usage("Test prompt")
 
@@ -276,7 +288,9 @@ class TestGroqGenerateWithUsage:
         mock_completion.choices = [MagicMock(message=MagicMock(content="ok"))]
         mock_completion.usage = mock_usage
 
-        mock_groq_client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        mock_groq_client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         result = await provider_with_key.generate_with_usage(
             "Test prompt", model="mixtral-8x7b-32768"

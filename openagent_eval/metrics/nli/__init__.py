@@ -31,7 +31,7 @@ Example:
 
 from openagent_eval.metrics.nli.claim_extractor import Claim, ClaimExtractor
 from openagent_eval.metrics.nli.evidence_finder import EvidenceFinder, EvidenceMatch
-from openagent_eval.metrics.nli.judge import NLIJudge, NLIResult, NLILabel
+from openagent_eval.metrics.nli.judge import NLIJudge, NLILabel, NLIResult
 
 __all__ = [
     "Claim",
