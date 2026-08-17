@@ -8,7 +8,6 @@ from typer.testing import CliRunner
 
 from openagent_eval.cli.main import app
 
-
 runner = CliRunner()
 
 

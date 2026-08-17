@@ -38,7 +38,14 @@ def mock_config() -> Config:
         llm=LLMConfig(provider="mock", model="mock-model"),
         retriever=RetrieverConfig(provider="mock", settings={"collection_name": "c"}),
         metrics=MetricsConfig(
-            retrieval=["context_precision", "context_recall", "mrr", "recall_at_k", "hit_rate", "ndcg"],
+            retrieval=[
+                "context_precision",
+                "context_recall",
+                "mrr",
+                "recall_at_k",
+                "hit_rate",
+                "ndcg",
+            ],
             generation=["faithfulness", "answer_relevancy", "exact_match", "f1_score"],
             performance=["latency"],
             cost=["token_count"],
@@ -67,7 +74,9 @@ def mock_dataset() -> list[dict]:
 
 
 @pytest.mark.asyncio
-async def test_pipeline_runs_end_to_end(mock_config: Config, mock_dataset: list[dict]) -> None:
+async def test_pipeline_runs_end_to_end(
+    mock_config: Config, mock_dataset: list[dict]
+) -> None:
     """The pipeline must retrieve, generate, and score — not return empty results."""
     engine = Engine(mock_config)
     report = await engine.run(mock_dataset)
@@ -94,7 +103,9 @@ async def test_pipeline_runs_end_to_end(mock_config: Config, mock_dataset: list[
 
 
 @pytest.mark.asyncio
-async def test_summary_counts_real_errors(mock_config: Config, mock_dataset: list[dict]) -> None:
+async def test_summary_counts_real_errors(
+    mock_config: Config, mock_dataset: list[dict]
+) -> None:
     """The summary must report the real error count, not a hardcoded 0."""
     # Inject a metric that always fails to force a per-item metric error.
     engine = Engine(

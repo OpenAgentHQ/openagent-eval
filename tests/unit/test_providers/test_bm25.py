@@ -9,7 +9,6 @@ rank_bm25 = pytest.importorskip("rank_bm25", reason="rank-bm25 not installed")
 from openagent_eval.providers.models import Document
 from openagent_eval.providers.retrievers.bm25 import BM25Retriever
 
-
 DOCS = [
     {"content": "Python is a high-level programming language", "id": "1"},
     {"content": "RAG combines retrieval and generation", "id": "2"},

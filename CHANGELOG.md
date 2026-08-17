@@ -8,9 +8,81 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+---
+
+## [0.4.9] - 2026-08-17
+
+### Added
+
+- **EvaluationReport Type Hints** — add `EvaluationReport` type hints to report generators for better IDE support (#239)
+- **Common Evaluation Workflow Examples** — add example workflows documentation for common RAG evaluation patterns (#289)
+- **Config Reference Documentation** — new `config-reference.md` documenting the full YAML schema
+- **CLI Exit Code Documentation** — document CLI exit codes for programmatic usage (#107)
+- **LLM API Key Setup Guide** — new docs page for configuring API keys
+- **Plugin Development Guide** — comprehensive guide for building custom plugins
+- **End-to-End Tutorial** — tutorial with free APIs and local embeddings
+- **Colab Tutorial Notebook** — zero-setup Colab tutorial for quick onboarding
+
+### Fixed
+
+- **ROUGE Recall Fallback** — compute occurrence-based ROUGE recall fallback when standard ROUGE fails (#288)
+- **LatencyMetric None Crash** — handle `None` latency_ms in `LatencyMetric` without crashing (#286)
+- **Exact Match Whitespace** — normalize internal whitespace in exact match (#281)
+- **Falsy Exception Details** — record explicitly-supplied falsy details instead of dropping them (#280)
+- **Short Answer False Positives** — require low relevancy to flag short answers as off-topic (#66)
+- **Silent Retrieval Failures** — surface retrieval failures in logs and run errors (#256)
+- **CICD Gate Metrics Summary** — populate `metrics_summary` in `run_evaluation` gate summary (#228)
+- **CICD Event Loop** — make `run_evaluation` independent of event-loop policy state
+- **CICD Lazy pytest** — lazy-load pytest in plugin.py (#227)
+- **Config SecretStr** — store `LLMConfig.api_key` as `SecretStr` for security
+- **Config Exports** — export `CorpusConfig`, `ReportConfig`, and `OutputFormat`
+- **Pipeline Ground Truth** — detect `ground_truth_contexts` support for backward compatibility
+- **Pipeline Retriever Contract** — pass `ground_truth_contexts` through public retriever contract
+- **Pipeline LLM Model** — read LLM model through public `model_name` contract
+- **CLI Config Loading** — load config exactly once in `run_command`
+- **Executor Async** — async `run_in_thread`, cancel siblings on timeout, lazy thread pool
+- **Corpus Unknown Checks** — raise `CorpusValidationError` for unknown audit checks
+- **Corpus Timestamp UTC** — make `AuditReport.timestamp` UTC-aware
+- **Corpus Concurrency** — limit contradiction detector concurrency
+- **Diagnosis Content Gaps** — use whole-word matching for content gaps
+- **NDCG Off-by-One** — fix off-by-one DCG position discount (#223)
+- **JSONL max_documents** — enforce `max_documents` cumulatively across `.jsonl` files (#224)
+- **Synthesis Config Migration** — fix legacy config migration bugs in `loader.py`
+
+### Changed
+
+- **Retrieval Failure Surfacing** — make retrieval-failure surfacing log-only for non-critical cases (#256)
+- **Synthesis Response Parser** — use shared response parser in `question_gen` and `adversarial`
+
 ### Removed
 
 - **Dead Executor Methods** — remove `Executor.execute_parallel()` and `Executor.execute_sequential()`, which had no production callers (the pipeline uses `Executor.gather()`); their only in-tree references were two dedicated unit tests (#52)
+
+### Documentation
+
+- **MkDocs Theme Redesign** — dark-first, org brand, hero + cards (#239)
+- **README Banner** — professional README banner for social sharing (#236)
+- **README Rewrite** — community-focused README with OpenAgentHQ branding
+- **Notebook Refresh** — refresh notebooks to v0.4.8 and wire tutorials into docs site
+- **CLI Wizard Screenshot** — add interactive CLI wizard screenshot to README
+- **ExactMatch Docs** — align documentation with actual behavior
+
+### Testing
+
+- **Diagnose Command Tests** — add unit tests for diagnose command
+- **CICD Regression Tests** — strengthen regression tests for gate metrics_summary (#228)
+- **Synthesis Parser Tests** — add characterization tests for question_gen and adversarial parsers
+- **Short-Answer Regression Tests** — regression tests for short-answer false positives (#66)
+- **Retrieval Failure Tests** — regression test for silent retrieval-failure swallow (#256)
+- **Corpus Concurrency Tests** — strengthen concurrency limit assertion
+- **Exception Falsy Tests** — cover falsy original errors
+
+### Contributors
+
+- ❤️ @Nitjsefnie
+- ❤️ @Nithyaviswak
+- ❤️ @PrinceThummar011
+- ❤️ @himanshu231204
 
 ---
 
@@ -457,7 +529,8 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ## Links
 
-[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.8...HEAD
+[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.9...HEAD
+[0.4.9]: https://github.com/openagenthq/openagent-eval/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/openagenthq/openagent-eval/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/openagenthq/openagent-eval/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/openagenthq/openagent-eval/compare/v0.4.5...v0.4.6

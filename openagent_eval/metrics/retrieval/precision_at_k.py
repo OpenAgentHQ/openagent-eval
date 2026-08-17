@@ -34,7 +34,9 @@ class PrecisionAtK(BaseMetric):
             MetricResult with precision score.
         """
         retrieved = [normalize_context(c) for c in kwargs.get("retrieved_contexts", [])]
-        ground_truth = [normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])]
+        ground_truth = [
+            normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])
+        ]
         k = kwargs.get("k", len(retrieved))
 
         if k == 0:

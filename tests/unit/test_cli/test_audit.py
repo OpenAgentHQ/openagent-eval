@@ -11,7 +11,12 @@ from typer.testing import CliRunner
 
 from openagent_eval.cli.context import get_context, reset_context
 from openagent_eval.cli.main import app
-from openagent_eval.corpus.models import AuditReport, CorpusIssue, IssueSeverity, IssueType
+from openagent_eval.corpus.models import (
+    AuditReport,
+    CorpusIssue,
+    IssueSeverity,
+    IssueType,
+)
 from openagent_eval.exceptions.corpus import (
     CorpusAuditError,
     CorpusNotFoundError,
@@ -30,8 +35,8 @@ def strip_ansi(text: str) -> str:
     CLI output should strip these first, matching the helper already
     used in test_cli_improvements.py.
     """
-    ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
-    return ansi_escape.sub('', text)
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    return ansi_escape.sub("", text)
 
 
 @pytest.fixture(autouse=True)
@@ -48,12 +53,12 @@ def _reset_cli_context():
 
 
 def make_issue(
-        severity: IssueSeverity = IssueSeverity.MEDIUM,
-        issue_type: IssueType = IssueType.DUPLICATE,
-        title: str = "Sample issue",
-        document_ids: list[str] | None = None,
-        metadata: dict | None = None,
-        description: str = "A sample issue description.",
+    severity: IssueSeverity = IssueSeverity.MEDIUM,
+    issue_type: IssueType = IssueType.DUPLICATE,
+    title: str = "Sample issue",
+    document_ids: list[str] | None = None,
+    metadata: dict | None = None,
+    description: str = "A sample issue description.",
 ) -> CorpusIssue:
     """Build a real CorpusIssue for use in test fixtures."""
     return CorpusIssue(
@@ -67,12 +72,12 @@ def make_issue(
 
 
 def make_report(
-        health_score: float = 0.95,
-        summary: str = "Corpus looks healthy.",
-        issues: list[CorpusIssue] | None = None,
-        checks_performed: list[str] | None = None,
-        total_documents: int = 10,
-        corpus_path: str = "corpus",
+    health_score: float = 0.95,
+    summary: str = "Corpus looks healthy.",
+    issues: list[CorpusIssue] | None = None,
+    checks_performed: list[str] | None = None,
+    total_documents: int = 10,
+    corpus_path: str = "corpus",
 ) -> AuditReport:
     """Build a real AuditReport for use in test fixtures.
 
@@ -86,7 +91,9 @@ def make_report(
         total_documents=total_documents,
         issues=issues if issues is not None else [],
         health_score=health_score,
-        checks_performed=checks_performed if checks_performed is not None else ["contradiction", "staleness"],
+        checks_performed=checks_performed
+        if checks_performed is not None
+        else ["contradiction", "staleness"],
         summary=summary,
     )
 
@@ -207,7 +214,9 @@ class TestAuditIntegration:
         result = runner.invoke(app, ["audit", str(corpus_dir)])
 
         assert result.exit_code == 0
-        mock_auditor.audit.assert_awaited_once_with(str(corpus_dir), progress_callback=ANY)
+        mock_auditor.audit.assert_awaited_once_with(
+            str(corpus_dir), progress_callback=ANY
+        )
 
     @patch("openagent_eval.cli.commands.audit.CorpusAuditor")
     def test_audit_corpus_not_found_error(self, mock_auditor_cls, corpus_dir):
@@ -225,7 +234,9 @@ class TestAuditIntegration:
     def test_audit_corpus_audit_error(self, mock_auditor_cls, corpus_dir):
         mock_auditor = mock_auditor_cls.return_value
         mock_auditor.audit = AsyncMock(
-            side_effect=CorpusAuditError(message="audit failed", corpus_path=str(corpus_dir))
+            side_effect=CorpusAuditError(
+                message="audit failed", corpus_path=str(corpus_dir)
+            )
         )
 
         result = runner.invoke(app, ["audit", str(corpus_dir)])
@@ -316,7 +327,9 @@ class TestAuditOutputFormatting:
 
     @patch("openagent_eval.cli.commands.audit.CorpusAuditor")
     def test_audit_issues_listed_in_table(self, mock_auditor_cls, corpus_dir):
-        issue = make_issue(severity=IssueSeverity.HIGH, title="Duplicate content detected")
+        issue = make_issue(
+            severity=IssueSeverity.HIGH, title="Duplicate content detected"
+        )
         mock_auditor = mock_auditor_cls.return_value
         mock_auditor.audit = AsyncMock(return_value=make_report(issues=[issue]))
 
@@ -326,7 +339,9 @@ class TestAuditOutputFormatting:
         assert "Duplicate content detected" in result.output
 
     @patch("openagent_eval.cli.commands.audit.CorpusAuditor")
-    def test_audit_verbose_shows_checks_and_documents(self, mock_auditor_cls, corpus_dir):
+    def test_audit_verbose_shows_checks_and_documents(
+        self, mock_auditor_cls, corpus_dir
+    ):
         mock_auditor = mock_auditor_cls.return_value
         mock_auditor.audit = AsyncMock(
             return_value=make_report(

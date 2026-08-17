@@ -1,6 +1,5 @@
 """Unit tests for threshold evaluation."""
 
-
 from openagent_eval.cicd.models import (
     CICDConfig,
     EvaluationGate,

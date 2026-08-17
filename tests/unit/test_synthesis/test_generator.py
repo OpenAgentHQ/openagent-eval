@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -16,6 +16,9 @@ from openagent_eval.synthesis.generator import (
     _read_corpus,
 )
 from openagent_eval.synthesis.models import TestCaseType
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _make_mock_llm(response: str | None = None) -> MagicMock:
@@ -30,8 +33,7 @@ def _make_mock_llm(response: str | None = None) -> MagicMock:
 def _standard_response(count: int = 2) -> str:
     """Generate a standard LLM response."""
     items = [
-        {"question": f"Question {i}?", "answer": f"Answer {i}."}
-        for i in range(count)
+        {"question": f"Question {i}?", "answer": f"Answer {i}."} for i in range(count)
     ]
     return json.dumps(items)
 
@@ -165,11 +167,20 @@ class TestSyntheticDataGenerator:
     @pytest.mark.asyncio
     async def test_generate_from_text_with_adversarial(self) -> None:
         """Test generation from text with adversarial cases."""
+
         async def mock_generate(prompt: str) -> str:
-            if "UNANSWERABLE" in prompt or "MISLEADING" in prompt or "AMBIGUOUS" in prompt or "MULTI-HOP" in prompt or "COUNTERFACTUAL" in prompt:
-                return json.dumps([
-                    {"question": "Unanswerable?", "answer": ""},
-                ])
+            if (
+                "UNANSWERABLE" in prompt
+                or "MISLEADING" in prompt
+                or "AMBIGUOUS" in prompt
+                or "MULTI-HOP" in prompt
+                or "COUNTERFACTUAL" in prompt
+            ):
+                return json.dumps(
+                    [
+                        {"question": "Unanswerable?", "answer": ""},
+                    ]
+                )
             return _standard_response(1)
 
         mock_llm = _make_mock_llm()
@@ -200,11 +211,14 @@ class TestSyntheticDataGenerator:
     @pytest.mark.asyncio
     async def test_generate_from_text_adversarial_types_filter(self) -> None:
         """Test filtering adversarial types."""
+
         async def mock_generate(prompt: str) -> str:
             if "UNANSWERABLE" in prompt:
-                return json.dumps([
-                    {"question": "Unanswerable?", "answer": ""},
-                ])
+                return json.dumps(
+                    [
+                        {"question": "Unanswerable?", "answer": ""},
+                    ]
+                )
             return _standard_response(1)
 
         mock_llm = _make_mock_llm()
@@ -316,7 +330,10 @@ class TestSharedGenerationHelpers:
         mock_llm = _make_mock_llm(_standard_response(1))
         gen = SyntheticDataGenerator(mock_llm)
 
-        chunks = [("doc.txt", 0, "Python is a language."), ("doc.txt", 1, "Rust is a language.")]
+        chunks = [
+            ("doc.txt", 0, "Python is a language."),
+            ("doc.txt", 1, "Rust is a language."),
+        ]
         semaphore = asyncio.Semaphore(gen._max_concurrent)
 
         result = await gen._generate_standard_cases(chunks, 1, 0, semaphore)
@@ -329,6 +346,7 @@ class TestSharedGenerationHelpers:
     @pytest.mark.asyncio
     async def test_generate_standard_cases_distributes_remaining(self) -> None:
         """Test that the `remaining` budget adds an extra question to early chunks."""
+
         # Mock honors the requested count so we can assert distribution.
         async def mock_generate(prompt: str) -> str:
             # The prompt embeds the requested count as "Generate {count}".
@@ -377,10 +395,17 @@ class TestSharedGenerationHelpers:
     @pytest.mark.asyncio
     async def test_generate_adversarial_cases(self) -> None:
         """Test _generate_adversarial_cases produces adversarial cases."""
+
         async def mock_generate(prompt: str) -> str:
             if any(
                 t in prompt
-                for t in ("UNANSWERABLE", "MISLEADING", "AMBIGUOUS", "MULTI-HOP", "COUNTERFACTUAL")
+                for t in (
+                    "UNANSWERABLE",
+                    "MISLEADING",
+                    "AMBIGUOUS",
+                    "MULTI-HOP",
+                    "COUNTERFACTUAL",
+                )
             ):
                 return json.dumps([{"question": "Tricky?", "answer": ""}])
             return _standard_response(1)
@@ -409,7 +434,9 @@ class TestSharedGenerationHelpers:
         gen = SyntheticDataGenerator(mock_llm)
 
         from_text = await gen.generate_from_text(text="Python is a language.", count=1)
-        from_corpus = await gen.generate_from_text(text="Python is a language.", count=1)
+        from_corpus = await gen.generate_from_text(
+            text="Python is a language.", count=1
+        )
 
         # Both paths use the same helper; results should be equivalent in shape
         assert from_text.total_count == from_corpus.total_count == 1

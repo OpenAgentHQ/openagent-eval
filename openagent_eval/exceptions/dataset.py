@@ -84,7 +84,9 @@ class InvalidDatasetError(DatasetError):
         if line_number is not None:
             error_details["line_number"] = line_number
 
-        super().__init__(message=message, dataset_path=dataset_path, details=error_details)
+        super().__init__(
+            message=message, dataset_path=dataset_path, details=error_details
+        )
         self.data_format = data_format
         self.line_number = line_number
 
@@ -115,5 +117,7 @@ class DatasetValidationError(DatasetError):
         if validation_errors is not None:
             error_details["validation_errors"] = validation_errors
 
-        super().__init__(message=message, dataset_path=dataset_path, details=error_details)
+        super().__init__(
+            message=message, dataset_path=dataset_path, details=error_details
+        )
         self.validation_errors = validation_errors or []

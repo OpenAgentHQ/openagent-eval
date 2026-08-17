@@ -22,7 +22,9 @@ class TokenUsage(BaseModel):
     """
 
     prompt_tokens: int = Field(..., description="Number of tokens in the prompt")
-    completion_tokens: int = Field(..., description="Number of tokens in the completion")
+    completion_tokens: int = Field(
+        ..., description="Number of tokens in the completion"
+    )
     total_tokens: int = Field(..., description="Total tokens used")
 
     @field_validator("prompt_tokens", "completion_tokens", "total_tokens")
@@ -56,7 +58,9 @@ class LLMResponse(BaseModel):
     model: str = Field(..., description="Model identifier used for generation")
     usage: TokenUsage = Field(..., description="Token usage statistics")
     provider: str = Field(..., description="LLM provider name")
-    latency_ms: float = Field(..., description="Response latency in milliseconds", ge=0.0)
+    latency_ms: float = Field(
+        ..., description="Response latency in milliseconds", ge=0.0
+    )
 
     @field_validator("model")
     @classmethod

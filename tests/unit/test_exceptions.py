@@ -97,7 +97,9 @@ class TestDatasetError:
 
     def test_invalid_dataset_error(self) -> None:
         """Test invalid dataset error."""
-        error = InvalidDatasetError("Invalid format", data_format="json", line_number=10)
+        error = InvalidDatasetError(
+            "Invalid format", data_format="json", line_number=10
+        )
         assert error.data_format == "json"
         assert error.line_number == 10
 
@@ -134,7 +136,9 @@ class TestMetricError:
 
     def test_not_found_error(self) -> None:
         """Test metric not found error."""
-        error = MetricNotFoundError("my_metric", available_metrics=["precision", "recall"])
+        error = MetricNotFoundError(
+            "my_metric", available_metrics=["precision", "recall"]
+        )
         assert error.metric_name == "my_metric"
         assert error.available_metrics == ["precision", "recall"]
 
@@ -194,7 +198,9 @@ class TestProviderError:
 
     def test_not_found_error(self) -> None:
         """Test provider not found error."""
-        error = ProviderNotFoundError("my_provider", available_providers=["openai", "gemini"])
+        error = ProviderNotFoundError(
+            "my_provider", available_providers=["openai", "gemini"]
+        )
         assert error.provider_name == "my_provider"
         assert error.available_providers == ["openai", "gemini"]
         assert error.error_type == "Provider Not Found"
@@ -215,7 +221,10 @@ class TestProviderError:
         )
         assert error.original_error is original
         assert error.error_type == "Connection Error"
-        assert str(error) == "[gemini] Connection Error: Failed to connect (original_error=Connection failed)"
+        assert (
+            str(error)
+            == "[gemini] Connection Error: Failed to connect (original_error=Connection failed)"
+        )
 
     def test_execution_error(self) -> None:
         """Test provider execution error."""
@@ -227,7 +236,10 @@ class TestProviderError:
         )
         assert error.original_error is original
         assert error.error_type == "Execution Error"
-        assert str(error) == "[anthropic] Execution Error: API call failed (original_error=Execution failed)"
+        assert (
+            str(error)
+            == "[anthropic] Execution Error: API call failed (original_error=Execution failed)"
+        )
 
 
 class TestPluginError:
@@ -240,7 +252,9 @@ class TestPluginError:
 
     def test_not_found_error(self) -> None:
         """Test plugin not found error."""
-        error = PluginNotFoundError("my_plugin", available_plugins=["plugin1", "plugin2"])
+        error = PluginNotFoundError(
+            "my_plugin", available_plugins=["plugin1", "plugin2"]
+        )
         assert error.plugin_name == "my_plugin"
         assert error.available_plugins == ["plugin1", "plugin2"]
 
@@ -266,7 +280,9 @@ class TestCLIError:
 
     def test_validation_error(self) -> None:
         """Test validation error."""
-        error = ValidationError("Invalid input", field="config_path", value="missing.yaml")
+        error = ValidationError(
+            "Invalid input", field="config_path", value="missing.yaml"
+        )
         assert error.field == "config_path"
         assert error.value == "missing.yaml"
 
@@ -476,7 +492,9 @@ class TestFalsyDetailRecording:
 
     def test_provider_connection_error_preserves_falsy_original_error(self) -> None:
         original_error = FalsyException("boom")
-        error = ProviderConnectionError("Failed to connect", original_error=original_error)
+        error = ProviderConnectionError(
+            "Failed to connect", original_error=original_error
+        )
         assert "original_error" in error.details
         assert error.original_error is original_error
 
@@ -485,7 +503,9 @@ class TestFalsyDetailRecording:
         assert "original_error" not in error.details
 
     def test_provider_execution_error_records_original_error(self) -> None:
-        error = ProviderExecutionError("API call failed", original_error=RuntimeError("boom"))
+        error = ProviderExecutionError(
+            "API call failed", original_error=RuntimeError("boom")
+        )
         assert "original_error" in error.details
 
     def test_provider_execution_error_preserves_falsy_original_error(self) -> None:
@@ -501,12 +521,16 @@ class TestFalsyDetailRecording:
     # --- synthesis.py ---
 
     def test_synthesis_execution_error_records_original_error(self) -> None:
-        error = SynthesisExecutionError("Synthesis failed", original_error=RuntimeError("boom"))
+        error = SynthesisExecutionError(
+            "Synthesis failed", original_error=RuntimeError("boom")
+        )
         assert "original_error" in error.details
 
     def test_synthesis_execution_error_preserves_falsy_original_error(self) -> None:
         original_error = FalsyException("boom")
-        error = SynthesisExecutionError("Synthesis failed", original_error=original_error)
+        error = SynthesisExecutionError(
+            "Synthesis failed", original_error=original_error
+        )
         assert "original_error" in error.details
         assert error.original_error is original_error
 

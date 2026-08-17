@@ -43,7 +43,9 @@ class PluginManager:
         load_counts = self.loader.load_all_plugins()
         self._initialized = True
 
-        logger.info(f"Plugin system initialized with {sum(load_counts.values())} plugins")
+        logger.info(
+            f"Plugin system initialized with {sum(load_counts.values())} plugins"
+        )
         return load_counts
 
     def reload_plugins(self) -> dict[str, int]:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -15,6 +15,9 @@ from openagent_eval.exceptions import (
     DatasetValidationError,
     InvalidDatasetError,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _escape(text: str) -> str:

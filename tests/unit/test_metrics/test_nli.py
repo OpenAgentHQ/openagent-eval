@@ -9,21 +9,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from openagent_eval.metrics.generation.llm_judge import (
+    FAITHFULNESS_CRITERIA,
+    RELEVANCY_CRITERIA,
+    LLMJudgeMetric,
+)
 from openagent_eval.metrics.nli import (
     Claim,
     ClaimExtractor,
     EvidenceFinder,
     EvidenceMatch,
     NLIJudge,
-    NLIResult,
     NLILabel,
+    NLIResult,
 )
-from openagent_eval.metrics.generation.llm_judge import (
-    LLMJudgeMetric,
-    FAITHFULNESS_CRITERIA,
-    RELEVANCY_CRITERIA,
-)
-
 
 # ============================================================
 # NLIResult Tests
@@ -235,50 +234,54 @@ class TestNLIJudge:
 
     def test_evaluate_entailment(self):
         mock_pipe = MagicMock()
-        mock_pipe.return_value = [[
-            {"label": "entailment", "score": 0.95},
-            {"label": "neutral", "score": 0.03},
-            {"label": "contradiction", "score": 0.02},
-        ]]
+        mock_pipe.return_value = [
+            [
+                {"label": "entailment", "score": 0.95},
+                {"label": "neutral", "score": 0.03},
+                {"label": "contradiction", "score": 0.02},
+            ]
+        ]
 
         judge = NLIJudge()
         judge._pipeline = mock_pipe
 
         result = judge.evaluate(
-            premise="The sky is blue.",
-            hypothesis="The sky has a color."
+            premise="The sky is blue.", hypothesis="The sky has a color."
         )
         assert result.label == NLILabel.ENTAILMENT
         assert result.entailed_score == 0.95
 
     def test_evaluate_contradiction(self):
         mock_pipe = MagicMock()
-        mock_pipe.return_value = [[
-            {"label": "entailment", "score": 0.05},
-            {"label": "neutral", "score": 0.1},
-            {"label": "contradiction", "score": 0.85},
-        ]]
+        mock_pipe.return_value = [
+            [
+                {"label": "entailment", "score": 0.05},
+                {"label": "neutral", "score": 0.1},
+                {"label": "contradiction", "score": 0.85},
+            ]
+        ]
 
         judge = NLIJudge()
         judge._pipeline = mock_pipe
 
         result = judge.evaluate(
-            premise="The sky is blue.",
-            hypothesis="The sky is red."
+            premise="The sky is blue.", hypothesis="The sky is red."
         )
         assert result.label == NLILabel.CONTRADICTION
         assert result.score == 0.85
 
     def test_batch_evaluate(self):
-        with patch.object(NLIJudge, 'evaluate') as mock_eval:
+        with patch.object(NLIJudge, "evaluate") as mock_eval:
             mock_eval.return_value = NLIResult(
                 label=NLILabel.ENTAILMENT, score=0.9, entailed_score=0.9
             )
             judge = NLIJudge()
-            results = judge.batch_evaluate([
-                ("premise1", "hyp1"),
-                ("premise2", "hyp2"),
-            ])
+            results = judge.batch_evaluate(
+                [
+                    ("premise1", "hyp1"),
+                    ("premise2", "hyp2"),
+                ]
+            )
             assert len(results) == 2
             assert all(r.label == NLILabel.ENTAILMENT for r in results)
 
@@ -386,7 +389,9 @@ class TestLLMJudgeMetric:
 
     def test_llm_judge_parse_score_prefers_json_over_ambiguous_text(self):
         metric = LLMJudgeMetric(provider=self.mock_provider)
-        score = metric._parse_score('There are 5 reasons why this is a score of 9 {"score": 0.9}')
+        score = metric._parse_score(
+            'There are 5 reasons why this is a score of 9 {"score": 0.9}'
+        )
         assert score == 0.9
 
     def test_llm_judge_parse_score_neutral(self):

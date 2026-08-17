@@ -33,7 +33,9 @@ class HitRate(BaseMetric):
             MetricResult with binary score.
         """
         retrieved = [normalize_context(c) for c in kwargs.get("retrieved_contexts", [])]
-        ground_truth = [normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])]
+        ground_truth = [
+            normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])
+        ]
 
         if not ground_truth:
             return MetricResult(

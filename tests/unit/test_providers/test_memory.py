@@ -9,7 +9,6 @@ from openagent_eval.providers.embedders.mock import MockEmbedder
 from openagent_eval.providers.models import Document
 from openagent_eval.providers.retrievers.memory import MemoryRetriever
 
-
 DOCS = [
     {"content": "Python is a high-level programming language", "id": "1"},
     {"content": "RAG combines retrieval and generation", "id": "2"},

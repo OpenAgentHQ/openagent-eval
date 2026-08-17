@@ -10,7 +10,12 @@ from openagent_eval.corpus.base import BaseCorpusAnalyzer
 from openagent_eval.corpus.contradiction import ContradictionDetector
 from openagent_eval.corpus.coverage import CoverageAnalyzer
 from openagent_eval.corpus.duplicates import DuplicateDetector
-from openagent_eval.corpus.models import AuditReport, CorpusIssue, IssueSeverity, IssueType
+from openagent_eval.corpus.models import (
+    AuditReport,
+    CorpusIssue,
+    IssueSeverity,
+    IssueType,
+)
 from openagent_eval.corpus.staleness import StalenessDetector
 
 __all__ = [

@@ -201,7 +201,7 @@ class Anthropic(LLMProvider):
             )
 
             # Track token usage
-            usage = TokenUsage(
+            TokenUsage(
                 prompt_tokens=response.usage.input_tokens,
                 completion_tokens=response.usage.output_tokens,
                 total_tokens=(
@@ -209,7 +209,7 @@ class Anthropic(LLMProvider):
                 ),
             )
 
-            latency_ms = (time.time() - start_time) * 1000
+            (time.time() - start_time) * 1000
 
             return content
 

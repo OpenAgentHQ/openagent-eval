@@ -66,7 +66,9 @@ def fake_analyzer(monkeypatch: pytest.MonkeyPatch) -> dict:
             ),
         ],
         chunking_issues=[],
-        recommendations=["Check if the retriever is using the correct embedding model."],
+        recommendations=[
+            "Check if the retriever is using the correct embedding model."
+        ],
         overall_health=0.5,
     )
     holder: dict = {"instances": [], "report": report}

@@ -7,7 +7,7 @@ and content freshness signals.
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from openagent_eval.corpus.base import BaseCorpusAnalyzer
@@ -73,7 +73,7 @@ class StalenessDetector(BaseCorpusAnalyzer):
         self.validate_inputs(documents)
 
         issues: list[CorpusIssue] = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cutoff = now - timedelta(days=self.staleness_days)
 
         for doc in documents:
@@ -161,9 +161,17 @@ class StalenessDetector(BaseCorpusAnalyzer):
             Parsed datetime or None.
         """
         date_keys = [
-            "updated_at", "modified_date", "last_modified",
-            "date", "timestamp", "created_at", "publish_date",
-            "modified", "updated", "date_modified", "date_updated",
+            "updated_at",
+            "modified_date",
+            "last_modified",
+            "date",
+            "timestamp",
+            "created_at",
+            "publish_date",
+            "modified",
+            "updated",
+            "date_modified",
+            "date_updated",
         ]
 
         for key in date_keys:
@@ -184,7 +192,7 @@ class StalenessDetector(BaseCorpusAnalyzer):
             if isinstance(value, (int, float)):
                 # Assume Unix timestamp
                 try:
-                    return datetime.fromtimestamp(value, tz=timezone.utc)
+                    return datetime.fromtimestamp(value, tz=UTC)
                 except (OSError, ValueError):
                     continue
 
@@ -245,7 +253,7 @@ class StalenessDetector(BaseCorpusAnalyzer):
             try:
                 dt = datetime.strptime(normalized, fmt)
                 if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc)
+                    dt = dt.replace(tzinfo=UTC)
                 return dt
             except ValueError:
                 continue

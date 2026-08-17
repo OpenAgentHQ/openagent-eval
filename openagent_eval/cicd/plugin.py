@@ -27,10 +27,13 @@ import asyncio
 import sys
 import time
 from pathlib import Path
-from typing import Any, Generator
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.cicd.models import CICDConfig, EvaluationGate, ThresholdConfig
 from openagent_eval.cicd.thresholds import EvaluationResult, ThresholdEvaluator
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -195,9 +198,9 @@ class OAEvalPlugin:
                 import concurrent.futures
 
                 with concurrent.futures.ThreadPoolExecutor() as pool:
-                    result = pool.submit(
-                        asyncio.run, engine.run(dataset_items)
-                    ).result(timeout=timeout)
+                    result = pool.submit(asyncio.run, engine.run(dataset_items)).result(
+                        timeout=timeout
+                    )
 
             # Extract metrics from summary
             metrics = result.summary.get("metrics_summary", {})
@@ -299,9 +302,7 @@ if sys.modules.get("pytest") is not None:
     pytest_runtest_setup = pytest.hookimpl(tryfirst=True)(pytest_runtest_setup)
 
 
-def pytest_sessionfinish(
-    session: pytest.Session, exitstatus: int
-) -> None:
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """Called after whole test run finished."""
     # Store final status for CI/CD
     session._oaeval_exitstatus = exitstatus  # type: ignore[attr-defined]

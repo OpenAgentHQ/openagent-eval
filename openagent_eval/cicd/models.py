@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class ThresholdOperator(str, Enum):
+class ThresholdOperator(StrEnum):
     """Comparison operators for threshold evaluation."""
 
     GT = "gt"  # Greater than
@@ -34,7 +34,7 @@ class ThresholdConfig(BaseModel):
     )
 
 
-class GateBehavior(str, Enum):
+class GateBehavior(StrEnum):
     """Behavior when a gate fails."""
 
     FAIL = "fail"  # Fail the test (exit code 1)
@@ -85,7 +85,7 @@ class CICDConfig(BaseModel):
     )
 
 
-class TestStatus(str, Enum):
+class TestStatus(StrEnum):
     """Status of a test result."""
 
     PASSED = "passed"

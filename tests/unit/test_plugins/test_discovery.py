@@ -32,7 +32,9 @@ class TestDiscoverPlugins:
         assert isinstance(plugins, dict)
 
     @patch("openagent_eval.plugins.discovery.importlib.metadata.entry_points")
-    def test_discover_plugins_with_mock_entry_points(self, mock_entry_points: MagicMock) -> None:
+    def test_discover_plugins_with_mock_entry_points(
+        self, mock_entry_points: MagicMock
+    ) -> None:
         """Test plugin discovery with mocked entry points."""
         # Create a mock entry point
         mock_ep = MagicMock()
@@ -51,7 +53,9 @@ class TestDiscoverPlugins:
         mock_ep.load.assert_called_once()
 
     @patch("openagent_eval.plugins.discovery.importlib.metadata.entry_points")
-    def test_discover_plugins_with_invalid_plugin(self, mock_entry_points: MagicMock) -> None:
+    def test_discover_plugins_with_invalid_plugin(
+        self, mock_entry_points: MagicMock
+    ) -> None:
         """Test plugin discovery with an invalid plugin (missing attributes)."""
         # Create a mock entry point with missing attributes
         mock_ep = MagicMock()
@@ -69,7 +73,9 @@ class TestDiscoverPlugins:
         assert "invalid_metric" not in plugins
 
     @patch("openagent_eval.plugins.discovery.importlib.metadata.entry_points")
-    def test_discover_plugins_with_load_error(self, mock_entry_points: MagicMock) -> None:
+    def test_discover_plugins_with_load_error(
+        self, mock_entry_points: MagicMock
+    ) -> None:
         """Test plugin discovery when plugin fails to load."""
         mock_ep = MagicMock()
         mock_ep.name = "broken_metric"

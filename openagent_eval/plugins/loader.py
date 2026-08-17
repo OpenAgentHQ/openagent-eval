@@ -64,9 +64,7 @@ class PluginLoader:
         logger.info(f"Loaded {count} {group_name} plugins")
         return count
 
-    def _register_plugins(
-        self, group_name: str, plugins: dict[str, type[Any]]
-    ) -> int:
+    def _register_plugins(self, group_name: str, plugins: dict[str, type[Any]]) -> int:
         """Register plugins into the appropriate registry method.
 
         Args:

@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from openagent_eval.diagnosis.blame import (
-    BlameAttribution,
     LOW_CONTEXT_PRECISION,
     LOW_CONTEXT_RECALL,
     LOW_FAITHFULNESS,
     LOW_RELEVANCY,
+    BlameAttribution,
 )
 from openagent_eval.diagnosis.models import (
     BlameTarget,
@@ -63,9 +63,7 @@ class TestBlameAttribution:
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.RETRIEVAL
         assert result.confidence >= 0.9
-        assert any(
-            f.mode == FailureMode.EMPTY_RETRIEVAL for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.EMPTY_RETRIEVAL for f in result.failure_modes)
 
     def test_low_context_precision(self) -> None:
         """Low context precision should blame retrieval."""
@@ -95,9 +93,7 @@ class TestBlameAttribution:
         )
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.RETRIEVAL
-        assert any(
-            f.mode == FailureMode.MISSING_CONTEXT for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.MISSING_CONTEXT for f in result.failure_modes)
 
     # ------------------------------------------------------------------
     # Generation failures
@@ -115,9 +111,7 @@ class TestBlameAttribution:
         )
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.GENERATION
-        assert any(
-            f.mode == FailureMode.HALLUCINATION for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.HALLUCINATION for f in result.failure_modes)
 
     def test_low_relevancy(self) -> None:
         """Low relevancy should blame generation for off-topic answer."""
@@ -131,9 +125,7 @@ class TestBlameAttribution:
         )
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.GENERATION
-        assert any(
-            f.mode == FailureMode.OFF_TOPIC_ANSWER for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.OFF_TOPIC_ANSWER for f in result.failure_modes)
 
     def test_empty_answer_blames_generation(self) -> None:
         """Short answer corroborated by low relevancy should blame generation."""
@@ -187,9 +179,7 @@ class TestBlameAttribution:
         )
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.GENERATION
-        assert any(
-            f.mode == FailureMode.OFF_TOPIC_ANSWER for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.OFF_TOPIC_ANSWER for f in result.failure_modes)
 
     # ------------------------------------------------------------------
     # Chunking failures
@@ -222,7 +212,8 @@ class TestBlameAttribution:
         result = self.blamer.analyze(scores)
         # Should detect chunking split issue
         chunking_failures = [
-            f for f in result.failure_modes
+            f
+            for f in result.failure_modes
             if f.mode == FailureMode.CHUNKING_SPLIT_INFO_LOST
         ]
         assert len(chunking_failures) > 0

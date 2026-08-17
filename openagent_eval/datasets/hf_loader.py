@@ -9,12 +9,14 @@ Note: This loader is optional and requires the `datasets` extra:
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.datasets.base import BaseDatasetLoader, Dataset, DatasetItem
 from openagent_eval.datasets.models import DatasetItemModel
 from openagent_eval.exceptions import DatasetValidationError, InvalidDatasetError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class HFDatasetLoader(BaseDatasetLoader):
@@ -255,7 +257,14 @@ class HFDatasetLoader(BaseDatasetLoader):
                 break
 
         # Ground truth field mappings
-        ground_truth_fields = ["answer", "answers", "ground_truth", "target", "output", "response"]
+        ground_truth_fields = [
+            "answer",
+            "answers",
+            "ground_truth",
+            "target",
+            "output",
+            "response",
+        ]
         for field in ground_truth_fields:
             if field in raw_item and raw_item[field]:
                 value = raw_item[field]

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from typer.testing import CliRunner
+from typing import TYPE_CHECKING
 
 from openagent_eval.cli.main import app
+
+if TYPE_CHECKING:
+    from typer.testing import CliRunner
 
 
 def test_doctor_checks_env(runner: CliRunner) -> None:

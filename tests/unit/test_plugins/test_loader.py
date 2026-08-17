@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-
 from openagent_eval.plugins.loader import PluginLoader
 
 
@@ -25,7 +24,9 @@ class TestPluginLoader:
         loader = PluginLoader(mock_registry)
 
         # Mock discover_all_plugins to return empty dict
-        with patch("openagent_eval.plugins.loader.discover_all_plugins", return_value={}):
+        with patch(
+            "openagent_eval.plugins.loader.discover_all_plugins", return_value={}
+        ):
             load_counts = loader.load_all_plugins()
             assert isinstance(load_counts, dict)
             assert sum(load_counts.values()) == 0
@@ -104,15 +105,15 @@ class TestPluginLoader:
         """Test registering plugins with an unknown group."""
         mock_registry = MagicMock()
         loader = PluginLoader(mock_registry)
-        
+
         mock_plugin_class = type(
             "MockPlugin",
             (),
             {"name": "mock_plugin", "description": "A mock plugin"},
         )
-        
+
         plugins = {"mock_plugin": mock_plugin_class}
-        
+
         # The method catches ValueError and logs an error, so no exception is raised
         count = loader._register_plugins("unknown_group", plugins)
         assert count == 0
@@ -121,11 +122,11 @@ class TestPluginLoader:
         """Test getting loaded plugins."""
         mock_registry = MagicMock()
         loader = PluginLoader(mock_registry)
-        
+
         # Manually set loaded plugins
         test_mock = MagicMock()
         loader._loaded_plugins = {"metrics": {"test": test_mock}}
-        
+
         loaded = loader.get_loaded_plugins()
         assert "metrics" in loaded
         assert "test" in loaded["metrics"]

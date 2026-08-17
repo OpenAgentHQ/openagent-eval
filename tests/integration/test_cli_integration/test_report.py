@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-
-from typer.testing import CliRunner
+from typing import TYPE_CHECKING
 
 from openagent_eval.cli.main import app
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from typer.testing import CliRunner
 
 
 def _create_sample_report(reports_dir: Path, report_id: str = "test_report") -> Path:
@@ -49,7 +52,14 @@ def test_report_displays_output(runner: CliRunner, reports_dir: Path) -> None:
 
     result = runner.invoke(
         app,
-        ["report", "test_001", "--output", "terminal", "--output-dir", str(reports_dir)],
+        [
+            "report",
+            "test_001",
+            "--output",
+            "terminal",
+            "--output-dir",
+            str(reports_dir),
+        ],
     )
 
     assert result.exit_code == 0

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import csv
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -12,6 +12,9 @@ from openagent_eval.exceptions import (
     DatasetNotFoundError,
     DatasetValidationError,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestCSVDatasetLoader:
@@ -34,8 +37,16 @@ class TestCSVDatasetLoader:
     def test_load_valid_csv(self, tmp_path: Path) -> None:
         """Test loading a valid CSV dataset."""
         rows = [
-            {"question": "What is Python?", "ground_truth": "A language.", "context": "Some context."},
-            {"question": "What is RAG?", "ground_truth": "Retrieval-Augmented Generation.", "context": "RAG info."},
+            {
+                "question": "What is Python?",
+                "ground_truth": "A language.",
+                "context": "Some context.",
+            },
+            {
+                "question": "What is RAG?",
+                "ground_truth": "Retrieval-Augmented Generation.",
+                "context": "RAG info.",
+            },
         ]
         csv_path = tmp_path / "test.csv"
         self._write_csv(csv_path, rows)

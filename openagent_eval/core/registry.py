@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Type
+from typing import Any
 
 from openagent_eval.exceptions import PluginNotFoundError
 
@@ -16,13 +16,13 @@ class Registry:
 
     def __init__(self) -> None:
         """Initialize the registry."""
-        self._metrics: dict[str, Type[Any]] = {}
-        self._providers: dict[str, Type[Any]] = {}
-        self._retrievers: dict[str, Type[Any]] = {}
-        self._dataset_loaders: dict[str, Type[Any]] = {}
-        self._report_generators: dict[str, Type[Any]] = {}
+        self._metrics: dict[str, type[Any]] = {}
+        self._providers: dict[str, type[Any]] = {}
+        self._retrievers: dict[str, type[Any]] = {}
+        self._dataset_loaders: dict[str, type[Any]] = {}
+        self._report_generators: dict[str, type[Any]] = {}
 
-    def register_metric(self, name: str, metric_class: Type[Any]) -> None:
+    def register_metric(self, name: str, metric_class: type[Any]) -> None:
         """Register a metric class.
 
         Args:
@@ -31,7 +31,7 @@ class Registry:
         """
         self._metrics[name] = metric_class
 
-    def register_provider(self, name: str, provider_class: Type[Any]) -> None:
+    def register_provider(self, name: str, provider_class: type[Any]) -> None:
         """Register a provider class.
 
         Args:
@@ -40,7 +40,7 @@ class Registry:
         """
         self._providers[name] = provider_class
 
-    def register_retriever(self, name: str, retriever_class: Type[Any]) -> None:
+    def register_retriever(self, name: str, retriever_class: type[Any]) -> None:
         """Register a retriever class.
 
         Args:
@@ -49,7 +49,7 @@ class Registry:
         """
         self._retrievers[name] = retriever_class
 
-    def register_dataset_loader(self, name: str, loader_class: Type[Any]) -> None:
+    def register_dataset_loader(self, name: str, loader_class: type[Any]) -> None:
         """Register a dataset loader class.
 
         Args:
@@ -58,7 +58,7 @@ class Registry:
         """
         self._dataset_loaders[name] = loader_class
 
-    def register_report_generator(self, name: str, generator_class: Type[Any]) -> None:
+    def register_report_generator(self, name: str, generator_class: type[Any]) -> None:
         """Register a report generator class.
 
         Args:
@@ -67,7 +67,7 @@ class Registry:
         """
         self._report_generators[name] = generator_class
 
-    def get_metric(self, name: str) -> Type[Any]:
+    def get_metric(self, name: str) -> type[Any]:
         """Get a registered metric class.
 
         Args:
@@ -87,7 +87,7 @@ class Registry:
             )
         return self._metrics[name]
 
-    def get_provider(self, name: str) -> Type[Any]:
+    def get_provider(self, name: str) -> type[Any]:
         """Get a registered provider class.
 
         Args:
@@ -107,7 +107,7 @@ class Registry:
             )
         return self._providers[name]
 
-    def get_retriever(self, name: str) -> Type[Any]:
+    def get_retriever(self, name: str) -> type[Any]:
         """Get a registered retriever class.
 
         Args:

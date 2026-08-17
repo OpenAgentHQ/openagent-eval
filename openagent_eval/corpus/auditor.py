@@ -7,9 +7,8 @@ into a single AuditReport.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
-from openagent_eval.corpus.base import BaseCorpusAnalyzer
 from openagent_eval.corpus.contradiction import ContradictionDetector
 from openagent_eval.corpus.coverage import CoverageAnalyzer
 from openagent_eval.corpus.duplicates import DuplicateDetector
@@ -25,6 +24,11 @@ from openagent_eval.exceptions.corpus import (
     CorpusNotFoundError,
     CorpusValidationError,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from openagent_eval.corpus.base import BaseCorpusAnalyzer
 
 # Supported file extensions for document loading
 _SUPPORTED_EXTENSIONS = {".txt", ".md", ".rst", ".html", ".json", ".jsonl"}
@@ -361,7 +365,12 @@ class CorpusAuditor:
             f"across {num_checks} checks. Found {len(issues)} issue(s)."
         ]
 
-        for severity in [IssueSeverity.CRITICAL, IssueSeverity.HIGH, IssueSeverity.MEDIUM, IssueSeverity.LOW]:
+        for severity in [
+            IssueSeverity.CRITICAL,
+            IssueSeverity.HIGH,
+            IssueSeverity.MEDIUM,
+            IssueSeverity.LOW,
+        ]:
             count = by_severity.get(severity, 0)
             if count:
                 parts.append(f"  - {severity.value}: {count}")

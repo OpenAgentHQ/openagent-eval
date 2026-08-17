@@ -80,7 +80,7 @@ def test_command(
     from openagent_eval.cli.utils.discovery import get_config_path
 
     console.print(f"[bold blue]OpenAgent Eval[/bold blue] v{__version__}")
-    console.print(f"[dim]CI/CD Test Mode[/dim]\n")
+    console.print("[dim]CI/CD Test Mode[/dim]\n")
 
     # Resolve config path
     try:
@@ -111,9 +111,7 @@ def test_command(
                 f"[red]Error:[/red] Invalid threshold format: {threshold_str}"
             )
             console.print("[dim]Expected: metric:operator:value[/dim]")
-            console.print(
-                "[dim]Example: faithfulness:gte:0.8[/dim]"
-            )
+            console.print("[dim]Example: faithfulness:gte:0.8[/dim]")
             raise typer.Exit(code=2)
 
         metric_name, operator_str, value_str = parts
@@ -121,17 +119,13 @@ def test_command(
         try:
             value = float(value_str)
         except ValueError:
-            console.print(
-                f"[red]Error:[/red] Invalid threshold value: {value_str}"
-            )
+            console.print(f"[red]Error:[/red] Invalid threshold value: {value_str}")
             raise typer.Exit(code=2)
 
         # Validate operator
         valid_operators = ["gt", "gte", "lt", "lte", "eq", "neq"]
         if operator_str not in valid_operators:
-            console.print(
-                f"[red]Error:[/red] Invalid operator: {operator_str}"
-            )
+            console.print(f"[red]Error:[/red] Invalid operator: {operator_str}")
             console.print(f"[dim]Valid operators: {', '.join(valid_operators)}[/dim]")
             raise typer.Exit(code=2)
 
@@ -193,7 +187,7 @@ def test_command(
 
 
 def _display_results(
-    result: "EvaluationResult",
+    result: EvaluationResult,
     duration: float,
     verbose: bool,
 ) -> None:
@@ -208,7 +202,9 @@ def _display_results(
         table.add_row("Status", "[red]ERROR[/red]")
         table.add_row("Error", result.summary["error"])
     else:
-        table.add_row("Status", "[green]PASSED[/green]" if result.passed else "[red]FAILED[/red]")
+        table.add_row(
+            "Status", "[green]PASSED[/green]" if result.passed else "[red]FAILED[/red]"
+        )
         table.add_row("Total Gates", str(result.summary.get("total_gates", 0)))
         table.add_row("Passed Gates", str(result.summary.get("passed_gates", 0)))
         table.add_row("Failed Gates", str(result.summary.get("failed_gates", 0)))
@@ -226,9 +222,7 @@ def _display_results(
 
         for gate in result.gate_results:
             status = "[green]PASS[/green]" if gate.passed else "[red]FAIL[/red]"
-            thresholds_str = "\n".join(
-                [tr.message for tr in gate.threshold_results]
-            )
+            thresholds_str = "\n".join([tr.message for tr in gate.threshold_results])
             gate_table.add_row(gate.gate_name, status, thresholds_str)
 
         console.print(gate_table)
@@ -244,10 +238,9 @@ def _display_results(
                 console.print(f"  {status} {tr.message}")
 
 
-def _output_json(result: "EvaluationResult", duration: float) -> None:
+def _output_json(result: EvaluationResult, duration: float) -> None:
     """Output results as JSON."""
     import json
-
 
     output = {
         "status": "passed" if result.passed else "failed",

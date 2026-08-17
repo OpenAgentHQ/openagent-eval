@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from openagent_eval.datasets.hf_loader import HFDatasetLoader
 from openagent_eval.exceptions import DatasetValidationError, InvalidDatasetError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestHFDatasetLoader:
@@ -110,7 +113,9 @@ class TestHFDatasetLoader:
             assert dataset.size == 2
             assert dataset[0].question == "Q1"
             assert dataset[0].ground_truth == "A1"
-            mock_datasets.load_dataset.assert_called_once_with("test_dataset", split="train")
+            mock_datasets.load_dataset.assert_called_once_with(
+                "test_dataset", split="train"
+            )
 
     def test_load_from_hub_with_limit(self) -> None:
         """Test load_from_hub with limit parameter."""

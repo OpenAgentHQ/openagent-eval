@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class IssueType(str, Enum):
+class IssueType(StrEnum):
     """Types of corpus issues that can be detected."""
 
     CONTRADICTION = "contradiction"
@@ -18,7 +18,7 @@ class IssueType(str, Enum):
     COVERAGE_GAP = "coverage_gap"
 
 
-class IssueSeverity(str, Enum):
+class IssueSeverity(StrEnum):
     """Severity levels for corpus issues."""
 
     LOW = "low"

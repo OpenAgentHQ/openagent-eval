@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -24,13 +24,13 @@ class TestStalenessDetector:
         return CorpusDocument(
             doc_id="recent.txt",
             content="Recently updated content.",
-            metadata={"updated_at": datetime.now(timezone.utc).isoformat()},
+            metadata={"updated_at": datetime.now(UTC).isoformat()},
         )
 
     @pytest.fixture
     def stale_doc(self):
         """Create a stale document."""
-        old_date = datetime.now(timezone.utc) - timedelta(days=500)
+        old_date = datetime.now(UTC) - timedelta(days=500)
         return CorpusDocument(
             doc_id="stale.txt",
             content="Old content.",
@@ -74,7 +74,9 @@ class TestStalenessDetector:
         assert report.issues[0].metadata["last_updated"].endswith("+00:00")
 
     @pytest.mark.asyncio
-    async def test_health_score_decreases_with_staleness(self, detector, recent_doc, stale_doc):
+    async def test_health_score_decreases_with_staleness(
+        self, detector, recent_doc, stale_doc
+    ):
         """Test health score decreases with more stale documents."""
         # All recent = perfect score
         report = await detector.analyze([recent_doc])
@@ -119,7 +121,7 @@ class TestStalenessDetector:
         detector = StalenessDetector(staleness_days=30)
 
         # 60 days old = stale with 30-day threshold
-        old_date = datetime.now(timezone.utc) - timedelta(days=60)
+        old_date = datetime.now(UTC) - timedelta(days=60)
         doc = CorpusDocument(
             doc_id="doc.txt",
             content="Content",

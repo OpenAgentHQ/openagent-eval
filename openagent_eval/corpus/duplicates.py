@@ -172,14 +172,14 @@ class DuplicateDetector(BaseCorpusAnalyzer):
 
                     # Determine if truly divergent or exact duplicate
                     is_exact = similarity > 0.99
-                    severity = (
-                        IssueSeverity.LOW if is_exact else IssueSeverity.MEDIUM
-                    )
+                    severity = IssueSeverity.LOW if is_exact else IssueSeverity.MEDIUM
 
                     doc_a = documents[i]
                     doc_b = documents[j]
 
-                    issue_type_title = "Exact duplicate" if is_exact else "Divergent duplicate"
+                    issue_type_title = (
+                        "Exact duplicate" if is_exact else "Divergent duplicate"
+                    )
 
                     issues.append(
                         CorpusIssue(
@@ -240,6 +240,8 @@ class DuplicateDetector(BaseCorpusAnalyzer):
         if exact:
             parts.append(f"{exact} exact duplicate(s).")
         if divergent:
-            parts.append(f"{divergent} divergent duplicate(s) (potential version conflicts).")
+            parts.append(
+                f"{divergent} divergent duplicate(s) (potential version conflicts)."
+            )
 
         return " ".join(parts)

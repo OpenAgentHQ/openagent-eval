@@ -29,9 +29,7 @@ class MetricResult:
     def __post_init__(self) -> None:
         """Validate score is within reasonable bounds."""
         if not 0.0 <= self.score <= 1.0:
-            raise ValueError(
-                f"Score must be between 0.0 and 1.0, got {self.score}"
-            )
+            raise ValueError(f"Score must be between 0.0 and 1.0, got {self.score}")
 
 
 class BaseMetric(ABC):

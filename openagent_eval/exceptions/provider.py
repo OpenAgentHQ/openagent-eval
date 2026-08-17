@@ -42,7 +42,9 @@ class ProviderError(OpenAgentEvalError):
         provider_prefix = f"[{self.provider_name}] " if self.provider_name else ""
         base = f"{provider_prefix}{self.error_type}: {self.message}"
         if self.details:
-            details_items = {k: v for k, v in self.details.items() if k != "provider_name"}
+            details_items = {
+                k: v for k, v in self.details.items() if k != "provider_name"
+            }
             if details_items:
                 details_str = ", ".join(f"{k}={v}" for k, v in details_items.items())
                 return f"{base} ({details_str})"
@@ -75,7 +77,9 @@ class ProviderNotFoundError(ProviderError):
         if available_providers:
             message += f". Available providers: {', '.join(available_providers)}"
 
-        super().__init__(message=message, provider_name=provider_name, details=error_details)
+        super().__init__(
+            message=message, provider_name=provider_name, details=error_details
+        )
         self.available_providers = available_providers or []
 
 
@@ -107,7 +111,9 @@ class ProviderConnectionError(ProviderError):
         if original_error is not None:
             error_details["original_error"] = str(original_error)
 
-        super().__init__(message=message, provider_name=provider_name, details=error_details)
+        super().__init__(
+            message=message, provider_name=provider_name, details=error_details
+        )
         self.original_error = original_error
 
 
@@ -139,5 +145,7 @@ class ProviderExecutionError(ProviderError):
         if original_error is not None:
             error_details["original_error"] = str(original_error)
 
-        super().__init__(message=message, provider_name=provider_name, details=error_details)
+        super().__init__(
+            message=message, provider_name=provider_name, details=error_details
+        )
         self.original_error = original_error

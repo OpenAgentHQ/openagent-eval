@@ -9,7 +9,6 @@ from typing import Any
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 
-
 # Cost per 1M tokens by provider and model (USD)
 COST_PER_1M_TOKENS: dict[str, dict[str, dict[str, float]]] = {
     "openai": {

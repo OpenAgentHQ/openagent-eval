@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 from openagent_eval.core.pipeline import EvaluationResult, PipelineResult
 from openagent_eval.reports.base import ExperimentComparison
 from openagent_eval.reports.comparison import ComparisonReport
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture
@@ -88,9 +90,7 @@ class TestComparisonReport:
         assert "baseline-v1" in result
         assert "experiment-v2" in result
 
-    def test_generate_contains_metric_comparison(
-        self, comparison: Any
-    ) -> None:
+    def test_generate_contains_metric_comparison(self, comparison: Any) -> None:
         """generate() includes metric comparison table."""
         report = ComparisonReport()
         result = report.generate(comparison)
@@ -124,17 +124,13 @@ class TestComparisonReport:
         """generate() handles regressed metrics."""
         baseline = PipelineResult(
             results=[
-                EvaluationResult(
-                    question="Q1", answer="A1", metrics={"f1": 0.90}
-                ),
+                EvaluationResult(question="Q1", answer="A1", metrics={"f1": 0.90}),
             ],
             summary={"total": 1},
         )
         experiment = PipelineResult(
             results=[
-                EvaluationResult(
-                    question="Q1", answer="A1", metrics={"f1": 0.70}
-                ),
+                EvaluationResult(question="Q1", answer="A1", metrics={"f1": 0.70}),
             ],
             summary={"total": 1},
         )
@@ -184,9 +180,7 @@ class TestComparisonReport:
         with pytest.raises(TypeError, match="ExperimentComparison"):
             report.generate("not a comparison")
 
-    def test_generate_to_file(
-        self, comparison: Any, tmp_path: Path
-    ) -> None:
+    def test_generate_to_file(self, comparison: Any, tmp_path: Path) -> None:
         """generate_to_file() writes to a file."""
         report = ComparisonReport()
         output_path = tmp_path / "comparison.txt"

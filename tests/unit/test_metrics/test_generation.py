@@ -7,14 +7,14 @@ import os
 import pytest
 
 from openagent_eval.metrics.generation import (
+    BLEU,
+    ROUGE,
     AnswerRelevancy,
     BERTScore,
-    BLEU,
     ExactMatch,
     F1Score,
     Faithfulness,
     HallucinationDetection,
-    ROUGE,
     SemanticSimilarity,
 )
 
@@ -174,6 +174,7 @@ class TestROUGE:
 
     def test_fallback_sensitive_to_repetition(self, monkeypatch):
         """Fallback recall counts occurrences, not unique word types."""
+
         def _force_fallback(*args, **kwargs):
             raise ImportError("force fallback path")
 
@@ -203,6 +204,7 @@ class TestSemanticSimilarity:
         """Same meaning returns high score."""
         import sys
         from unittest.mock import MagicMock, patch
+
         import numpy as np
 
         if hasattr(self.metric, "_cached_model"):
@@ -213,12 +215,15 @@ class TestSemanticSimilarity:
         mock_sklearn = MagicMock()
         mock_sklearn.cosine_similarity.return_value = np.array([[0.8]])
 
-        with patch.dict(sys.modules, {
-            "sentence_transformers": mock_st,
-            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
-            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
-            "sklearn.metrics.pairwise": mock_sklearn,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": mock_st,
+                "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+                "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+                "sklearn.metrics.pairwise": mock_sklearn,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="The car is red",
                 ground_truth="The automobile is red",
@@ -229,6 +234,7 @@ class TestSemanticSimilarity:
         """Different meaning returns lower score."""
         import sys
         from unittest.mock import MagicMock, patch
+
         import numpy as np
 
         if hasattr(self.metric, "_cached_model"):
@@ -239,12 +245,15 @@ class TestSemanticSimilarity:
         mock_sklearn = MagicMock()
         mock_sklearn.cosine_similarity.return_value = np.array([[0.0]])
 
-        with patch.dict(sys.modules, {
-            "sentence_transformers": mock_st,
-            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
-            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
-            "sklearn.metrics.pairwise": mock_sklearn,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": mock_st,
+                "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+                "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+                "sklearn.metrics.pairwise": mock_sklearn,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="The sky is blue",
                 ground_truth="Python is a programming language",
@@ -380,9 +389,12 @@ class TestBERTScore:
 
         mock_bert_score = MagicMock(return_value=(mock_precision, mock_recall, mock_f1))
 
-        with patch.dict(sys.modules, {
-            "bert_score": mock_bert_score,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "bert_score": mock_bert_score,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="The cat sat on the mat",
                 ground_truth="The cat sat on the mat",
@@ -403,9 +415,12 @@ class TestBERTScore:
 
         mock_bert_score = MagicMock(return_value=(mock_precision, mock_recall, mock_f1))
 
-        with patch.dict(sys.modules, {
-            "bert_score": mock_bert_score,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "bert_score": mock_bert_score,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="The feline sat on the mat",
                 ground_truth="The cat sat on the mat",
@@ -426,9 +441,12 @@ class TestBERTScore:
 
         mock_bert_score = MagicMock(return_value=(mock_precision, mock_recall, mock_f1))
 
-        with patch.dict(sys.modules, {
-            "bert_score": mock_bert_score,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "bert_score": mock_bert_score,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="Python is a language",
                 ground_truth="The cat sat on the mat",
@@ -446,6 +464,7 @@ class TestSimilarityCosineClamp:
         """L22: Even with negative cosine similarity, score must be >= 0."""
         import sys
         from unittest.mock import MagicMock, patch
+
         import numpy as np
 
         metric = SemanticSimilarity()
@@ -460,12 +479,15 @@ class TestSimilarityCosineClamp:
         mock_sklearn = MagicMock()
         mock_sklearn.cosine_similarity.return_value = np.array([[-1.0]])
 
-        with patch.dict(sys.modules, {
-            "sentence_transformers": mock_st,
-            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
-            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
-            "sklearn.metrics.pairwise": mock_sklearn,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": mock_st,
+                "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+                "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+                "sklearn.metrics.pairwise": mock_sklearn,
+            },
+        ):
             result = metric.evaluate(answer="a", ground_truth="b")
 
         assert result.score >= 0.0
@@ -475,6 +497,7 @@ class TestSimilarityCosineClamp:
         """L22: Cosine of 0.0 maps to 0.5 after rescaling."""
         import sys
         from unittest.mock import MagicMock, patch
+
         import numpy as np
 
         metric = SemanticSimilarity()
@@ -486,12 +509,15 @@ class TestSimilarityCosineClamp:
         mock_sklearn = MagicMock()
         mock_sklearn.cosine_similarity.return_value = np.array([[0.0]])
 
-        with patch.dict(sys.modules, {
-            "sentence_transformers": mock_st,
-            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
-            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
-            "sklearn.metrics.pairwise": mock_sklearn,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": mock_st,
+                "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+                "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+                "sklearn.metrics.pairwise": mock_sklearn,
+            },
+        ):
             result = metric.evaluate(answer="a", ground_truth="b")
 
         assert result.score == pytest.approx(0.5)
@@ -502,7 +528,7 @@ class TestBERTScoreCosineClamp:
 
     def test_negative_f1_clamped_to_zero(self):
         """L22: Even if BERTScore returns negative F1, score must be >= 0."""
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
 
         metric = BERTScore()
         mock_precision = MagicMock()

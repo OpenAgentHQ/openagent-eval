@@ -6,16 +6,18 @@ Auto-detects format from file extension if not specified in config.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from openagent_eval.config.models import DatasetConfig
-from openagent_eval.datasets.base import BaseDatasetLoader
 from openagent_eval.datasets.csv_loader import CSVDatasetLoader
 from openagent_eval.datasets.hf_loader import HFDatasetLoader
 from openagent_eval.datasets.json_loader import JSONDatasetLoader
 from openagent_eval.datasets.jsonl_loader import JSONLDatasetLoader
 from openagent_eval.datasets.pdf_loader import PDFDatasetLoader
 from openagent_eval.exceptions.dataset import InvalidDatasetError
+
+if TYPE_CHECKING:
+    from openagent_eval.config.models import DatasetConfig
+    from openagent_eval.datasets.base import BaseDatasetLoader
 
 # Map of file extensions to loader classes
 _LOADER_MAP: dict[str, type[BaseDatasetLoader]] = {
@@ -55,9 +57,9 @@ def _get_loader(config: DatasetConfig) -> BaseDatasetLoader:
     # Early path validation — fail fast with a helpful message.
     path = Path(config.path)
     if not path.exists():
-        from openagent_eval.exceptions import DatasetNotFoundError
-
         import os
+
+        from openagent_eval.exceptions import DatasetNotFoundError
 
         cwd = os.getcwd()
         raise DatasetNotFoundError(

@@ -247,17 +247,21 @@ def _display_json_list(
 
         try:
             data = manager.load_report(report_id, output_dir)
-            config_name = data.get("config", {}).get("dataset", {}).get("path", "unknown")
+            config_name = (
+                data.get("config", {}).get("dataset", {}).get("path", "unknown")
+            )
             errors = data.get("errors", [])
             status = "ok" if not errors else "failed"
         except (FileNotFoundError, KeyError):
             status = "unknown"
 
-        output_data.append({
-            "report_id": report_id,
-            "created_at": created_at,
-            "config": config_name,
-            "status": status,
-        })
+        output_data.append(
+            {
+                "report_id": report_id,
+                "created_at": created_at,
+                "config": config_name,
+                "status": status,
+            }
+        )
 
     console.print(json.dumps(output_data, indent=2))

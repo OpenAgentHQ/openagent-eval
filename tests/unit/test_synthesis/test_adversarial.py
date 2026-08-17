@@ -47,12 +47,14 @@ class TestAdversarialTestCaseGenerator:
     @pytest.mark.asyncio
     async def test_generate_unanswerable(self) -> None:
         """Test unanswerable question generation."""
-        llm_response = json.dumps([
-            {
-                "question": "What is the company's revenue for 2025?",
-                "answer": "",
-            },
-        ])
+        llm_response = json.dumps(
+            [
+                {
+                    "question": "What is the company's revenue for 2025?",
+                    "answer": "",
+                },
+            ]
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = AdversarialTestCaseGenerator(mock_llm)
 
@@ -72,12 +74,14 @@ class TestAdversarialTestCaseGenerator:
     @pytest.mark.asyncio
     async def test_generate_misleading(self) -> None:
         """Test misleading question generation."""
-        llm_response = json.dumps([
-            {
-                "question": "Why did the project fail last quarter?",
-                "answer": "The provided text does not mention any project failure.",
-            },
-        ])
+        llm_response = json.dumps(
+            [
+                {
+                    "question": "Why did the project fail last quarter?",
+                    "answer": "The provided text does not mention any project failure.",
+                },
+            ]
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = AdversarialTestCaseGenerator(mock_llm)
 
@@ -93,12 +97,14 @@ class TestAdversarialTestCaseGenerator:
     @pytest.mark.asyncio
     async def test_generate_counterfactual(self) -> None:
         """Test counterfactual question generation."""
-        llm_response = json.dumps([
-            {
-                "question": "How did the team handle the budget surplus?",
-                "answer": "The text states there was a budget deficit, not a surplus.",
-            },
-        ])
+        llm_response = json.dumps(
+            [
+                {
+                    "question": "How did the team handle the budget surplus?",
+                    "answer": "The text states there was a budget deficit, not a surplus.",
+                },
+            ]
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = AdversarialTestCaseGenerator(mock_llm)
 
@@ -117,7 +123,9 @@ class TestAdversarialTestCaseGenerator:
         mock_llm = _make_mock_llm()
         gen = AdversarialTestCaseGenerator(mock_llm)
 
-        with pytest.raises(SynthesisExecutionError, match="Unsupported adversarial test type"):
+        with pytest.raises(
+            SynthesisExecutionError, match="Unsupported adversarial test type"
+        ):
             await gen.generate(
                 context="Test context.",
                 test_type="invalid_type",  # type: ignore[arg-type]
@@ -154,9 +162,14 @@ class TestAdversarialTestCaseGenerator:
         for test_type in TestCaseType:
             if test_type == TestCaseType.STANDARD:
                 continue
-            responses[test_type] = json.dumps([
-                {"question": f"Test {test_type.value}?", "answer": f"Answer for {test_type.value}."},
-            ])
+            responses[test_type] = json.dumps(
+                [
+                    {
+                        "question": f"Test {test_type.value}?",
+                        "answer": f"Answer for {test_type.value}.",
+                    },
+                ]
+            )
 
         call_count = 0
         mock_llm = MagicMock()
@@ -192,11 +205,13 @@ class TestAdversarialTestCaseGenerator:
     @pytest.mark.asyncio
     async def test_generate_filters_empty_questions(self) -> None:
         """Test that empty questions are filtered out."""
-        llm_response = json.dumps([
-            {"question": "Valid?", "answer": "Valid."},
-            {"question": "", "answer": "No question."},
-            {"question": "Also valid?", "answer": "Also valid."},
-        ])
+        llm_response = json.dumps(
+            [
+                {"question": "Valid?", "answer": "Valid."},
+                {"question": "", "answer": "No question."},
+                {"question": "Also valid?", "answer": "Also valid."},
+            ]
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = AdversarialTestCaseGenerator(mock_llm)
 
@@ -211,9 +226,11 @@ class TestAdversarialTestCaseGenerator:
     @pytest.mark.asyncio
     async def test_generate_preserves_metadata(self) -> None:
         """Test that metadata is preserved in generated test cases."""
-        llm_response = json.dumps([
-            {"question": "Test?", "answer": "Answer."},
-        ])
+        llm_response = json.dumps(
+            [
+                {"question": "Test?", "answer": "Answer."},
+            ]
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = AdversarialTestCaseGenerator(mock_llm)
 
@@ -330,8 +347,7 @@ class TestAdversarialTestCaseGenerator:
     async def test_generate_concatenated_json_objects(self) -> None:
         """Characterization: parser accepts concatenated JSON objects."""
         llm_response = (
-            '{"question": "Q1?", "answer": ""}'
-            '{"question": "Q2?", "answer": ""}'
+            '{"question": "Q1?", "answer": ""}{"question": "Q2?", "answer": ""}'
         )
         mock_llm = _make_mock_llm(llm_response)
         gen = AdversarialTestCaseGenerator(mock_llm)
@@ -367,7 +383,9 @@ class TestAdversarialTestCaseGenerator:
     @pytest.mark.asyncio
     async def test_generate_final_fallback_tier(self) -> None:
         """Characterization: parser uses final fallback for loose Q/A patterns."""
-        llm_response = 'Here is a question:\n"question": "Fallback?"\n"answer": "Fallback answer."'
+        llm_response = (
+            'Here is a question:\n"question": "Fallback?"\n"answer": "Fallback answer."'
+        )
         mock_llm = _make_mock_llm(llm_response)
         gen = AdversarialTestCaseGenerator(mock_llm)
 
