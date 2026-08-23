@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from openagent_eval import __version__
 from openagent_eval.core.engine import Engine
 from openagent_eval.core.executor import Executor
 from openagent_eval.core.pipeline import EvaluationResult, Pipeline, PipelineResult
@@ -141,6 +142,7 @@ class TestEngine:
         report = await engine.run(sample_dataset)
         assert report.config is sample_config
         assert report.summary["total_items"] == len(sample_dataset)
+        assert report.metadata["version"] == __version__
         engine.shutdown()
 
     @pytest.mark.asyncio
