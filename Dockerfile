@@ -7,9 +7,10 @@
 # -------------------------------------------------------
 FROM python:3.11-slim AS builder
 
-# Install uv (fast Python package resolver and installer)
-# https://github.com/astral/uv
-COPY --from=ghcr.io/astral/uv:0.4.26 /usr/local/bin/uv /usr/local/bin/uv
+# Install uv from the official astral-sh image
+# https://github.com/astral-sh/uv
+# Binary paths are /uv and /uvx in the distroless image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
@@ -35,7 +36,8 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy uv binary from builder for running the app
-COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
+COPY --from=builder /bin/uv /bin/uv
+COPY --from=builder /bin/uvx /bin/uvx
 
 # Copy installed Python packages from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
