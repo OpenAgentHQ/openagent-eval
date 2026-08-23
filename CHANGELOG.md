@@ -10,6 +10,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.4.10] - 2026-08-24
+
+### Fixed
+
+- **Report Version Metadata** — use package version in report metadata instead of hardcoded value (#292)
+- **CLI Test Command** — add missing `EvaluationResult` import in CI/CD test command
+- **Exception Chaining** — add proper `raise ... from` in exception handlers across codebase
+- **pgvector Availability Check** — use `importlib.util.find_spec` for psycopg availability check
+
+### Changed
+
+- **Opencode Model** — update opencode model to MiMo V2.5 Free (#293)
+- **Opencode Model ID** — correct MiMo model ID format in opencode workflow (#294)
+
+### Testing
+
+- **Audit Path Test** — fix path assertion in audit error message test for Windows path wrapping
+- **CLI Help Test** — fix encoding issue in pytest-import regression test on Windows
+
+---
+
 ## [0.4.9] - 2026-08-17
 
 ### Added
@@ -529,7 +550,8 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ## Links
 
-[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.9...HEAD
+[Unreleased]: https://github.com/openagenthq/openagent-eval/compare/v0.4.10...HEAD
+[0.4.10]: https://github.com/openagenthq/openagent-eval/compare/v0.4.9...v0.4.10
 [0.4.9]: https://github.com/openagenthq/openagent-eval/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/openagenthq/openagent-eval/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/openagenthq/openagent-eval/compare/v0.4.6...v0.4.7
