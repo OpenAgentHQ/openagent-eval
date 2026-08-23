@@ -14,8 +14,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Copy project manifest files
-COPY pyproject.toml uv.lock* ./
+# Copy project manifest files (README.md is required by hatchling metadata)
+COPY pyproject.toml uv.lock* README.md ./
 
 # Install core dependencies first (cached layer — only re-runs when this
 # line changes). These mirror the base `dependencies` in pyproject.toml.
