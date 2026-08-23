@@ -17,16 +17,24 @@ WORKDIR /app
 # Copy project manifest files
 COPY pyproject.toml uv.lock* ./
 
-# Install only core dependencies for minimal image size
-# --extra-group core matches the "core" extra in pyproject.toml:
-#   typer, rich, pydantic, pyyaml, loguru, jinja2, httpx
-# To include all extras, replace with: --all-extras
-RUN uv pip install --system \
-    --extra-group core \
-    -r pyproject.toml
+# Install core dependencies first (cached layer — only re-runs when this
+# line changes). These mirror the base `dependencies` in pyproject.toml.
+# To include all extras instead, use: uv pip install --system --all-extras .
+RUN uv pip install --system --no-cache \
+    "typer>=0.12.0" \
+    "rich>=13.0.0" \
+    "pydantic>=2.0.0" \
+    "pyyaml>=6.0" \
+    "loguru>=0.7.0" \
+    "jinja2>=3.1.0" \
+    "httpx>=0.27.0"
 
 # Copy source code into the image
 COPY openagent_eval/ /app/openagent_eval/
+
+# Install the package itself (creates the `oaeval` console script).
+# --no-deps skips re-resolving the deps installed above, keeping this fast.
+RUN uv pip install --system --no-cache --no-deps .
 
 # -------------------------------------------------------
 # Stage 2: Runtime — Minimal production image
@@ -48,9 +56,8 @@ COPY --from=builder /app/openagent_eval/ /app/openagent_eval/
 # -------------------------------------------------------
 # Entry point
 # -------------------------------------------------------
-# Use `uv run oaeval` to invoke the CLI entry point
-# This ensures the correct environment (with all installed deps) is used
-ENTRYPOINT ["uv", "run", "oaeval"]
+# `oaeval` console script is installed system-wide in site-packages
+ENTRYPOINT ["oaeval"]
 
 # -------------------------------------------------------
 # Optional: Health check
