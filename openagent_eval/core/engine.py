@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from openagent_eval import __version__
 from openagent_eval.core.executor import Executor
 from openagent_eval.core.pipeline import Pipeline, PipelineResult
 from openagent_eval.core.registry import Registry
@@ -96,7 +97,7 @@ class Engine:
             result=result,
             summary=summary,
             metadata={
-                "version": "0.1.0",
+                "version": __version__,
                 "engine": "openagent-eval",
                 "llm_provider": getattr(self._llm, "name", None),
                 "retriever_provider": getattr(self._retriever, "name", None),
