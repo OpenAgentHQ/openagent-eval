@@ -281,7 +281,10 @@ class TestAuditErrorHandling:
         path_pattern = r"(?:\r?\n)?".join(
             re.escape(character) for character in str(missing)
         )
-        assert re.search(path_pattern, output) is not None
+        error_path_pattern = (
+            re.escape("Error: Path does not exist: ") + r"(?:\r?\n)?" + path_pattern
+        )
+        assert re.search(error_path_pattern, output) is not None
 
     def test_audit_unknown_check_lists_valid_checks(self, corpus_dir):
         result = runner.invoke(app, ["audit", str(corpus_dir), "--checks", "bogus"])
