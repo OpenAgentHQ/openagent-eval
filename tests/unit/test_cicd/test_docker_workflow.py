@@ -7,6 +7,8 @@ import yaml
 
 WORKFLOW_PATH = Path(__file__).parents[3] / ".github" / "workflows" / "docker.yml"
 MAIN_PUSH_GUARD = "github.event_name == 'push' && github.ref == 'refs/heads/main'"
+MAIN_PUSH_EXPRESSION = f"${{{{ {MAIN_PUSH_GUARD} }}}}"
+CHECKOUT_ACTION = "actions/checkout@v4"
 BUILDX_ACTION = "docker/setup-buildx-action@v3"
 BUILD_PUSH_ACTION = "docker/build-push-action@v5"
 LOGIN_ACTION = "docker/login-action@v3"
@@ -16,6 +18,25 @@ REGISTRY_CACHE_TO = "type=registry,ref=ghcr.io/{0}/openagent-eval:cache,mode=max
 GHA_CACHE_FROM = "type=gha"
 GHA_CACHE_TO = "type=gha,mode=max"
 
+EXPECTED_STEP_SCHEMA = (
+    ("Checkout repository", {"uses": CHECKOUT_ACTION}, {"name", "uses"}),
+    ("Set up Docker Buildx", {"uses": BUILDX_ACTION}, {"name", "uses"}),
+    (
+        "Log in to GHCR",
+        {"uses": LOGIN_ACTION},
+        {"name", "if", "uses", "with"},
+    ),
+    (
+        "Lowercase repository owner",
+        {
+            "id": "repo",
+            "run": 'echo "name=${GITHUB_REPOSITORY_OWNER@L}" >> "$GITHUB_OUTPUT"',
+        },
+        {"name", "id", "run"},
+    ),
+    ("Build and push", {"uses": BUILD_PUSH_ACTION}, {"name", "uses", "with"}),
+)
+
 
 def _load_workflow() -> dict:
     """Load the workflow without YAML 1.1 coercing GitHub's ``on`` key."""
@@ -23,100 +44,48 @@ def _load_workflow() -> dict:
         return yaml.load(workflow_file, Loader=yaml.BaseLoader)
 
 
-def _workflow_jobs(workflow: dict) -> dict:
-    """Return workflow jobs, rejecting a malformed top-level structure."""
+def _workflow_schema() -> tuple[dict, dict, dict[str, dict]]:
+    """Validate the sole build job and return its semantic five-step schema."""
+    workflow = _load_workflow()
+    assert isinstance(workflow, dict), "workflow must be a mapping"
+
     jobs = workflow.get("jobs")
     assert isinstance(jobs, dict), "workflow must define a jobs mapping"
-    return jobs
+    assert list(jobs) == ["build-and-push"], (
+        "workflow must define only the 'build-and-push' Docker job"
+    )
+    build_job = jobs.get("build-and-push")
+    assert isinstance(build_job, dict), (
+        "workflow must define the 'build-and-push' Docker job as a mapping"
+    )
 
+    steps = build_job.get("steps")
+    assert isinstance(steps, list), "the Docker build job must define steps as a list"
+    assert len(steps) == len(EXPECTED_STEP_SCHEMA), (
+        "the Docker build job must retain its exact five-step inventory"
+    )
 
-def _build_job(workflow: dict) -> dict:
-    """Return the required Docker build job with an explanatory assertion."""
-    job = _workflow_jobs(workflow).get("build-and-push")
-    assert isinstance(job, dict), "workflow must define the 'build-and-push' Docker job"
-    return job
-
-
-def _workflow_steps(workflow: dict) -> list[dict]:
-    """Return every step, rejecting malformed workflow structure explicitly."""
-    steps = []
-    for job_name, job in _workflow_jobs(workflow).items():
-        assert isinstance(job, dict), f"job {job_name!r} must be a mapping"
-        job_steps = job.get("steps", [])
-        assert isinstance(job_steps, list), (
-            f"job {job_name!r} must define steps as a list"
+    steps_by_name = {}
+    for index, (expected_name, expected_fields, expected_keys) in enumerate(
+        EXPECTED_STEP_SCHEMA
+    ):
+        step = steps[index]
+        assert isinstance(step, dict), (
+            f"workflow step {index} must be a mapping for {expected_name!r}"
         )
-        for index, step in enumerate(job_steps):
-            assert isinstance(step, dict), (
-                f"job {job_name!r} step {index} must be a mapping"
+        assert step.get("name") == expected_name, (
+            f"workflow step {index} must remain {expected_name!r}"
+        )
+        assert set(step) == expected_keys, (
+            f"workflow step {expected_name!r} must have exactly keys {expected_keys}"
+        )
+        for field, expected_value in expected_fields.items():
+            assert step.get(field) == expected_value, (
+                f"workflow step {expected_name!r} must keep {field}={expected_value!r}"
             )
-            steps.append(step)
-    return steps
+        steps_by_name[expected_name] = step
 
-
-def _action_steps(workflow: dict, action: str) -> list[dict]:
-    """Return every workflow step using one pinned action."""
-    return [step for step in _workflow_steps(workflow) if step.get("uses") == action]
-
-
-def _exactly_one_action(workflow: dict, action: str) -> dict:
-    """Return one pinned action, with a clear assertion for missing/duplicates."""
-    matches = _action_steps(workflow, action)
-    assert len(matches) == 1, (
-        f"expected exactly one {action!r} action, found {len(matches)}"
-    )
-    return matches[0]
-
-
-def _named_step(workflow: dict, name: str) -> dict:
-    """Return one named step, with an explanatory assertion on drift."""
-    matches = [step for step in _workflow_steps(workflow) if step.get("name") == name]
-    assert len(matches) == 1, (
-        f"expected exactly one workflow step named {name!r}, found {len(matches)}"
-    )
-    return matches[0]
-
-
-def _login_step(workflow: dict) -> dict:
-    """Return the sole named GHCR login action."""
-    step = _named_step(workflow, "Log in to GHCR")
-    assert step.get("uses") == LOGIN_ACTION, (
-        "the 'Log in to GHCR' step must use the pinned Docker login action"
-    )
-    action_matches = _action_steps(workflow, LOGIN_ACTION)
-    assert len(action_matches) == 1, (
-        f"expected exactly one {LOGIN_ACTION!r} action, found {len(action_matches)}"
-    )
-    assert action_matches[0] is step, (
-        "the named GHCR login step must be the workflow's sole login action"
-    )
-    return step
-
-
-def _buildx_step(workflow: dict) -> dict:
-    """Return the sole Buildx setup action and pin its expected step name."""
-    step = _exactly_one_action(workflow, BUILDX_ACTION)
-    assert step.get("name") == "Set up Docker Buildx", (
-        "the sole Buildx setup action must remain named 'Set up Docker Buildx'"
-    )
-    return step
-
-
-def _build_step(workflow: dict) -> dict:
-    """Return the sole named Docker build-push action."""
-    step = _named_step(workflow, "Build and push")
-    assert step.get("uses") == BUILD_PUSH_ACTION, (
-        "the 'Build and push' step must use the pinned Docker build-push action"
-    )
-    action_matches = _action_steps(workflow, BUILD_PUSH_ACTION)
-    assert len(action_matches) == 1, (
-        f"expected exactly one {BUILD_PUSH_ACTION!r} action, "
-        f"found {len(action_matches)}"
-    )
-    assert action_matches[0] is step, (
-        "the named Docker build step must be the workflow's sole build-push action"
-    )
-    return step
+    return workflow, build_job, steps_by_name
 
 
 def _build_inputs(build_step: dict) -> dict:
@@ -168,23 +137,32 @@ def _assert_cache_expression(
 
 def test_ghcr_login_is_limited_to_main_push() -> None:
     """Fork pull requests must not log in to the organization GHCR."""
-    login_step = _login_step(_load_workflow())
+    _, _, steps = _workflow_schema()
+    login_step = steps["Log in to GHCR"]
 
-    assert login_step.get("if") == f"${{{{ {MAIN_PUSH_GUARD} }}}}", (
+    assert login_step.get("if") == MAIN_PUSH_EXPRESSION, (
         "GHCR login must run only for a push to refs/heads/main"
     )
+    assert login_step.get("with") == {
+        "registry": "ghcr.io",
+        "username": "${{ github.actor }}",
+        "password": "${{ secrets.GITHUB_TOKEN }}",
+    }, "GHCR login must use the exact GitHub Container Registry credentials"
 
 
 def test_image_push_is_limited_to_main_push() -> None:
     """Fork pull requests must build without pushing an image."""
-    build_step = _build_step(_load_workflow())
-    inputs = _build_inputs(build_step)
+    _, _, steps = _workflow_schema()
+    inputs = _build_inputs(steps["Build and push"])
 
-    assert inputs.get("push") == f"${{{{ {MAIN_PUSH_GUARD} }}}}", (
+    assert inputs.get("push") == MAIN_PUSH_EXPRESSION, (
         "image publication must be enabled only for a push to refs/heads/main"
     )
     assert "outputs" not in inputs, (
         "the Docker build action must not define an unguarded registry output"
+    )
+    assert inputs.get("context") == ".", (
+        "the Docker build action must build the checked-out repository context"
     )
     tags = inputs.get("tags")
     assert isinstance(tags, str), "the Docker build action must define image tags"
@@ -195,60 +173,53 @@ def test_image_push_is_limited_to_main_push() -> None:
 
 def test_workflow_triggers_include_pull_request_and_main_push() -> None:
     """Docker CI must run for PRs and pushes to the main branch."""
-    workflow = _load_workflow()
+    workflow, _, _ = _workflow_schema()
     triggers = workflow.get("on")
 
     assert isinstance(triggers, dict), (
         "workflow must define event triggers as a mapping"
     )
-    pull_request = triggers.get("pull_request")
-    assert isinstance(pull_request, dict), (
-        "workflow must retain a pull_request mapping for the main branch"
-    )
-    assert pull_request == {"branches": ["main"]}, (
+    assert triggers.get("pull_request") == {"branches": ["main"]}, (
         "workflow must retain exactly pull_request branches: [main] without qualifiers"
     )
-    push = triggers.get("push")
-    assert isinstance(push, dict), "workflow must retain a push mapping for main"
-    assert push == {"branches": ["main"]}, (
+    assert triggers.get("push") == {"branches": ["main"]}, (
         "workflow must retain exactly push branches: [main]"
     )
 
 
 def test_workflow_has_one_buildx_and_docker_build_action() -> None:
     """Docker CI must have exactly one setup and one build-push action."""
-    workflow = _load_workflow()
+    _, _, steps = _workflow_schema()
 
-    _buildx_step(workflow)
-    _build_step(workflow)
+    assert steps["Set up Docker Buildx"]["uses"] == BUILDX_ACTION
+    assert steps["Build and push"]["uses"] == BUILD_PUSH_ACTION
 
 
 def test_docker_build_step_remains_runnable_for_pull_requests() -> None:
-    """The Docker build step must not skip pull-request events."""
-    workflow = _load_workflow()
-    build_job = _build_job(workflow)
-    build_step = _build_step(workflow)
+    """The Docker build job and step must not skip pull-request events."""
+    _, build_job, steps = _workflow_schema()
 
     assert build_job.get("if") is None, (
         "the containing Docker build job must remain unconditional so pull requests build"
     )
-    assert build_step.get("if") is None, (
+    assert steps["Build and push"].get("if") is None, (
         "the Docker build-push step must remain unconditional so pull requests build"
     )
 
 
 def test_buildx_setup_remains_runnable_for_pull_requests() -> None:
     """The configured Buildx setup must not skip pull-request events."""
-    buildx_step = _buildx_step(_load_workflow())
+    _, _, steps = _workflow_schema()
 
-    assert buildx_step.get("if") is None, (
+    assert steps["Set up Docker Buildx"].get("if") is None, (
         "the Buildx setup step must remain unconditional so pull requests build"
     )
 
 
 def test_registry_cache_import_is_limited_to_main_push() -> None:
     """Fork pull requests must not import their cache from GHCR."""
-    inputs = _build_inputs(_build_step(_load_workflow()))
+    _, _, steps = _workflow_schema()
+    inputs = _build_inputs(steps["Build and push"])
 
     _assert_cache_expression(
         inputs.get("cache-from"),
@@ -260,7 +231,8 @@ def test_registry_cache_import_is_limited_to_main_push() -> None:
 
 def test_registry_cache_export_is_limited_to_main_push() -> None:
     """Fork pull requests must use a non-registry cache export."""
-    inputs = _build_inputs(_build_step(_load_workflow()))
+    _, _, steps = _workflow_schema()
+    inputs = _build_inputs(steps["Build and push"])
 
     _assert_cache_expression(
         inputs.get("cache-to"),
