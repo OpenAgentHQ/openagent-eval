@@ -96,20 +96,26 @@ def test_cli_invalid_command():
     assert result.exit_code != 0
 
 
-def test_unexpected_cli_exception_preserves_diagnostic_and_exit_code(monkeypatch):
-    """Unexpected errors render their diagnostic and exit through Typer."""
+@pytest.mark.parametrize(
+    "message",
+    ["boom", "dynamic [bold] text", "dynamic [/dim] text"],
+)
+def test_unexpected_cli_exception_preserves_diagnostic_and_exit_code(
+    monkeypatch, message
+):
+    """Unexpected errors render arbitrary diagnostics and exit through Typer."""
     output = StringIO()
     console = Console(file=output, force_terminal=False, color_system=None)
     monkeypatch.setattr(main, "Console", lambda **kwargs: console)
 
     with pytest.raises(BaseException) as exc_info:
-        main._cli_exception_handler(RuntimeError, RuntimeError("boom"), None)
+        main._cli_exception_handler(RuntimeError, RuntimeError(message), None)
 
     assert isinstance(exc_info.value, typer.Exit)
     assert exc_info.value.exit_code == 1
     rendered = output.getvalue()
     assert "Unexpected error" in rendered
-    assert "boom" in rendered
+    assert message in rendered
     assert "https://github.com/OpenAgentHQ/openagent-eval/issues" in rendered
 
 
