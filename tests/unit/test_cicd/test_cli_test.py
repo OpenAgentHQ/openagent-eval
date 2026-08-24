@@ -3,9 +3,12 @@
 import asyncio
 import json
 import re
+from typing import get_type_hints
 
 from typer.testing import CliRunner
 
+from openagent_eval.cicd.thresholds import EvaluationResult
+from openagent_eval.cli.commands import test as test_command
 from openagent_eval.cli.main import app
 
 runner = CliRunner()
@@ -65,6 +68,23 @@ parallel: false
 
 class TestTestCommand:
     """Tests for oaeval test command."""
+
+    def test_result_annotations_resolve_to_evaluation_result(self):
+        """CLI result helpers resolve their annotations at runtime."""
+        helpers = (test_command._display_results, test_command._output_json)
+        annotations = {}
+        resolution_errors = {}
+
+        for helper in helpers:
+            try:
+                annotations[helper.__name__] = get_type_hints(helper)["result"]
+            except NameError as exc:
+                resolution_errors[helper.__name__] = str(exc)
+
+        assert not resolution_errors, (
+            f"CLI result annotations did not resolve: {resolution_errors}"
+        )
+        assert annotations == {helper.__name__: EvaluationResult for helper in helpers}
 
     def test_test_command_help(self):
         """Test test command help output."""
