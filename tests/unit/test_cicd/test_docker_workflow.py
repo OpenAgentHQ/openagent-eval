@@ -17,6 +17,9 @@ REGISTRY_CACHE_FROM = "type=registry,ref=ghcr.io/{0}/openagent-eval:cache"
 REGISTRY_CACHE_TO = "type=registry,ref=ghcr.io/{0}/openagent-eval:cache,mode=max"
 GHA_CACHE_FROM = "type=gha"
 GHA_CACHE_TO = "type=gha,mode=max"
+EXPECTED_BUILD_JOB_KEYS = {"runs-on", "permissions", "steps"}
+EXPECTED_PERMISSIONS = {"contents": "read", "packages": "write"}
+EXPECTED_BUILD_INPUT_KEYS = {"context", "push", "tags", "cache-from", "cache-to"}
 
 EXPECTED_STEP_SCHEMA = (
     ("Checkout repository", {"uses": CHECKOUT_ACTION}, {"name", "uses"}),
@@ -58,6 +61,22 @@ def _workflow_schema() -> tuple[dict, dict, dict[str, dict]]:
     assert isinstance(build_job, dict), (
         "workflow must define the 'build-and-push' Docker job as a mapping"
     )
+    assert set(build_job) == EXPECTED_BUILD_JOB_KEYS, (
+        "the Docker build job must have only runs-on, permissions, and steps"
+    )
+    assert build_job.get("if") is None, (
+        "the Docker build job must not define a job-level if condition"
+    )
+    assert build_job.get("runs-on") == "ubuntu-latest", (
+        "the Docker build job must run on ubuntu-latest"
+    )
+    permissions = build_job.get("permissions")
+    assert isinstance(permissions, dict), (
+        "the Docker build job permissions must be a mapping"
+    )
+    assert permissions == EXPECTED_PERMISSIONS, (
+        "the Docker build job must grant exactly contents: read and packages: write"
+    )
 
     steps = build_job.get("steps")
     assert isinstance(steps, list), "the Docker build job must define steps as a list"
@@ -93,6 +112,9 @@ def _build_inputs(build_step: dict) -> dict:
     inputs = build_step.get("with")
     assert isinstance(inputs, dict), (
         "the Docker build-push step must define with inputs"
+    )
+    assert set(inputs) == EXPECTED_BUILD_INPUT_KEYS, (
+        "the Docker build-push step must define only context, push, tags, cache-from, and cache-to"
     )
     return inputs
 
