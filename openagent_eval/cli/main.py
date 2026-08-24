@@ -500,8 +500,8 @@ def _cli_exception_handler(
         # For unexpected errors, show a user-friendly message
         console = Console(stderr=True)
         console.print(f"\n[red]Unexpected error:[/red] {exc_value}")
-        console.print("[dim]This is a bug. Please report it at:")
-        console.print("  https://github.com/OpenAgentHQ/openagent-eval/issues[/dim]")
+        console.print("[dim]This is a bug. Please report it at:[/dim]")
+        console.print("  [dim]https://github.com/OpenAgentHQ/openagent-eval/issues[/dim]")
         raise typer.Exit(code=1) from None
 
 
