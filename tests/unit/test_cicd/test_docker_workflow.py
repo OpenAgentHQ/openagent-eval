@@ -10,6 +10,7 @@ MAIN_PUSH_GUARD = "github.event_name == 'push' && github.ref == 'refs/heads/main
 BUILDX_ACTION = "docker/setup-buildx-action@v3"
 BUILD_PUSH_ACTION = "docker/build-push-action@v5"
 LOGIN_ACTION = "docker/login-action@v3"
+EXPECTED_IMAGE_TAG = "ghcr.io/${{ steps.repo.outputs.name }}/openagent-eval:latest"
 REGISTRY_CACHE_FROM = "type=registry,ref=ghcr.io/{0}/openagent-eval:cache"
 REGISTRY_CACHE_TO = "type=registry,ref=ghcr.io/{0}/openagent-eval:cache,mode=max"
 GHA_CACHE_FROM = "type=gha"
@@ -22,13 +23,24 @@ def _load_workflow() -> dict:
         return yaml.load(workflow_file, Loader=yaml.BaseLoader)
 
 
-def _workflow_steps(workflow: dict) -> list[dict]:
-    """Return every step, rejecting malformed workflow structure explicitly."""
+def _workflow_jobs(workflow: dict) -> dict:
+    """Return workflow jobs, rejecting a malformed top-level structure."""
     jobs = workflow.get("jobs")
     assert isinstance(jobs, dict), "workflow must define a jobs mapping"
+    return jobs
 
+
+def _build_job(workflow: dict) -> dict:
+    """Return the required Docker build job with an explanatory assertion."""
+    job = _workflow_jobs(workflow).get("build-and-push")
+    assert isinstance(job, dict), "workflow must define the 'build-and-push' Docker job"
+    return job
+
+
+def _workflow_steps(workflow: dict) -> list[dict]:
+    """Return every step, rejecting malformed workflow structure explicitly."""
     steps = []
-    for job_name, job in jobs.items():
+    for job_name, job in _workflow_jobs(workflow).items():
         assert isinstance(job, dict), f"job {job_name!r} must be a mapping"
         job_steps = job.get("steps", [])
         assert isinstance(job_steps, list), (
@@ -171,6 +183,14 @@ def test_image_push_is_limited_to_main_push() -> None:
     assert inputs.get("push") == f"${{{{ {MAIN_PUSH_GUARD} }}}}", (
         "image publication must be enabled only for a push to refs/heads/main"
     )
+    assert "outputs" not in inputs, (
+        "the Docker build action must not define an unguarded registry output"
+    )
+    tags = inputs.get("tags")
+    assert isinstance(tags, str), "the Docker build action must define image tags"
+    assert [line.strip() for line in tags.splitlines() if line.strip()] == [
+        EXPECTED_IMAGE_TAG
+    ], "the main-push image tag must be the sole expected GHCR tag"
 
 
 def test_workflow_triggers_include_pull_request_and_main_push() -> None:
@@ -185,13 +205,13 @@ def test_workflow_triggers_include_pull_request_and_main_push() -> None:
     assert isinstance(pull_request, dict), (
         "workflow must retain a pull_request mapping for the main branch"
     )
-    assert pull_request.get("branches") == ["main"], (
-        "workflow must retain a pull_request trigger for the main branch"
+    assert pull_request == {"branches": ["main"]}, (
+        "workflow must retain exactly pull_request branches: [main] without qualifiers"
     )
     push = triggers.get("push")
     assert isinstance(push, dict), "workflow must retain a push mapping for main"
-    assert push.get("branches") == ["main"], (
-        "workflow must retain a push-to-main trigger"
+    assert push == {"branches": ["main"]}, (
+        "workflow must retain exactly push branches: [main]"
     )
 
 
@@ -205,10 +225,24 @@ def test_workflow_has_one_buildx_and_docker_build_action() -> None:
 
 def test_docker_build_step_remains_runnable_for_pull_requests() -> None:
     """The Docker build step must not skip pull-request events."""
-    build_step = _build_step(_load_workflow())
+    workflow = _load_workflow()
+    build_job = _build_job(workflow)
+    build_step = _build_step(workflow)
 
+    assert build_job.get("if") is None, (
+        "the containing Docker build job must remain unconditional so pull requests build"
+    )
     assert build_step.get("if") is None, (
         "the Docker build-push step must remain unconditional so pull requests build"
+    )
+
+
+def test_buildx_setup_remains_runnable_for_pull_requests() -> None:
+    """The configured Buildx setup must not skip pull-request events."""
+    buildx_step = _buildx_step(_load_workflow())
+
+    assert buildx_step.get("if") is None, (
+        "the Buildx setup step must remain unconditional so pull requests build"
     )
 
 
@@ -234,38 +268,3 @@ def test_registry_cache_export_is_limited_to_main_push() -> None:
         REGISTRY_CACHE_TO,
         GHA_CACHE_TO,
     )
-
-
-def test_cache_inputs_select_expected_backend_for_event_shapes() -> None:
-    """Both cache inputs use registry only for main pushes and GHA otherwise."""
-    inputs = _build_inputs(_build_step(_load_workflow()))
-    cache_branches = {
-        "cache-from": _assert_cache_expression(
-            inputs.get("cache-from"),
-            "cache-from",
-            REGISTRY_CACHE_FROM,
-            GHA_CACHE_FROM,
-        ),
-        "cache-to": _assert_cache_expression(
-            inputs.get("cache-to"),
-            "cache-to",
-            REGISTRY_CACHE_TO,
-            GHA_CACHE_TO,
-        ),
-    }
-    event_shapes = (
-        ("push", "refs/heads/main", "type=registry"),
-        ("pull_request", "refs/pull/123/merge", "type=gha"),
-        ("push", "refs/heads/feature", "type=gha"),
-        ("workflow_dispatch", "refs/heads/main", "type=gha"),
-    )
-
-    for input_name, (registry, gha) in cache_branches.items():
-        for event_name, ref, expected_backend in event_shapes:
-            selected = (
-                registry if event_name == "push" and ref == "refs/heads/main" else gha
-            )
-            assert selected.startswith(expected_backend), (
-                f"{input_name} selected {selected!r} for event={event_name!r}, "
-                f"ref={ref!r}; expected {expected_backend!r}"
-            )
