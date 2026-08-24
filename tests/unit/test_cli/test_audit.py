@@ -7,6 +7,7 @@ import re
 from unittest.mock import ANY, AsyncMock, patch
 
 import pytest
+from rich.console import Console
 from typer.testing import CliRunner
 
 from openagent_eval.cli.context import get_context, reset_context
@@ -269,12 +270,18 @@ class TestAuditErrorHandling:
     """Tests for error handling on non-existent or invalid corpus paths."""
 
     def test_audit_error_message_includes_path(self, tmp_path):
-        missing = tmp_path / "missing_corpus"
-        result = runner.invoke(app, ["audit", str(missing)])
+        missing = tmp_path / ("missing_corpus_" + "x" * 64)
+        with patch(
+            "openagent_eval.cli.commands.audit.console",
+            Console(width=40, force_terminal=False),
+        ):
+            result = runner.invoke(app, ["audit", str(missing)], terminal_width=40)
+        output = strip_ansi(result.output)
+        assert str(missing) not in output
         path_pattern = r"(?:\r?\n)?".join(
             re.escape(character) for character in str(missing)
         )
-        assert re.search(path_pattern, strip_ansi(result.output)) is not None
+        assert re.search(path_pattern, output) is not None
 
     def test_audit_unknown_check_lists_valid_checks(self, corpus_dir):
         result = runner.invoke(app, ["audit", str(corpus_dir), "--checks", "bogus"])
