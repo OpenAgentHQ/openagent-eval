@@ -98,7 +98,15 @@ def test_cli_invalid_command():
 
 @pytest.mark.parametrize(
     "message",
-    ["boom", "dynamic [bold] text", "dynamic [/dim] text"],
+    [
+        "boom",
+        "dynamic [bold] text",
+        "dynamic [/dim] text",
+        "[bold][italic]nested[/italic][/bold]",
+        "[bold]unmatched",
+        r"\[",
+        r"slashes \\\\ [bold] " + r"\\\\",
+    ],
 )
 def test_unexpected_cli_exception_preserves_diagnostic_and_exit_code(
     monkeypatch, message
