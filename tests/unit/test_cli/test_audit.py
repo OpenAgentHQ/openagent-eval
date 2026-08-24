@@ -271,7 +271,10 @@ class TestAuditErrorHandling:
     def test_audit_error_message_includes_path(self, tmp_path):
         missing = tmp_path / "missing_corpus"
         result = runner.invoke(app, ["audit", str(missing)])
-        assert str(missing) in strip_ansi(result.output)
+        path_pattern = r"(?:\r?\n)?".join(
+            re.escape(character) for character in str(missing)
+        )
+        assert re.search(path_pattern, strip_ansi(result.output)) is not None
 
     def test_audit_unknown_check_lists_valid_checks(self, corpus_dir):
         result = runner.invoke(app, ["audit", str(corpus_dir), "--checks", "bogus"])
