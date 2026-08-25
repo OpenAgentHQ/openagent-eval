@@ -72,13 +72,23 @@ class TestChromaRetrieverInit:
 
     def test_init_custom_distance_fn(self, mock_chromadb):
         """Retriever uses custom distance function."""
-        _, _, mock_collection = mock_chromadb
+        mock_chroma, mock_client, mock_collection = mock_chromadb
         retriever = ChromaRetriever(
             collection_name="test",
             distance_fn="l2",
         )
         assert retriever.distance_fn == "l2"
-        mock_collection.metadata == {"hnsw:space": "l2"}
+        mock_client.get_or_create_collection.assert_called_once_with(
+            name="test", metadata={"hnsw:space": "l2"}
+        )
+
+    def test_init_default_cosine_metadata(self, mock_chromadb):
+        """Default distance_fn passes hnsw:space='cosine' metadata to collection."""
+        _, mock_client, _ = mock_chromadb
+        ChromaRetriever(collection_name="test")
+        mock_client.get_or_create_collection.assert_called_once_with(
+            name="test", metadata={"hnsw:space": "cosine"}
+        )
 
     def test_init_connection_error(self):
         """Retriever raises ProviderConnectionError on init failure."""
