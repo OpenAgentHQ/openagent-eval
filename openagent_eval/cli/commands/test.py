@@ -11,7 +11,7 @@ from rich.table import Table
 from openagent_eval import __version__
 from openagent_eval.cicd.models import CICDConfig, EvaluationGate, ThresholdConfig
 from openagent_eval.cicd.plugin import OAEvalPlugin
-from openagent_eval.cicd.thresholds import ThresholdEvaluator
+from openagent_eval.cicd.thresholds import EvaluationResult, ThresholdEvaluator
 from openagent_eval.exceptions import ConfigurationError
 
 console = Console()
