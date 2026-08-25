@@ -14,7 +14,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class MetricResult:
-    """Result of a metric evaluation.
+    """Result of a metric evaluation
 
     Attributes:
         score: The metric score (typically 0.0 to 1.0).
@@ -69,11 +69,11 @@ class BaseMetric(ABC):
             MetricTimeoutError: If evaluation times out.
         """
         ...
-    @abstractmethod
     def validate_inputs(self, **kwargs: Any) -> None:
         """Validate metric inputs before evaluation.
 
-        Override this method to add custom input validation.
+        This is a no-op by default. Override this method in subclasses
+        to add custom input validation.
 
         Args:
             **kwargs: Inputs to validate.
@@ -81,3 +81,4 @@ class BaseMetric(ABC):
         Raises:
             ValueError: If inputs are invalid.
         """
+        return None
