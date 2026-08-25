@@ -83,21 +83,23 @@ class TestBaseMetric:
             def evaluate(self, **kwargs):
                 return MetricResult(score=0.5)
 
+            def validate_inputs(self, **kwargs):
+                pass
+
         metric = ValidMetric()
         assert metric.name == "valid"
         result = metric.evaluate()
         assert result.score == 0.5
 
-    def test_validate_inputs_default(self):
-        """validate_inputs does nothing by default."""
+    def test_subclass_must_implement_validate_inputs(self):
+        """Subclass without validate_inputs raises TypeError."""
 
-        class SimpleMetric(BaseMetric):
-            name = "simple"
-            description = "Simple metric"
+        class IncompleteMetric(BaseMetric):
+            name = "incomplete"
+            description = "Missing validate_inputs"
 
             def evaluate(self, **kwargs):
                 return MetricResult(score=1.0)
 
-        metric = SimpleMetric()
-        # Should not raise
-        metric.validate_inputs(anything="value")
+        with pytest.raises(TypeError):
+            IncompleteMetric()  # type: ignore[abstract]

@@ -69,7 +69,7 @@ class BaseMetric(ABC):
             MetricTimeoutError: If evaluation times out.
         """
         ...
-
+    @abstractmethod
     def validate_inputs(self, **kwargs: Any) -> None:
         """Validate metric inputs before evaluation.
 
