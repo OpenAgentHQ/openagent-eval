@@ -1,186 +1,183 @@
 # RepoHeart: workflow runs green, agents never visibly activate
 
-## TL;DR
+## TL;DR — primary root cause
 
-The `.github/workflows/repoheart.yml` workflow and `repoheart.yml` config in
-this repo are correct — routing, agent registration, provider wiring, event
-parsing, and permissions all check out. The reason nothing visible happens is
-upstream, in the `OpenAgentHQ/repo-heart` action image itself:
-
-**`ruff`, `mypy`, and `detect-secrets` are declared as `dev`-only extras in
-`repo-heart`'s `pyproject.toml`, but the Dockerfile only runs `pip install .`
-(base dependencies). So the shipped `ghcr.io/openagenthq/repo-heart:latest`
-image never has these binaries on `PATH`.**
-
-`Orchestrator._run_linters()` / `_scan_secrets()` shell out to them via
-`subprocess.run(...)`, catch `FileNotFoundError`, and silently return `""`
-(`repoheart/orchestrator/orchestrator.py`, `_run_linters`/`_scan_secrets`).
-That empty output then hits an explicit early-return in `CodeQualityAgent.run()`:
+**`OpenCodeProvider` (`OpenAgentHQ/repo-heart`, `repoheart/providers/opencode.py`)
+hardcodes the wrong API host.** It defaults to:
 
 ```python
-if not context.linter_output:
-    return AgentResult(
-        findings=[Finding(summary="No linter output available; tools may not be installed")]
-    )
+base_url: str = "https://api.opencode.ai/v1"
 ```
 
-(`repoheart/agents/code_quality.py:62-65`)
+but the real, documented OpenCode Zen hosted API — the one `OPENCODE_API_KEY`
+actually authenticates against, and the one every Zen model (including
+`mimo-v2.5-free`, the model configured in this repo's `repoheart.yml`) is
+served from — lives at:
 
-So on **every single PR**, `code_quality` degrades to a no-op `Finding` (never
-posted as a comment), and `security`'s secret-scan context is always empty
-too. The orchestrator counts this as a normal, successful agent run
-(`agent_run ... status=ok`), so `main()` returns `0` and the Action step goes
-green — even though nothing was actually reviewed. This exactly matches the
-reported symptom: the job completes successfully with no evidence any agent
-did real work.
+```
+https://opencode.ai/zen/v1/chat/completions
+```
+
+(confirmed against OpenCode's own docs at `opencode.ai/docs/zen` and
+`opencode.ai/docs/providers`, and independently corroborated by Docker
+Agent's OpenCode Zen integration docs and third-party OpenCode Zen guides —
+all agree on `https://opencode.ai/zen/v1` as the base URL).
+
+`api.opencode.ai` is not that host. Every single `OpenCodeProvider.complete()`
+call — regardless of how correctly `OPENCODE_API_KEY` is configured — hits
+the wrong domain and fails (connection/DNS error or a 404 HTML page, not a
+JSON API response). Every agent wraps its provider call in
+`except Exception: return AgentResult(findings=[Finding(summary="Provider
+error ...")])` (see `issue_triage.py`, `code_quality.py`, `security.py`,
+etc.) — so the failure is caught, turned into an internal `Finding` (which is
+diagnostic-only, never posted to GitHub — see `agents/base.py`), and the
+orchestrator logs a perfectly normal `agent_run ... status=ok`. The job
+exits `0`. **This is why the workflow is green, `OPENCODE_API_KEY` is
+correctly set, and yet every review comes back blank: not one LLM call this
+repo's RepoHeart workflow has ever made against the `opencode` provider could
+have succeeded.**
+
+Confirmed directly from this repo's own RepoHeart workflow logs (run
+[`32976363682`](https://github.com/OpenAgentHQ/openagent-eval/actions/runs/32976363682),
+job `repoheart`, triggered by a real `issues.opened` event):
+
+```
+##[group]Run OpenAgentHQ/repo-heart@main
+with:
+  config: repoheart.yml
+env:
+  GITHUB_TOKEN: ***
+  OPENCODE_API_KEY: ***          # <- present and non-empty
+  ...
+event_msg=routed agents=issue_triage,duplicate_detection,issue_resolution
+event_msg=agent_run agent=issue_triage status=ok findings=1 actions=0
+event_msg=agent_run agent=duplicate_detection status=ok findings=1 actions=0
+event_msg=agent_run agent=issue_resolution status=ok findings=1 actions=0
+event_msg=run_complete agents_run=issue_triage,duplicate_detection,issue_resolution actions_taken=0 actions_escalated=0 actions_denied=0 errors=0
+```
+
+`findings=1, actions=0` on every single agent, with **no**
+`issue_comment_posted` / `issue_comment_denied` / `issue_comment_skipped` log
+line anywhere in the run — even though every one of these agents
+unconditionally attaches an `IssueComment` on its success path. The only way
+to get `findings=1` with nothing downstream is the internal
+`except Exception` branch: the provider call itself failed before ever
+reaching the JSON-parsing / comment-building code. That is only possible if
+`context.provider.complete()` raised — i.e. every OpenCode HTTP request in
+this run failed, consistent with every request going to the wrong host.
 
 ## Execution trace
 
 ```
-GitHub Event (pull_request.opened)
- ↓  .github/workflows/repoheart.yml — on.pull_request.types ✅ correct
+GitHub Event (issues.opened / pull_request.opened / ...)
+ ↓  .github/workflows/repoheart.yml — on.* triggers ✅ correct
 GitHub Actions Workflow
  ↓  uses: OpenAgentHQ/repo-heart@main → docker://ghcr.io/openagenthq/repo-heart:latest ✅ pulls fine
-RepoHeart Container
- ↓  ENTRYPOINT ["python", "-m", "repoheart.main"] ✅ starts
-Application Entrypoint (repoheart/main.py:main)
- ↓  GITHUB_EVENT_PATH / GITHUB_EVENT_NAME read correctly ✅
+RepoHeart Container / Entrypoint (repoheart/main.py)
+ ↓  GITHUB_EVENT_PATH / GITHUB_EVENT_NAME / GITHUB_TOKEN / OPENCODE_API_KEY all present ✅
 Event Detection / Router (events/context.py, events/router.py)
- ↓  routing_key "pull_request.opened" → [pr_review, code_quality, security, test, conflict_resolution] ✅
-Agent Selection / Registration (agents/registry.py — AGENT_REGISTRY)
- ↓  all 5 classes registered and enabled per repoheart.yml ✅
-Agent Initialization (Orchestrator._build_context)
- ↓  provider constructed via providers/registry.py ✅ (fails fast only on missing SDK, not on missing linters)
-Provider Initialization
- ↓  OpenCodeProvider(...) instantiated fine ✅
-Agent Execution — CodeQualityAgent.run()
- ✗  STOPS HERE: context.linter_output == "" (ruff/mypy not on PATH in the
-    image) → early return, "skipping code quality check", no LLM call made,
-    no comment posted. Reported as agent_run status=ok — indistinguishable
-    from a real, clean run in the logs.
+ ↓  routing_key correctly maps to the right agent set ✅
+Agent Selection / Registration (agents/registry.py)
+ ↓  all agents registered and enabled per repoheart.yml ✅
+Agent Initialization → Provider Initialization
+ ↓  OpenCodeProvider(model="mimo-v2.5-free") constructed fine — no fail-fast
+    check catches a wrong base_url; construction never makes a network call ✅
+AI Model Call — OpenCodeProvider._do_complete()
+ ✗  STOPS HERE: POST to https://api.opencode.ai/v1/chat/completions — a host
+    that does not serve the OpenCode Zen API. The request fails (DNS/connect
+    error or non-JSON 404 response). urllib raises; retried 3x by
+    `_retry_with_backoff` where applicable, then propagates.
+Agent Execution
+ ✗  Each agent's `try: response = context.provider.complete(request) except
+    Exception as exc: return AgentResult(findings=[Finding(...)])` swallows
+    the failure. Orchestrator logs `agent_run status=ok findings=1
+    actions=0` — indistinguishable from a real, clean, "nothing to report"
+    run in the logs or in the job's exit code.
 GitHub API Action
-    never reached for code_quality; security's diff review still runs but
-    without secret-scan context.
+    never reached — there is nothing to post; no comment, no label, no
+    review.
 ```
-
-## Evidence
-
-- `OpenAgentHQ/repo-heart` — `pyproject.toml` (before fix):
-  ```toml
-  dependencies = [
-      "pyyaml>=6.0",
-  ]
-  [project.optional-dependencies]
-  dev = [
-      "pytest>=8.0",
-      "ruff>=0.6",
-      "mypy>=1.11",
-      "types-PyYAML>=6.0",
-  ]
-  ```
-- `OpenAgentHQ/repo-heart` — `Dockerfile`:
-  ```dockerfile
-  COPY pyproject.toml README.md ./
-  COPY repoheart ./repoheart
-  RUN pip install --no-cache-dir .
-  ```
-  `pip install .` only pulls `[project.dependencies]` — the `dev` extra
-  (and therefore `ruff`/`mypy`) is never installed in the image.
-- `OpenAgentHQ/repo-heart` — `repoheart/orchestrator/orchestrator.py`,
-  `_run_linters()` (ruff/mypy) and `_scan_secrets()` (detect-secrets): both
-  wrap `subprocess.run([...])` in `except (FileNotFoundError, ...): pass` /
-  `return ""` — correct behavior for "tool not installed", but nothing
-  upstream distinguishes "genuinely nothing to report" from "the binary
-  doesn't exist," so it never surfaces as an error.
-- `OpenAgentHQ/repo-heart` — `repoheart/agents/code_quality.py:62-65`: hard
-  early-return whenever `context.linter_output` is empty, which is
-  unconditionally the case in the shipped image.
-- `tests/agents/test_code_quality.py` in `repo-heart` injects
-  `linter_output` directly in every test — nothing in the existing suite
-  exercises `_run_linters()` actually finding `ruff`/`mypy` on `PATH`, so this
-  gap was untested.
-
-Reproduced locally: cloned `OpenAgentHQ/repo-heart` at the pinned `main` ref,
-installed the package the same way the Dockerfile does (`pip install .`,
-base deps only), and ran the real pipeline against a synthetic
-`pull_request.opened` event pointed at two real commits in this repo:
-
-```
-event_msg=routed agents=pr_review,code_quality,security,test,conflict_resolution
-event_msg=agent_run agent=code_quality status=ok findings=1 actions=0
-```
-— `findings[0].summary == "No linter output available; tools may not be installed"`,
-confirming the silent no-op, while the step/job itself reports success.
-
-## This repo's own configuration — verified correct, not the cause
-
-- `.github/workflows/repoheart.yml`: `on.issues/issue_comment/pull_request/
-  pull_request_review/push/workflow_run/release` all present and correctly
-  typed; `permissions` (`contents: write`, `issues: write`,
-  `pull-requests: write`, `checks: read`, `actions: read`) are sufficient for
-  every `ActionKind` the orchestrator dispatches; the `uses:` action reference
-  (`OpenAgentHQ/repo-heart@main`) was already corrected in commit `97c04d3`.
-- `repoheart.yml`: correctly nested under the required top-level
-  `repoheart:` key, `provider.name: opencode` is a valid provider, and all
-  agents including `code_quality` are enabled.
-- `GITHUB_EVENT_NAME` / `GITHUB_EVENT_PATH` / `GITHUB_TOKEN` are supplied to
-  the container as expected for a Docker container action; routing, agent
-  registry, and provider resolution all behaved correctly in the local
-  reproduction above.
 
 ## Fix
 
-Applied upstream, in `OpenAgentHQ/repo-heart` (verified locally against a
-clone of that repo; not part of this repo's diff since the affected code
-lives there):
+Implemented and verified in a local clone of `OpenAgentHQ/repo-heart`
+(`repoheart/providers/opencode.py`):
 
-- `pyproject.toml`: moved `ruff`, `mypy`, and added `detect-secrets` to
-  `[project.dependencies]` (base install), leaving only `pytest` and
-  `types-PyYAML` under the `dev` extra. `pip install .` (what the Dockerfile
-  runs) now installs everything `_run_linters`/`_scan_secrets` need.
-- Added `tests/test_runtime_deps.py`:
-  - asserts `ruff`/`mypy`/`detect-secrets` are listed in
-    `[project.dependencies]`, not only `dev` — this test fails against the
-    pre-fix `pyproject.toml`.
-  - asserts the three binaries actually resolve on `PATH` once installed.
-  - a smoke test that `ruff check` on a deliberately bad snippet produces a
-    real finding (`F401`), guarding against a future "installed but broken"
-    regression.
+```python
+base_url: str = "https://opencode.ai/zen/v1",   # was: "https://api.opencode.ai/v1"
+```
 
-## Verification (in the `repo-heart` clone)
+Added two regression tests to `tests/test_providers_opencode.py`:
+
+- `test_default_base_url_is_the_real_opencode_zen_endpoint` — asserts the
+  provider's default `base_url` is the real Zen host.
+- `test_request_url_hits_the_real_zen_chat_completions_path` — captures the
+  actual URL `urllib.request.urlopen` is called with during `.complete()`
+  and asserts it's `https://opencode.ai/zen/v1/chat/completions`.
+
+Both tests were confirmed to **fail** against the pre-fix `base_url` (asserted
+`https://api.opencode.ai/v1/chat/completions` — the wrong host — was what the
+provider actually requested), and pass after the one-line fix.
 
 ```
-$ pip install -e .            # base deps only, mirrors Dockerfile's `pip install .`
-$ pytest -q tests/test_runtime_deps.py
-...                                                                      [100%]
-3 passed in 0.02s
-
-$ pytest -q                    # full existing suite
-... 4 pre-existing failures in tests/test_retrieval_lexical.py, unrelated to
-    this change (ripgrep-fallback tests failing in this sandbox regardless
-    of the pyproject/runtime-deps fix — reproduced identically before and
-    after the change)
-
-$ ruff check pyproject.toml
+$ pytest -q tests/test_providers_opencode.py
+13 passed in 0.06s
+$ ruff check repoheart/providers/opencode.py tests/test_providers_opencode.py
 All checks passed!
-
-$ mypy repoheart/agents/code_quality.py
+$ mypy repoheart/providers/opencode.py
 Success: no issues found in 1 source file
 ```
 
-Re-running the same synthetic `pull_request.opened` reproduction after
-installing the fixed dependency set: `ruff`/`mypy` resolve on `PATH`,
-`_run_linters()` returns real output, and `code_quality` proceeds past the
-early-return into the actual LLM-backed review path instead of the
-"no linter output" `Finding`.
+## Secondary finding — `code_quality`/`security` still degrade even with a working provider
+
+Separately, once the provider itself is fixed, `code_quality` and `security`
+remain unable to fully do their job specifically for **PR** agents, because
+`ruff`, `mypy`, and `detect-secrets` are declared as `dev`-only extras in
+`repo-heart`'s `pyproject.toml`, while its `Dockerfile` only runs
+`pip install .` (base dependencies) — so the shipped image never has these
+binaries on `PATH`. `Orchestrator._run_linters()` / `_scan_secrets()` catch
+the resulting `FileNotFoundError` and return `""`, which trips
+`CodeQualityAgent.run()`'s explicit early return:
+
+```python
+if not context.linter_output:
+    return AgentResult(findings=[Finding(summary="No linter output available; tools may not be installed")])
+```
+
+(`repoheart/agents/code_quality.py:62-65`)
+
+Fix (implemented and verified in the same local clone): moved `ruff`,
+`mypy`, and added `detect-secrets` from `[project.optional-dependencies].dev`
+into `[project.dependencies]` in `pyproject.toml`, and added
+`tests/test_runtime_deps.py` (3 tests) asserting these tools are declared as
+base dependencies and resolve on `PATH` once installed — fails pre-fix,
+passes post-fix.
+
+## This repo's own configuration — verified correct, not the cause
+
+- `.github/workflows/repoheart.yml`: all relevant `on:` triggers present and
+  correctly typed; `permissions` sufficient for every `ActionKind` the
+  orchestrator dispatches; the `uses:` action reference was already
+  corrected in commit `97c04d3`.
+- `repoheart.yml`: correctly nested under the required top-level
+  `repoheart:` key; `provider.name: opencode` / `model: mimo-v2.5-free` are
+  valid and match a real, currently-served OpenCode Zen model; all agents
+  enabled as intended.
+- `OPENCODE_API_KEY` is genuinely present in the environment at run time
+  (confirmed non-empty in the masked workflow logs above) — this was never a
+  missing-secret problem.
 
 ## Note on scope
 
-This session's write access is scoped to `OpenAgentHQ/openagent-eval`. The
-defect and its fix live in `OpenAgentHQ/repo-heart`'s `pyproject.toml` /
-`Dockerfile` / test suite, which was cloned read-only for investigation and
-reproduction (`/home/user/openagenthq/repo-heart` locally). The fix described
-above was implemented and verified in that clone but is not pushed anywhere
-by this session; it should be applied as a PR against `OpenAgentHQ/repo-heart`
-directly. Nothing in this repo's `repoheart.yml` or workflow needed to
-change.
+This session's write access is scoped to `OpenAgentHQ/openagent-eval`. Both
+defects and their fixes live in `OpenAgentHQ/repo-heart`
+(`repoheart/providers/opencode.py`, `pyproject.toml`, `Dockerfile`), which
+was cloned read-only for investigation and reproduction
+(`/home/user/openagenthq/repo-heart` locally). Both fixes described above
+were implemented and verified in that clone but are not pushed anywhere by
+this session; they should be applied as a PR against
+`OpenAgentHQ/repo-heart` directly — the primary `base_url` fix in
+particular is what will make `code_quality`, `security`, `pr_review`,
+`issue_triage`, and every other `opencode`-backed agent actually produce
+real output in this repo's own workflow. Nothing in this repo's
+`repoheart.yml` or workflow needs to change.
