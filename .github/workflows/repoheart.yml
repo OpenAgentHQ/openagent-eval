@@ -1,0 +1,56 @@
+name: RepoHeart
+
+on:
+  issues:
+    types: [opened, edited]
+
+  issue_comment:
+    types: [created]
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+  pull_request_review:
+    types: [submitted]
+
+  push:
+
+  workflow_run:
+    workflows: ["*"]
+    types: [completed]
+
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  checks: read
+  actions: read
+
+concurrency:
+  group: repoheart-${{ github.event.issue.number || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repoheart:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Run RepoHeart
+        uses: OpenAgentHQ/repoheart@main
+        with:
+          config: repoheart.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
