@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 import yaml
-from pydantic import SecretStr
+from pydantic import SecretStr, ValidationError
 
 from openagent_eval.config.loader import load_config
 from openagent_eval.config.models import (
@@ -52,7 +52,7 @@ class TestConfigModels:
         assert config.api_key is not None
 
         # Invalid API key (too short)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             LLMConfig(provider="openai", model="gpt-4o", api_key="short")
 
     def test_llm_config_api_key_is_secretstr(self) -> None:
