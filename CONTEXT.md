@@ -11,7 +11,7 @@
 | Repo | `openagent-eval` |
 | Package | `openagent_eval` |
 | CLI | `oaeval` |
-| Lang | Python 3.10+ |
+| Lang | Python 3.11+ |
 | PM | `uv` |
 | Test | `pytest` |
 | Lint | `ruff` |
