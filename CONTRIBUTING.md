@@ -179,6 +179,20 @@ optional footer
 | `ci` | CI/CD | `ci: add release workflow` |
 | `build` | Build | `build: configure hatch` |
 
+### Changelog Contribution Guidelines
+
+All new features, fixes, or breaking changes **must** be documented in the `CHANGELOG.md` file before the associated Pull Request is merged. Entries must strictly adhere to the [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
+
+#### Format Rules
+
+1. Use the standard sections: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Breaking`.
+2. Each entry must start with a clear, concise summary.
+3. Use Markdown bullet points (`*`) for list items.
+
+#### Validation
+
+Before submitting, run python `scripts/changelog_validator.py` to ensure compliance.
+
 ### Rules
 
 - Use imperative mood ("add feature" not "added feature")
