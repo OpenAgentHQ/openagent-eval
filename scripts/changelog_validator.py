@@ -1,9 +1,8 @@
 import re
 import sys
-from typing import List, Dict
+from typing import List
 
 CHANGELOG_PATH = "CHANGELOG.md"
-REQUIRED_SECTIONS = ["Added", "Changed", "Fixed", "Deprecated", "Removed", "Breaking"]
 
 def load_changelog(filepath: str) -> str:
     """Loads the content of the changelog file."""

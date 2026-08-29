@@ -64,13 +64,13 @@ uv run ruff check .
 
 ### Branch Naming
 
-| Type | Format | Example |
-|------|--------|---------|
-| Feature | `feature/{description}` | `feature/add-oauth` |
-| Bug Fix | `fix/{description}` | `fix/null-pointer` |
-| Documentation | `docs/{description}` | `docs/update-readme` |
-| Refactor | `refactor/{description}` | `refactor/extract-utils` |
-| Test | `test/{description}` | `test/add-unit-tests` |
+| Type          | Format                   | Example                  |
+| ------------- | ------------------------ | ------------------------ |
+| Feature       | `feature/{description}`  | `feature/add-oauth`      |
+| Bug Fix       | `fix/{description}`      | `fix/null-pointer`       |
+| Documentation | `docs/{description}`     | `docs/update-readme`     |
+| Refactor      | `refactor/{description}` | `refactor/extract-utils` |
+| Test          | `test/{description}`     | `test/add-unit-tests`    |
 
 ### Coding Standards
 
@@ -135,12 +135,12 @@ class TestMyMetric:
     @pytest.fixture
     def metric(self):
         return MyMetric()
-    
+
     def test_evaluate_success(self, metric):
         result = metric.evaluate(answer="test", context="context")
         assert result.score >= 0.0
         assert result.score <= 1.0
-    
+
     def test_evaluate_edge_case(self, metric):
         result = metric.evaluate(answer="", context="")
         assert result.score == 0.0
@@ -166,18 +166,18 @@ optional footer
 
 ### Types
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `feat` | New feature | `feat(metrics): add BERTScore metric` |
-| `fix` | Bug fix | `fix(config): handle missing yaml key` |
-| `docs` | Documentation | `docs(readme): add installation steps` |
-| `style` | Formatting | `style: fix indentation` |
-| `refactor` | Code refactoring | `refactor(utils): extract helpers` |
-| `test` | Tests | `test(metrics): add faithfulness tests` |
-| `chore` | Maintenance | `chore: update dependencies` |
-| `perf` | Performance | `perf(query): add caching` |
-| `ci` | CI/CD | `ci: add release workflow` |
-| `build` | Build | `build: configure hatch` |
+| Type       | Description      | Example                                 |
+| ---------- | ---------------- | --------------------------------------- |
+| `feat`     | New feature      | `feat(metrics): add BERTScore metric`   |
+| `fix`      | Bug fix          | `fix(config): handle missing yaml key`  |
+| `docs`     | Documentation    | `docs(readme): add installation steps`  |
+| `style`    | Formatting       | `style: fix indentation`                |
+| `refactor` | Code refactoring | `refactor(utils): extract helpers`      |
+| `test`     | Tests            | `test(metrics): add faithfulness tests` |
+| `chore`    | Maintenance      | `chore: update dependencies`            |
+| `perf`     | Performance      | `perf(query): add caching`              |
+| `ci`       | CI/CD            | `ci: add release workflow`              |
+| `build`    | Build            | `build: configure hatch`                |
 
 ### Changelog Contribution Guidelines
 
@@ -185,9 +185,9 @@ All new features, fixes, or breaking changes **must** be documented in the `CHAN
 
 #### Format Rules
 
-1. Use the standard sections: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Breaking`.
+1. Use the standard sections: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Breaking`, `Security`.
 2. Each entry must start with a clear, concise summary.
-3. Use Markdown bullet points (`*`) for list items.
+3. Use Markdown bullet points (`-` or `*`) for list items.
 
 #### Validation
 
@@ -206,12 +206,14 @@ Before submitting, run `uv run python scripts/changelog_validator.py` to ensure 
 ### Before Submitting
 
 1. Update your branch:
+
    ```bash
    git fetch upstream
    git rebase upstream/main
    ```
 
 2. Run all checks:
+
    ```bash
    uv run pytest
    uv run ruff check .
@@ -245,6 +247,7 @@ Before submitting, run `uv run python scripts/changelog_validator.py` to ensure 
 ### Bug Reports
 
 When reporting bugs, include:
+
 1. Clear description of the bug
 2. Steps to reproduce
 3. Expected vs actual behavior
@@ -254,6 +257,7 @@ When reporting bugs, include:
 ### Feature Requests
 
 When requesting features, include:
+
 1. Clear description of the feature
 2. Use case
 3. Alternatives considered
