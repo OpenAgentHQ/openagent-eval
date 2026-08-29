@@ -191,7 +191,7 @@ All new features, fixes, or breaking changes **must** be documented in the `CHAN
 
 #### Validation
 
-Before submitting, run python `scripts/changelog_validator.py` to ensure compliance.
+Before submitting, run `uv run python scripts/changelog_validator.py` to ensure compliance.
 
 ### Rules
 
