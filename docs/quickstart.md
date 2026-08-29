@@ -82,6 +82,12 @@ This checks:
 - Dataset file existence
 - Output directory accessibility
 
+!!! tip "Test without API keys"
+    Use the built-in mock LLM and retriever to run the complete pipeline without
+    credentials, network access, or a vector database. Follow the
+    [offline testing guide](testing-offline.md) for a ready-to-run fixture and
+    configuration.
+
 ## 3. Prepare a dataset
 
 OpenAgent Eval loads datasets in **JSON**, **JSONL**, **CSV**, or **PDF** format. Each item needs a
@@ -203,6 +209,7 @@ assert report.summary["metrics_summary"]["faithfulness"] >= 0.8
 
 ## Next steps
 
+- Add an API-key-free smoke test with the [offline testing guide](testing-offline.md).
 - Understand the internals on the [Architecture](architecture.md) page.
 - Learn every flag in the [CLI Reference](cli.md).
 - Discover the full API in [API Reference](api.md).

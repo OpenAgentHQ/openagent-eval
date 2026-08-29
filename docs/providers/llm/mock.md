@@ -81,5 +81,7 @@ print(report.summary["metrics_summary"])
 
 ## Related
 
+- Follow the [offline testing guide](../../testing-offline.md) for a complete
+  CLI, Python, and CI workflow.
 - Pair with the [mock retriever](../retrievers/mock.md) for a 100% offline run.
 - See all LLMs in [index.md](index.md).

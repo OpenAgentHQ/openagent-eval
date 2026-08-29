@@ -74,6 +74,8 @@ print(report.summary["metrics_summary"])
 
 ## Related
 
+- Follow the [offline testing guide](../../testing-offline.md) for a complete
+  CLI, Python, and CI workflow.
 - Ready to go live? Switch to [Chroma](chroma.md) or any other vector
   store and update `retriever.provider`.
 - Pair with an LLM from [../llm/index.md](../llm/index.md).
