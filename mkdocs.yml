@@ -147,6 +147,7 @@ nav:
   - Getting Started:
       - Installation: installation.md
       - Quickstart: quickstart.md
+      - Testing Offline: testing-offline.md
   - Providers:
       - providers/index.md
       - LLM:
