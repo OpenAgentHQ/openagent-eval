@@ -3,18 +3,43 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import os
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from openagent_eval import __version__
 from openagent_eval.cli.context import get_context
+from openagent_eval.cli.utils.discovery import find_config_file
+from openagent_eval.config.loader import load_config
+from openagent_eval.exceptions import ConfigurationError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 console = Console()
+
+_LLM_PROVIDER_EXTRAS: dict[str, tuple[tuple[str, ...], str]] = {
+    "anthropic": (("anthropic",), "providers"),
+    "gemini": (("google.genai",), "providers"),
+    "groq": (("groq",), "providers"),
+    "openai": (("openai", "tiktoken"), "providers"),
+}
+
+_RETRIEVER_EXTRAS: dict[str, tuple[tuple[str, ...], str]] = {
+    "bm25": (("rank_bm25",), "bm25"),
+    "elasticsearch": (("elasticsearch",), "elasticsearch"),
+    "faiss": (("faiss",), "faiss"),
+    "pgvector": (("psycopg", "pgvector"), "pgvector"),
+    "pinecone": (("pinecone",), "pinecone"),
+    "qdrant": (("qdrant_client",), "qdrant"),
+    "weaviate": (("weaviate",), "weaviate"),
+}
 
 
 def doctor_command(
@@ -125,7 +150,8 @@ def doctor_command(
 
     # Configuration file check
     console.print("\n[bold]Configuration:[/bold]")
-    _check_config_files()
+    config_path = _check_config_files()
+    _check_configured_provider_extras(config_path)
 
     # Summary
     console.print("\n[bold]Summary:[/bold]")
@@ -187,26 +213,77 @@ def _test_api_connectivity(providers: list[str]) -> None:
             console.print(f"  [yellow]SKIP[/yellow] {provider}: {type(e).__name__}")
 
 
-def _check_config_files() -> None:
+def _check_config_files() -> Path | None:
     """Check for configuration files in current directory."""
-    config_names = ["config.yaml", "config.yml", "oaeval.yaml", "oaeval.yml"]
-    found = False
+    config_path = find_config_file()
 
-    for name in config_names:
-        path = Path(name)
-        if path.exists():
-            console.print(f"  [green]OK[/green] Found config: {name}")
-            found = True
-            break
-
-    if not found:
+    if config_path is None:
         console.print("  [dim]No config file in current directory[/dim]")
         console.print("  [dim]Run 'oaeval init' to create one[/dim]")
+        return None
 
-    # Check environment variable
-    env_config = os.environ.get("OAEVAL_CONFIG")
-    if env_config:
-        console.print(f"  [green]OK[/green] OAEVAL_CONFIG: {env_config}")
+    console.print(f"  [green]OK[/green] Found config: {config_path}")
+    return config_path
+
+
+def _check_configured_provider_extras(config_path: Path | None) -> None:
+    """Warn when the active config uses providers whose extras are not installed."""
+    if config_path is None:
+        return
+
+    try:
+        config = load_config(config_path)
+    except ConfigurationError as exc:
+        console.print(
+            f"  [yellow]WARNING[/yellow] Could not inspect configured providers: {exc.message}"
+        )
+        return
+
+    missing = [
+        *_missing_extra_rows("LLM", config.llm.provider, _LLM_PROVIDER_EXTRAS),
+        *_missing_extra_rows("Retriever", config.retriever.provider, _RETRIEVER_EXTRAS),
+    ]
+
+    if not missing:
+        console.print("  [green]OK[/green] Configured provider extras installed")
+        return
+
+    table = Table(title="Configured Provider Extras")
+    table.add_column("Provider", style="cyan")
+    table.add_column("Status", style="bold")
+    table.add_column("Install")
+
+    for provider, extra in missing:
+        table.add_row(
+            provider,
+            "[yellow]MISSING[/yellow]",
+            escape(f'pip install "openagent-eval[{extra}]"'),
+        )
+
+    console.print(table)
+
+
+def _missing_extra_rows(
+    kind: str,
+    provider: str,
+    extras: dict[str, tuple[tuple[str, ...], str]],
+) -> list[tuple[str, str]]:
+    key = provider.lower().strip()
+    if key not in extras:
+        return []
+
+    modules, extra = extras[key]
+    if all(_module_available(module) for module in modules):
+        return []
+
+    return [(f"{kind}: {provider}", extra)]
+
+
+def _module_available(module_name: str) -> bool:
+    try:
+        return importlib.util.find_spec(module_name) is not None
+    except (ImportError, ModuleNotFoundError, ValueError):
+        return False
 
 
 def _print_recommendations(python_ok: bool, providers: list[str]) -> None:
