@@ -173,7 +173,9 @@ uv run ruff check --fix .
 
 ### Type Checking
 
-This project uses [mypy](https://mypy.readthedocs.io/) for static type checking.
+This project uses [mypy](https://mypy.readthedocs.io/) for static type checking and is configured with `strict = true` in `pyproject.toml`.
+
+**Note on CI Enforcement:** Currently, mypy strict mode is non-blocking in our CI pipeline (`continue-on-error: true`). While type-checking errors will not immediately fail your build, we are actively working towards making strict type enforcement a blocking requirement. Contributors are highly encouraged to resolve all mypy errors locally before submitting a PR to help us reach this target. (For more details, see the related CI-enforcement tracking issue: [#344](https://github.com/OpenAgentHQ/openagent-eval/issues/344)).
 
 ```bash
 uv run mypy openagent_eval/
