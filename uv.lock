@@ -2466,7 +2466,7 @@ wheels = [
 
 [[package]]
 name = "openagent-eval"
-version = "0.4.8"
+version = "0.4.10"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
