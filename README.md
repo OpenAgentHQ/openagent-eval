@@ -52,6 +52,45 @@ uv sync
 
 ---
 
+## Try It in 60 Seconds — No API Key Needed
+
+The built-in mock providers run a complete evaluation locally, without network calls or credentials. Copy and paste this block after installing `openagent-eval`:
+
+```bash
+cat > quickstart-dataset.json <<'JSON'
+[
+  {
+    "question": "What is retrieval-augmented generation?",
+    "ground_truth": "RAG combines retrieval with generation.",
+    "ground_truth_contexts": ["RAG combines retrieval with generation."]
+  }
+]
+JSON
+
+cat > quickstart.yaml <<'YAML'
+dataset:
+  path: quickstart-dataset.json
+llm:
+  provider: mock
+  model: mock-model
+retriever:
+  provider: mock
+metrics:
+  retrieval: [context_precision]
+  generation: [exact_match]
+  performance: [latency]
+  cost: [token_count]
+report:
+  output: terminal
+YAML
+
+oaeval run quickstart.yaml
+```
+
+This uses deterministic offline stand-ins so you can verify the full dataset → retrieval → generation → metrics → report flow before configuring a real model or vector store.
+
+---
+
 ## Quick Start
 
 ### 1. Initialize Configuration
