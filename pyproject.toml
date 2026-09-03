@@ -68,6 +68,13 @@ datasets = [
 pdf = [
     "pypdf>=4.0.0",
 ]
+# EvalPort (https://github.com/adhabnr-ux/evalport) ResultSet export via
+# openagent_eval.reports.evalport.EvalPortReport. Not required to import that
+# module (it degrades to a bundled OPENEVAL_VERSION fallback without it), but
+# is required to validate its output against openeval.validate.validate_result_set.
+evalport = [
+    "evalport-sdk>=1.0.0",
+]
 # --- LLM provider extras ------------------------------------------------
 # These SDKs are imported unconditionally by their respective provider
 # adapters (openagent_eval/providers/llm/*), so they must be installed to
@@ -88,7 +95,7 @@ pgvector = ["psycopg[binary]>=3.1.0", "pgvector>=0.2.0"]
 elasticsearch = ["elasticsearch>=8.0.0"]
 bm25 = ["rank-bm25>=0.2.0"]
 all = [
-    "openagent-eval[dev,evaluation,corpus,nli,datasets,pdf,providers,qdrant,pinecone,weaviate,faiss,pgvector,elasticsearch,bm25]",
+    "openagent-eval[dev,evaluation,corpus,nli,datasets,pdf,providers,qdrant,pinecone,weaviate,faiss,pgvector,elasticsearch,bm25,evalport]",
 ]
 
 [project.scripts]
