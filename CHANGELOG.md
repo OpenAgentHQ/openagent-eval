@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added `oaeval doctor` warnings for configured providers whose optional extras are not installed.
 - Created `scripts/changelog_validator.py` to automatically verify Keep a Changelog formatting.
 - Added a section to `CONTRIBUTING.md` documenting the changelog update process for future contributors.
+- Added `EvalPortReport` (`openagent_eval/reports/evalport.py`), a `ReportGenerator` that exports an `EvaluationReport` as an [EvalPort](https://github.com/adhabnr-ux/evalport) `ResultSet` for interop with other EvalPort-speaking evaluation tools; install with the new optional `evalport` extra (design agreed in Discussion #296).
 
 ---
 
