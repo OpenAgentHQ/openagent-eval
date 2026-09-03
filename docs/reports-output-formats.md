@@ -56,7 +56,7 @@ oaeval report ffeaa75f-9717-4502-92ee-4c91fdfb7e9c --output terminal
 OpenAgent Eval - Report Viewer
 Report: latest
 
-╭─────────────────────────── Evaluation Complete ─────────────────────────────╮
+╭──────────────────────────── Evaluation Complete ─────────────────────────────╮
 │ OpenAgent Eval Report                                                        │
 ╰──────────────────────────────────────────────────────────────────────────────╯
       Summary      
@@ -72,7 +72,7 @@ Report: latest
 │ precision    │ 0.8500 │
 │ recall       │ 0.8433 │
 │ faithfulness │ 0.8567 │
-└─────────────┴────────┘
+└──────────────┴────────┘
                      Sample Results                     
 ┏━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ # ┃ Question        ┃ Metrics                        ┃
