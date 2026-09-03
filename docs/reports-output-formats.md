@@ -56,15 +56,15 @@ oaeval report ffeaa75f-9717-4502-92ee-4c91fdfb7e9c --output terminal
 OpenAgent Eval - Report Viewer
 Report: latest
 
-╭──────────────────────────── Evaluation Complete ─────────────────────────────╮
+╭──────────────────────── Evaluation Complete ─────────────────────────╮
 │ OpenAgent Eval Report                                                        │
-╰──────────────────────────────────────────────────────────────────────────────╯
+╰───────────────────────────────────────────────────────────────────────────────╯
       Summary      
-┌─────────────┬───┐
+┌──────────────┬───┐
 │ Total Items │ 5 │
 │ Successful  │ 3 │
 │ Failed      │ 2 │
-└─────────────┴───┘
+└──────────────┴───┘
          Metrics         
 ┏━━━━━━━━━━━━━━┳━━━━━━━━┓
 ┃ Metric       ┃  Score ┃
@@ -74,17 +74,17 @@ Report: latest
 │ faithfulness │ 0.8567 │
 └──────────────┴────────┘
                      Sample Results                     
-┏━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┏━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ # ┃ Question        ┃ Metrics                        ┃
-┡━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+┡━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
 │ 1 │ What is Python? │ precision=0.95, recall=0.88... │
 │ 2 │ What is RAG?    │ precision=0.82, recall=0.90... │
 └───┴─────────────────┴────────────────────────────────┘
-╭─────────────────────────────── Configuration ────────────────────────────────╮
+╭─────────────────────────── Configuration ────────────────────────────╮
 │ Dataset: tests/sample_data/test_dataset.json                                 │
 │ LLM: openai/gpt-4o                                                           │
 │ Output: terminal                                                             │
-╰──────────────────────────────────────────────────────────────────────────────╯
+╰───────────────────────────────────────────────────────────────────────────╯
 
 Report ID: ffeaa75f-9717-4502-92ee-4c91fdfb7e9c
 ```
@@ -350,7 +350,79 @@ oaeval report latest --output json
 
 ---
 
-## 5. Comparison Report
+## 5. EvalPort Report
+
+The **EvalPort Report** (`EvalPortReport`) exports a completed evaluation as an [EvalPort](https://github.com/adhabnr-ux/evalport) `ResultSet` -- an open, tool-agnostic JSON format for evaluation results shared across DeepEval, Promptfoo, Inspect AI, AutoGen, CrewAI, Ragas, LangSmith, Braintrust, MLflow, Opik, TruLens, and now OpenAgent Eval. Use it to hand a run's results to any EvalPort-speaking dashboard, comparison tool, or CI gate without writing a bespoke exporter.
+
+Unlike Terminal/Markdown/HTML/JSON, this generator is not wired into `--output` yet -- OpenAgent Eval's metrics are bare `[0.0, 1.0]` scores with no native pass/fail concept, so producing an EvalPort `ResultSet` (which requires a `passed` boolean per grader) needs a threshold decision that has no single obviously-correct default for every metric. Invoke it directly from the SDK once you have an `EvaluationReport`:
+
+```python
+from openagent_eval.reports.evalport import EvalPortReport
+
+# Optional: pass-thresholds per metric name. Any metric not listed here
+# uses default_threshold (0.5).
+generator = EvalPortReport(evalport_thresholds={"faithfulness": 0.7})
+generator.generate_to_file(report, "result_set.json")
+```
+
+### Mapping
+
+* **`metrics` → `grader_results`**: one `GraderResult` per metric (`grader_id` = metric name, `type="custom"`). `passed` is derived from `evalport_thresholds` (default `0.5`) since OpenAgent Eval's metrics carry no native pass/fail -- every result's `metadata.openeval_derived_pass` is set to `true` so a consumer can always tell an inferred pass/fail from a tool-native one.
+* **`answer` → `actual_output`**, **`metadata["latency_ms"]` → `duration_ms`** (rounded to the nearest millisecond).
+* **`question` / `ground_truth` / `contexts`**: preserved under `metadata.openagent_eval`, since EvalPort's `Result` schema has no dedicated fields for them.
+* **`test_case_id`**: the dataset item's `metadata.id` when present, else a positional `f"{run_id}_item_{i}"`.
+* **Pipeline errors** (`PipelineResult.errors`): each becomes its own failed `Result` with `error` populated and no `grader_results`, since EvalPort's schema has no concept of an item that was never evaluated.
+* **Direction**: strictly one-way (`EvaluationReport -> ResultSet`). There is no `from_openeval` -- OpenAgent Eval's own dataset loading already has an established shape this adapter does not replace.
+
+### Sample Output
+
+```json
+{
+  "version": "1.0.0-rc.5",
+  "suite_id": "data/questions.json",
+  "run_id": "run_2026-07-14T12-30",
+  "started_at": "2026-07-14T12:30:48Z",
+  "results": [
+    {
+      "test_case_id": "1",
+      "grader_results": [
+        {"grader_id": "precision", "type": "custom", "score": 0.95, "passed": true, "reason": "precision=0.9500 (threshold=0.5)"},
+        {"grader_id": "recall", "type": "custom", "score": 0.88, "passed": true, "reason": "recall=0.8800 (threshold=0.5)"},
+        {"grader_id": "faithfulness", "type": "custom", "score": 0.92, "passed": true, "reason": "faithfulness=0.9200 (threshold=0.7)"}
+      ],
+      "passed": true,
+      "metadata": {
+        "openagent_eval": {
+          "question": "What is Python?",
+          "ground_truth": "Python is a high-level programming language.",
+          "contexts": ["Python is a programming language created by Guido van Rossum."]
+        },
+        "openeval_derived_pass": true
+      },
+      "actual_output": "Python is a programming language.",
+      "duration_ms": 842
+    },
+    {
+      "test_case_id": "run_2026-07-14T12-30_error_0",
+      "grader_results": [],
+      "passed": false,
+      "error": {"message": "Connection timeout", "detail": "ProviderConnectionError"},
+      "metadata": {"openeval_derived_pass": true, "openagent_eval": {"question": "Failed question"}}
+    }
+  ],
+  "summary": {"total": 3, "passed": 2, "failed": 1, "pass_rate": 0.6667},
+  "metadata": {
+    "openagent_eval": {"engine": "openagent-eval", "version": "0.1.0", "title": "OpenAgent Eval Report"}
+  },
+  "completed_at": "2026-07-14T12:30:49Z"
+}
+```
+
+Validate any generated `ResultSet` against the spec with `openeval.validate.validate_result_set()` (from the optional `evalport-sdk` dependency, `pip install openagent-eval[evalport]`).
+
+---
+
+## 6. Comparison Report
 
 The **Comparison Report** (`ComparisonReport`) is a dedicated utility used to compare two experiments side by side. It calculates the delta for each shared metric, assesses whether the overall score went up or down, and declares a winner.
 
