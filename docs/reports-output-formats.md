@@ -72,7 +72,7 @@ Report: latest
 │ precision    │ 0.8500 │
 │ recall       │ 0.8433 │
 │ faithfulness │ 0.8567 │
-└──────────────┴────────┘
+└─────────────┴────────┘
                      Sample Results                     
 ┏━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ # ┃ Question        ┃ Metrics                        ┃
