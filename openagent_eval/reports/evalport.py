@@ -3,8 +3,7 @@
 EvalPort (https://github.com/adhabnr-ux/evalport) is an open interchange
 format (Apache 2.0) for portable LLM evaluation datasets: test cases,
 graders, suites, and results as plain JSON, shared across evaluation tools
-(DeepEval, Promptfoo, Inspect AI, AutoGen, CrewAI, Ragas, LangSmith,
-Braintrust, MLflow, Opik, TruLens, and now OpenAgent Eval).
+(DeepEval, Promptfoo, Inspect AI, AutoGen, CrewAI, and others).
 
 This module converts a completed :class:`~openagent_eval.core.engine.EvaluationReport`
 into an EvalPort ``ResultSet`` (a plain ``dict`` matching the schema validated by
@@ -15,7 +14,7 @@ already has its own well-established shape (see ``config/loader.py`` and
 ``cli/commands/run.py``) that this adapter does not attempt to replace.
 
 Design notes (agreed in OpenAgentHQ/openagent-eval Discussion #296 with
-@himanshu-kumar):
+@himanshu231204):
 
 - OpenAgent Eval's :class:`~openagent_eval.core.pipeline.EvaluationResult`
   has no native pass/fail concept -- only a ``metrics: dict[str, float]``
@@ -41,6 +40,24 @@ Design notes (agreed in OpenAgentHQ/openagent-eval Discussion #296 with
   ``Pipeline._evaluate_item``/``_generate``), and run-level metadata
   (``EvaluationReport.metadata``, ``EvaluationReport.summary``) map onto the
   ``ResultSet``'s own top-level fields (``metadata``, ``summary``).
+- **Pipeline failures.** ``Pipeline._evaluate_item``'s exception boundary
+  does two things on a retrieval/generation/metric failure: it appends a
+  dict to ``PipelineResult.errors``, *and* it returns a zeroed
+  ``EvaluationResult`` (flagged via ``metadata["failed"] = True``) that
+  lands in ``PipelineResult.results`` like every other item. Both
+  representations describe the exact same failure. This adapter treats the
+  ``EvaluationResult`` in ``results`` as the single source of truth for
+  failed items and does not additionally walk ``PipelineResult.errors`` --
+  earlier versions of this module did, and double-counted every failure (one
+  Result from the zeroed ``EvaluationResult``, a second synthetic one from
+  the matching ``errors`` entry), corrupting ``summary.total``/``pass_rate``
+  silently. Sourcing failures from ``results`` alone also sidesteps a real
+  ordering hazard: ``PipelineResult.results`` preserves dataset order
+  (``Pipeline.execute`` awaits/gathers coroutines in item order), but
+  ``PipelineResult.errors`` is appended to from inside each item's own
+  coroutine, so under the parallel executor its order reflects completion
+  time, not dataset position -- there is no safe way to zip
+  ``errors[i]`` against ``items[i]``.
 
 This adapter is a standalone, directly-importable :class:`ReportGenerator`
 (the same ABC every other format in this package implements -- see
@@ -56,6 +73,8 @@ follow-up once this conversion itself has been reviewed against real
 
 from __future__ import annotations
 
+import json
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -66,17 +85,43 @@ if TYPE_CHECKING:
     from openagent_eval.core.engine import EvaluationReport
     from openagent_eval.core.pipeline import EvaluationResult
 
+logger = logging.getLogger(__name__)
+
 try:
     from openeval import OPENEVAL_VERSION
 except ImportError:  # pragma: no cover - evalport-sdk is an optional extra
     OPENEVAL_VERSION = "1.0.0"
+    logger.warning(
+        "evalport-sdk is not installed; EvalPortReport is falling back to a "
+        "bundled OPENEVAL_VERSION=%r, which may be stale. Install the "
+        "'evalport' extra (pip install openagent-eval[evalport]) to pick up "
+        "the SDK's real current spec version.",
+        OPENEVAL_VERSION,
+    )
 
 __all__ = ["EvalPortReport", "evaluation_report_to_result_set"]
 
 DEFAULT_PASS_THRESHOLD = 0.5
 
+# Keys on EvaluationResult.metadata that are either surfaced through a
+# dedicated Result field elsewhere (id -> test_case_id, latency_ms ->
+# duration_ms) or are Pipeline's own failure bookkeeping (failed, error,
+# error_type -> the Result.error object) -- never re-exported verbatim into
+# metadata.openagent_eval.
+_METADATA_EXCLUDED_KEYS = ("id", "latency_ms", "failed", "error", "error_type")
+
 
 def _now_iso() -> str:
+    """Current UTC time as a Zulu-suffixed ISO-8601 string.
+
+    Deliberately seconds-precision, no fractional component -- this matches
+    the EvalPort SDK's own convention for ``started_at``/``completed_at``
+    string fields. This is intentionally not the same convention
+    ``reports/json_report.py`` uses for its own ``metadata.timestamp``
+    (``datetime.now(UTC).isoformat()``, which keeps microseconds and a
+    ``+00:00`` offset instead of ``Z``): these are two different fields in
+    two different schemas, not a value that needs to round-trip between them.
+    """
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
@@ -92,14 +137,31 @@ def _clamp_unit(score: float) -> float:
     return max(0.0, min(1.0, float(score)))
 
 
+def _validate_threshold(label: str, value: float) -> None:
+    """Raise ``ValueError`` if a pass threshold is outside EvalPort's [0, 1] score range.
+
+    An out-of-range threshold fails silently otherwise: > 1.0 makes every
+    result fail (no score can ever meet it), < 0.0 makes every result pass
+    (every score already meets it) -- both are almost certainly a caller
+    mistake (e.g. passing a percentage like ``70`` instead of ``0.7``), not a
+    deliberate choice, so this is rejected outright rather than silently
+    misbehaving.
+    """
+    if not 0.0 <= value <= 1.0:
+        raise ValueError(f"{label} must be in [0.0, 1.0], got {value!r}")
+
+
 def _test_case_id(eval_result: EvaluationResult, run_id: str, index: int) -> str:
     """Resolve a stable EvalPort ``test_case_id`` for one evaluated item.
 
     Prefers the dataset item's own ``id`` field, which the pipeline
     preserves into ``EvaluationResult.metadata["id"]`` when the source
     dataset item carries a ``metadata.id`` value (see
-    ``Pipeline._evaluate_item``). Falls back to a positional id so results
-    from datasets that never set ``id`` still get stable, unique ids.
+    ``Pipeline._evaluate_item``) -- including for a failed item, since the
+    exception boundary now spreads the original item's ``metadata`` the same
+    way the success path does. Falls back to a positional id, stable within
+    one ``evaluation_report_to_result_set`` call because ``i`` is this item's
+    index in ``PipelineResult.results``, which preserves dataset order.
     """
     item_id = eval_result.metadata.get("id")
     if item_id is not None:
@@ -136,9 +198,7 @@ def _result_metadata(eval_result: EvaluationResult) -> dict[str, Any]:
     schema itself doesn't have a dedicated field for -- the original
     question, ground-truth reference, retrieved contexts, token usage,
     per-item metric errors, and any caller-supplied dataset item metadata --
-    is preserved here rather than silently dropped, matching the lossiness
-    convention every other EvalPort adapter in the ecosystem follows (see
-    e.g. ``trulens-connectors-openeval``'s ``metadata["trulens"]``).
+    is preserved here rather than silently dropped.
 
     Notably, ``Result`` has no ``input``/``expected_output`` fields of its
     own (only ``test_case_id``, ``passed``, ``grader_results``,
@@ -148,7 +208,9 @@ def _result_metadata(eval_result: EvaluationResult) -> dict[str, Any]:
     than as invented top-level keys the schema doesn't define.
     """
     preserved = {
-        k: v for k, v in eval_result.metadata.items() if k not in ("id", "latency_ms")
+        k: v
+        for k, v in eval_result.metadata.items()
+        if k not in _METADATA_EXCLUDED_KEYS
     }
     openagent_eval: dict[str, Any] = dict(preserved)
     if eval_result.question:
@@ -158,6 +220,29 @@ def _result_metadata(eval_result: EvaluationResult) -> dict[str, Any]:
     if eval_result.contexts:
         openagent_eval["contexts"] = eval_result.contexts
     return {"openagent_eval": openagent_eval} if openagent_eval else {}
+
+
+def _failed_result(eval_result: EvaluationResult, test_case_id: str) -> dict[str, Any]:
+    """Build a failed EvalPort ``Result`` for an ``EvaluationResult`` whose
+    ``metadata["failed"]`` is ``True`` -- i.e. an item whose retrieval,
+    generation, or metric step raised inside
+    ``Pipeline._evaluate_item``'s exception boundary.
+
+    This is the only place a pipeline-level failure is represented in the
+    exported ``ResultSet`` (see the module docstring's "Pipeline failures"
+    note for why ``PipelineResult.errors`` is not also walked here).
+    """
+    metadata = {**_result_metadata(eval_result), "openeval_derived_pass": True}
+    return {
+        "test_case_id": test_case_id,
+        "grader_results": [],
+        "passed": False,
+        "error": {
+            "message": eval_result.metadata.get("error") or "Unknown error",
+            "detail": eval_result.metadata.get("error_type") or "Unknown",
+        },
+        "metadata": metadata,
+    }
 
 
 def evaluation_report_to_result_set(
@@ -180,12 +265,12 @@ def evaluation_report_to_result_set(
             mapping. OpenAgent Eval's own metrics carry no native pass/fail
             concept -- only a ``[0.0, 1.0]`` score -- so a threshold is
             required to derive ``GraderResult.passed``. Any metric not
-            listed here falls back to ``default_threshold``.
+            listed here falls back to ``default_threshold``. Every value
+            (here and in ``default_threshold``) must be in ``[0.0, 1.0]``.
         default_threshold: Pass threshold applied to any metric not present
-            in ``evalport_thresholds``. Defaults to ``0.5``, matching the
-            convention used by the ``trulens-connectors-openeval`` and
-            ``ares-openeval-adapter`` EvalPort adapters for bare ``[0, 1]``
-            scores with no tool-native threshold.
+            in ``evalport_thresholds``. Defaults to ``0.5``, a neutral
+            midpoint appropriate for bare ``[0, 1]`` scores with no
+            tool-native threshold of their own. Must be in ``[0.0, 1.0]``.
         suite_id: The EvalPort ``ResultSet.suite_id``. OpenAgent Eval does
             not track the id of an externally-authored EvalPort suite it ran
             against (it loads datasets via ``config.dataset.path``, not
@@ -193,7 +278,11 @@ def evaluation_report_to_result_set(
             back to ``"openagent_eval_run"`` if the config has none.
         run_id: The EvalPort ``ResultSet.run_id``. Defaults to
             ``report.metadata.get("run_id")``, falling back to a
-            timestamp-based id if the report carries none.
+            timestamp-based id if the report carries none -- which, as of
+            this writing, is every real ``Engine.run()`` call: the engine
+            does not currently set ``metadata["run_id"]`` (or
+            ``metadata["title"]``, see ``suite_id``/the ``metadata.title``
+            note below). Pass ``run_id`` explicitly if the caller has one.
         started_at / completed_at: ISO-8601 timestamps for the ResultSet.
             ``started_at`` is required by the EvalPort schema; both default
             to the current time if omitted, since ``EvaluationReport`` does
@@ -204,9 +293,15 @@ def evaluation_report_to_result_set(
         ``openeval.validate.validate_result_set()``.
 
     Raises:
-        ValueError: if ``report.result.results`` is empty -- EvalPort's
-            schema requires at least one ``Result`` per ``ResultSet``.
+        ValueError: if ``default_threshold`` or any value in
+            ``evalport_thresholds`` is outside ``[0.0, 1.0]``, or if
+            ``report.result.results`` is empty -- EvalPort's schema requires
+            at least one ``Result`` per ``ResultSet``.
     """
+    _validate_threshold("default_threshold", default_threshold)
+    for metric_name, threshold in (evalport_thresholds or {}).items():
+        _validate_threshold(f"evalport_thresholds[{metric_name!r}]", threshold)
+
     result = report.result
     if not result.results:
         raise ValueError(
@@ -230,11 +325,17 @@ def evaluation_report_to_result_set(
 
     results: list[dict[str, Any]] = []
     for i, eval_result in enumerate(result.results):
+        test_case_id = _test_case_id(eval_result, run_id, i)
+
+        if eval_result.metadata.get("failed"):
+            results.append(_failed_result(eval_result, test_case_id))
+            continue
+
         grader_results = _grader_results(eval_result, thresholds, default_threshold)
         passed = all(g["passed"] for g in grader_results) if grader_results else False
 
         entry: dict[str, Any] = {
-            "test_case_id": _test_case_id(eval_result, run_id, i),
+            "test_case_id": test_case_id,
             "grader_results": grader_results,
             "passed": passed,
             "metadata": {
@@ -248,44 +349,31 @@ def evaluation_report_to_result_set(
 
         latency_ms = eval_result.metadata.get("latency_ms")
         if latency_ms is not None:
-            entry["duration_ms"] = max(0, round(latency_ms))
+            try:
+                entry["duration_ms"] = max(0, round(latency_ms))
+            except (TypeError, ValueError):
+                # A non-numeric latency_ms (e.g. injected via a dataset item's
+                # own metadata spread) shouldn't crash the whole export --
+                # just omit duration_ms for this result.
+                logger.warning(
+                    "Ignoring non-numeric metadata['latency_ms']=%r for %s",
+                    latency_ms,
+                    test_case_id,
+                )
 
         results.append(entry)
 
-    # OpenAgent Eval's per-item failures (retrieval/generation errors caught by
-    # Pipeline._evaluate_item's exception boundary) never produce an
-    # EvaluationResult at all -- they are recorded only in
-    # PipelineResult.errors, outside the per-item results list this loop
-    # walks. EvalPort's Result schema requires exactly one Result per entry
-    # in `results`, with no concept of an item that was never evaluated, so
-    # each such failure is appended here as its own failed Result (no grader
-    # results, `error` populated) rather than silently dropped -- keeping the
-    # ResultSet's `results` length reflect the full evaluation attempt, not
-    # just the items that completed successfully.
-    for i, error_entry in enumerate(result.errors):
-        item = error_entry.get("item", {}) or {}
-        item_id = item.get("metadata", {}).get("id") if isinstance(item, dict) else None
-        error_metadata: dict[str, Any] = {"openeval_derived_pass": True}
-        question = item.get("question") if isinstance(item, dict) else None
-        if question:
-            error_metadata["openagent_eval"] = {"question": question}
-        results.append(
-            {
-                "test_case_id": (
-                    str(item_id) if item_id is not None else f"{run_id}_error_{i}"
-                ),
-                "grader_results": [],
-                "passed": False,
-                "error": {
-                    "message": error_entry.get("error", "Unknown error"),
-                    "detail": error_entry.get("error_type", "Unknown"),
-                },
-                "metadata": error_metadata,
-            }
-        )
-
     total = len(results)
     passed_count = sum(1 for r in results if r["passed"])
+
+    metadata_block: dict[str, Any] = {
+        "engine": report.metadata.get("engine", "openagent-eval"),
+        "version": report.metadata.get("version"),
+        "config_summary": report.summary,
+    }
+    title = report.metadata.get("title")
+    if title is not None:
+        metadata_block["title"] = title
 
     result_set: dict[str, Any] = {
         "version": OPENEVAL_VERSION,
@@ -299,14 +387,7 @@ def evaluation_report_to_result_set(
             "failed": total - passed_count,
             "pass_rate": (passed_count / total) if total else 0.0,
         },
-        "metadata": {
-            "openagent_eval": {
-                "engine": report.metadata.get("engine", "openagent-eval"),
-                "version": report.metadata.get("version"),
-                "title": report.metadata.get("title"),
-                "config_summary": report.summary,
-            }
-        },
+        "metadata": {"openagent_eval": metadata_block},
     }
     result_set["completed_at"] = completed_at or _now_iso()
 
@@ -335,6 +416,8 @@ class EvalPortReport(ReportGenerator):
         default_threshold: float = DEFAULT_PASS_THRESHOLD,
         suite_id: str | None = None,
         run_id: str | None = None,
+        started_at: str | None = None,
+        completed_at: str | None = None,
         indent: int = 2,
     ) -> None:
         """Initialize the EvalPort report generator.
@@ -343,20 +426,31 @@ class EvalPortReport(ReportGenerator):
             evalport_thresholds: Optional ``metric name -> pass threshold``
                 mapping used to derive each ``GraderResult.passed``. See
                 :func:`evaluation_report_to_result_set` for the full
-                rationale.
+                rationale. Every value must be in ``[0.0, 1.0]``.
             default_threshold: Pass threshold for any metric not listed in
-                ``evalport_thresholds``. Defaults to ``0.5``.
+                ``evalport_thresholds``. Defaults to ``0.5``. Must be in
+                ``[0.0, 1.0]``.
             suite_id: Optional override for the ResultSet's ``suite_id``.
                 Defaults to the run's dataset path.
             run_id: Optional override for the ResultSet's ``run_id``.
                 Defaults to ``report.metadata["run_id"]`` or a generated,
                 timestamp-based id.
-            indent: JSON indentation level. Use ``0`` for compact output.
+            started_at: Optional override for the ResultSet's ``started_at``.
+                Defaults to the current time when the report is generated,
+                which is only an approximation of the real evaluation start
+                -- pass the actual run-start timestamp here when it's known.
+            completed_at: Optional override for the ResultSet's
+                ``completed_at``, with the same caveat as ``started_at``.
+            indent: JSON indentation level. ``0`` (or any negative value)
+                produces compact, single-line output, matching
+                ``JSONReport``'s own convention.
         """
         self.evalport_thresholds = evalport_thresholds
         self.default_threshold = default_threshold
         self.suite_id = suite_id
         self.run_id = run_id
+        self.started_at = started_at
+        self.completed_at = completed_at
         self.indent = indent
 
     def to_result_set(self, report: EvaluationReport) -> dict[str, Any]:
@@ -367,6 +461,8 @@ class EvalPortReport(ReportGenerator):
             default_threshold=self.default_threshold,
             suite_id=self.suite_id,
             run_id=self.run_id,
+            started_at=self.started_at,
+            completed_at=self.completed_at,
         )
 
     def generate(self, report: EvaluationReport) -> str:
@@ -378,8 +474,6 @@ class EvalPortReport(ReportGenerator):
         Returns:
             JSON-formatted ``ResultSet`` string.
         """
-        import json
-
         return json.dumps(
             self.to_result_set(report),
             indent=self.indent if self.indent > 0 else None,
