@@ -167,7 +167,12 @@ class Pipeline:
                 ground_truth=ground_truth,
                 contexts=[],
                 metrics={name: 0.0 for name, _ in self._metrics},
-                metadata={"failed": True, "error": str(e)},
+                metadata={
+                    "failed": True,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    **item.get("metadata", {}),
+                },
             )
 
     # ------------------------------------------------------------------ #
