@@ -56,31 +56,31 @@ oaeval report ffeaa75f-9717-4502-92ee-4c91fdfb7e9c --output terminal
 OpenAgent Eval - Report Viewer
 Report: latest
 
-╭──────────────────────────── Evaluation Complete ─────────────────────────────╮
+╭──────────────────────── Evaluation Complete ─────────────────────────╮
 │ OpenAgent Eval Report                                                        │
 ╰──────────────────────────────────────────────────────────────────────────────╯
       Summary      
-┌─────────────┬───┐
+┌─────────────────────┬───┐
 │ Total Items │ 5 │
 │ Successful  │ 3 │
 │ Failed      │ 2 │
-└─────────────┴───┘
+└─────────────────────┴───┘
          Metrics         
-┏━━━━━━━━━━━━━━┳━━━━━━━━┓
+┏━━━━━━━━━━━━━━┓━━━━━━━━┓
 ┃ Metric       ┃  Score ┃
-┡━━━━━━━━━━━━━━╇━━━━━━━━┩
+┡━━━━━━━━━━━━━━╇━━━━━━━━┡
 │ precision    │ 0.8500 │
 │ recall       │ 0.8433 │
 │ faithfulness │ 0.8567 │
-└──────────────┴────────┘
+└───────────────┼────────┘
                      Sample Results                     
-┏━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┏━━━┯━━━━━━━━━━━━━━━┓━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ # ┃ Question        ┃ Metrics                        ┃
-┡━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+┡━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┡
 │ 1 │ What is Python? │ precision=0.95, recall=0.88... │
 │ 2 │ What is RAG?    │ precision=0.82, recall=0.90... │
-└───┴─────────────────┴────────────────────────────────┘
-╭─────────────────────────────── Configuration ────────────────────────────────╮
+└───┴───────────────┴─────────────────────────────┘
+╭──────────────────────────── Configuration ────────────────────────────╮
 │ Dataset: tests/sample_data/test_dataset.json                                 │
 │ LLM: openai/gpt-4o                                                           │
 │ Output: terminal                                                             │
@@ -370,8 +370,8 @@ generator.generate_to_file(report, "result_set.json")
 * **`metrics` → `grader_results`**: one `GraderResult` per metric (`grader_id` = metric name, `type="custom"`). `passed` is derived from `evalport_thresholds` (default `0.5`) since OpenAgent Eval's metrics carry no native pass/fail -- every result's `metadata.openeval_derived_pass` is set to `true` so a consumer can always tell an inferred pass/fail from a tool-native one.
 * **`answer` → `actual_output`**, **`metadata["latency_ms"]` → `duration_ms`** (rounded to the nearest millisecond).
 * **`question` / `ground_truth` / `contexts`**: preserved under `metadata.openagent_eval`, since EvalPort's `Result` schema has no dedicated fields for them.
-* **`test_case_id`**: the dataset item's `metadata.id` when present, else a positional `f"{run_id}_item_{i}"`.
-* **Pipeline errors** (`PipelineResult.errors`): each becomes its own failed `Result` with `error` populated and no `grader_results`, since EvalPort's schema has no concept of an item that was never evaluated.
+* **`test_case_id`**: the dataset item's `metadata.id` when present, else a positional `f"{run_id}_item_{i}"` (`i` is the item's index in `PipelineResult.results`, which preserves dataset order).
+* **Failed items**: `Pipeline._evaluate_item` flags a retrieval/generation/metric failure two ways -- it appends a dict to `PipelineResult.errors`, *and* it returns a zeroed `EvaluationResult` (`metadata["failed"] = True`) that lands in `PipelineResult.results` like every other item. This adapter reads failures from `results` alone: an item with `metadata["failed"]` set becomes a failed `Result` (`grader_results: []`, `passed: false`, `error` populated from `metadata["error"]`/`metadata["error_type"]`) and `PipelineResult.errors` is never walked. Sourcing both would double-count every failure (one `Result` from the zeroed item, a second synthetic one from the matching `errors` entry) -- and `errors` isn't safe to zip against dataset position anyway, since it's appended to from inside each item's own coroutine and so reflects completion order under the parallel executor, not dataset order.
 * **Direction**: strictly one-way (`EvaluationReport -> ResultSet`). There is no `from_openeval` -- OpenAgent Eval's own dataset loading already has an established shape this adapter does not replace.
 
 ### Sample Output
@@ -403,14 +403,14 @@ generator.generate_to_file(report, "result_set.json")
       "duration_ms": 842
     },
     {
-      "test_case_id": "run_2026-07-14T12-30_error_0",
+      "test_case_id": "run_2026-07-14T12-30_item_1",
       "grader_results": [],
       "passed": false,
       "error": {"message": "Connection timeout", "detail": "ProviderConnectionError"},
       "metadata": {"openeval_derived_pass": true, "openagent_eval": {"question": "Failed question"}}
     }
   ],
-  "summary": {"total": 3, "passed": 2, "failed": 1, "pass_rate": 0.6667},
+  "summary": {"total": 2, "passed": 1, "failed": 1, "pass_rate": 0.5},
   "metadata": {
     "openagent_eval": {"engine": "openagent-eval", "version": "0.1.0", "title": "OpenAgent Eval Report"}
   },
