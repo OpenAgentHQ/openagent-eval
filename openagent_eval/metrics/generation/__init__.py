@@ -20,6 +20,7 @@ from openagent_eval.metrics.generation.llm_judge import (
 )
 from openagent_eval.metrics.generation.relevancy import AnswerRelevancy
 from openagent_eval.metrics.generation.rouge import ROUGE
+from openagent_eval.metrics.generation.schema_conformance import SchemaConformance
 from openagent_eval.metrics.generation.similarity import SemanticSimilarity
 
 __all__ = [
@@ -37,5 +38,6 @@ __all__ = [
     "JudgeCriteria",
     "RELEVANCY_CRITERIA",
     "ROUGE",
+    "SchemaConformance",
     "SemanticSimilarity",
 ]
