@@ -31,6 +31,7 @@ class TestMetricRegistry:
             "semantic_similarity",
             "exact_match",
             "f1_score",
+            "schema_conformance",
             "bleu",
             "rouge",
             "bertscore",
@@ -58,6 +59,10 @@ class TestMetricRegistry:
         metric_class = get_metric("exact_match")
         assert metric_class is not None
         assert issubclass(metric_class, BaseMetric)
+
+        schema_metric_class = get_metric("schema_conformance")
+        assert schema_metric_class is not None
+        assert issubclass(schema_metric_class, BaseMetric)
 
     def test_get_metric_nonexistent(self):
         """get_metric raises KeyError for nonexistent metric."""

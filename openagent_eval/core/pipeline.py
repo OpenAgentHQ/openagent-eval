@@ -115,7 +115,7 @@ class Pipeline:
         ground_truth = item.get("ground_truth")
         context = item.get("context")
         gt_contexts = item.get("ground_truth_contexts", []) or []
-
+        metadata = item.get("metadata", {})
         try:
             # 1. Retrieval
             contexts = await self._retrieve(question, context, gt_contexts)
@@ -134,6 +134,7 @@ class Pipeline:
                 gt_contexts,
                 latency_ms,
                 token_usage,
+                metadata,
             )
 
             return EvaluationResult(
@@ -287,6 +288,7 @@ class Pipeline:
         gt_contexts: list[str],
         latency_ms: float | None,
         token_usage: Any | None,
+        metadata: dict[str, Any],
     ) -> tuple[dict[str, float], dict[str, str]]:
         """Run every configured metric and collect scores.
 
@@ -316,6 +318,7 @@ class Pipeline:
                     completion_tokens=completion_tokens,
                     provider=provider_name,
                     model=model_name,
+                    metadata=metadata,
                 )
                 scores[name] = result.score
             except Exception as e:

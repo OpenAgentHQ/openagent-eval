@@ -15,6 +15,7 @@ from openagent_eval.metrics.generation import (
     F1Score,
     Faithfulness,
     HallucinationDetection,
+    SchemaConformance,
     SemanticSimilarity,
 )
 
@@ -192,6 +193,90 @@ class TestROUGE:
         assert partial.score == pytest.approx(1 / 3)
         assert full.score == 1.0
         assert partial.metadata["method"] == "simple_recall"
+
+
+class TestSchemaConformance:
+    """Tests for SchemaConformance metric."""
+
+    def setup_method(self):
+        self.metric = SchemaConformance()
+        self.schema = {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"},
+            },
+            "required": ["name", "age"],
+        }
+
+    def test_valid_output(self):
+        """Fully conformant JSON receives a perfect score."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25}',
+            metadata={"json_schema": self.schema},
+        )
+
+        assert result.score == 1.0
+        assert result.metadata["valid"] is True
+        assert result.metadata["json_parseable"] is True
+
+    def test_invalid_json(self):
+        """Malformed JSON receives zero score."""
+        result = self.metric.evaluate(
+            answer="not valid json",
+            metadata={"json_schema": self.schema},
+        )
+
+        assert result.score == 0.0
+        assert result.metadata["valid"] is False
+        assert result.metadata["json_parseable"] is False
+
+    def test_partial_schema_violation(self):
+        """Valid JSON with one invalid field receives a partial score."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "twenty"}',
+            metadata={"json_schema": self.schema},
+        )
+
+        assert result.score == 0.5
+        assert result.metadata["valid"] is False
+        assert result.metadata["json_parseable"] is True
+
+    def test_missing_schema(self):
+        """Missing schema receives zero score."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25}',
+            metadata={},
+        )
+
+        assert result.score == 0.0
+        assert result.metadata["valid"] is False
+
+    def test_empty_schema_accepts_valid_json(self):
+        """An empty JSON Schema accepts any valid JSON value."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice"}',
+            metadata={"json_schema": {}},
+        )
+
+        assert result.score == 1.0
+        assert result.metadata["valid"] is True
+        assert result.metadata["json_parseable"] is True
+
+    def test_extra_property_is_not_fully_conformant(self):
+        """Extra properties prevent full schema conformance."""
+        schema = {
+            **self.schema,
+            "additionalProperties": False,
+        }
+
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25, "extra": "value"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.score < 1.0
+        assert result.metadata["valid"] is False
 
 
 class TestSemanticSimilarity:
