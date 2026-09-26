@@ -24,6 +24,7 @@ from openagent_eval.metrics.generation import (
     HallucinationDetection,
     JudgeCriteria,
     LLMJudgeMetric,
+    SchemaConformance,
     SemanticSimilarity,
 )
 from openagent_eval.metrics.nli import (
@@ -70,6 +71,7 @@ __all__ = [
     "AsyncLLMJudgeMetric",
     "JudgeCriteria",
     "ROUGE",
+    "SchemaConformance",
     "SemanticSimilarity",
     # NLI
     "NLIJudge",
@@ -103,6 +105,7 @@ METRIC_REGISTRY: dict[str, type[BaseMetric]] = {
     "bleu": BLEU,
     "rouge": ROUGE,
     "bertscore": BERTScore,
+    "schema_conformance": SchemaConformance,
     "latency": LatencyMetric,
     "token_count": TokenCountMetric,
 }
