@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import pytest
 
+# Check rank-bm25 before provider imports so SDK-free installs skip at collection.
 rank_bm25 = pytest.importorskip("rank_bm25", reason="rank-bm25 not installed")
 
-from openagent_eval.providers.models import Document
-from openagent_eval.providers.retrievers.bm25 import BM25Retriever
+from openagent_eval.providers.models import Document  # noqa: E402
+from openagent_eval.providers.retrievers.bm25 import BM25Retriever  # noqa: E402
 
 DOCS = [
     {"content": "Python is a high-level programming language", "id": "1"},
