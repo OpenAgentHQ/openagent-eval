@@ -309,6 +309,44 @@ class TestSchemaConformance:
         assert 0.0 < result.score < 1.0
         assert result.metadata["valid"] is False
 
+    @pytest.mark.parametrize(
+        ("extra_schema", "answer"),
+        [
+            (
+                {"additionalProperties": {"type": "integer"}},
+                '{"name": "Alice", "age": 25, "extra": "value"}',
+            ),
+            (
+                {"patternProperties": {"^x": {"type": "integer"}}},
+                '{"name": "Alice", "age": 25, "x1": "value"}',
+            ),
+            (
+                {
+                    "properties": {
+                        "name": {"type": "string"},
+                        "age": {"type": "integer"},
+                        "email": {"type": "string"},
+                    },
+                    "allOf": [{"required": ["email"]}],
+                },
+                '{"name": "Alice", "age": 25}',
+            ),
+            (
+                {"allOf": [{"properties": {"age": {"minimum": 30}}}]},
+                '{"name": "Alice", "age": 25}',
+            ),
+        ],
+    )
+    def test_any_violation_blocks_full_score(self, extra_schema, answer):
+        """No schema violation, wherever it is reported, yields a 1.0 score."""
+        result = self.metric.evaluate(
+            answer=answer,
+            metadata={"json_schema": {**self.schema, **extra_schema}},
+        )
+
+        assert result.score < 1.0
+        assert result.metadata["valid"] is False
+
     def test_false_boolean_schema_rejects_without_error(self):
         """The ``false`` boolean schema is valid and rejects every value."""
         result = self.metric.evaluate(

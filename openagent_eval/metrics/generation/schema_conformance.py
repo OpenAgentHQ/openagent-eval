@@ -3,8 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from jsonschema import Draft202012Validator
-from jsonschema.exceptions import SchemaError
+from jsonschema import Draft202012Validator, SchemaError
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 
@@ -77,25 +76,33 @@ class SchemaConformance(BaseMetric):
 
             if applicable_properties:
                 valid_properties = 0
+                failed_properties: set[str] = set()
 
                 for name in applicable_properties:
                     if name not in data:
+                        failed_properties.add(name)
                         continue
 
                     property_schema = properties[name]
 
                     if Draft202012Validator(property_schema).is_valid(data[name]):
                         valid_properties += 1
+                    else:
+                        failed_properties.add(name)
 
-                # Violations not tied to a top-level property (e.g.
-                # additionalProperties, or a required key absent from
-                # properties) count as one extra failed check, so the score
-                # stays below 1.0 without dropping to 0.0.
-                uncovered_missing = required - properties.keys() - data.keys()
-                schema_level_failure = bool(uncovered_missing) or any(
-                    not error.absolute_path and error.validator != "required"
-                    for error in errors
-                )
+                # Any violation not already counted against a failed property
+                # (e.g. additionalProperties, patternProperties, or a required
+                # key outside top-level properties) counts as one extra failed
+                # check, so the score stays below 1.0 without dropping to 0.0.
+                def is_counted(error: Any) -> bool:
+                    if error.absolute_path:
+                        return error.absolute_path[0] in failed_properties
+                    if error.validator == "required":
+                        missing = [k for k in error.validator_value if k not in data]
+                        return bool(missing) and set(missing) <= failed_properties
+                    return False
+
+                schema_level_failure = not all(is_counted(error) for error in errors)
                 total_checks = len(applicable_properties) + int(schema_level_failure)
                 score = valid_properties / total_checks
 
