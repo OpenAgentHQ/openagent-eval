@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 
@@ -37,6 +38,15 @@ class SchemaConformance(BaseMetric):
                 metadata={"valid": False, "json_parseable": False},
             )
 
+        try:
+            Draft202012Validator.check_schema(schema)
+        except SchemaError:
+            return MetricResult(
+                score=0.0,
+                reason="Invalid JSON schema",
+                metadata={"valid": False, "json_parseable": True},
+            )
+
         validator = Draft202012Validator(schema)
         errors = list(validator.iter_errors(data))
 
@@ -54,6 +64,7 @@ class SchemaConformance(BaseMetric):
         # field-level partial scoring.
         if (
             isinstance(data, dict)
+            and isinstance(schema, dict)
             and schema.get("type") == "object"
             and isinstance(schema.get("properties"), dict)
         ):
@@ -76,10 +87,17 @@ class SchemaConformance(BaseMetric):
                     if Draft202012Validator(property_schema).is_valid(data[name]):
                         valid_properties += 1
 
-                score = valid_properties / len(applicable_properties)
-
-                if score == 1.0 and errors:
-                    score = 0.0
+                # Violations not tied to a top-level property (e.g.
+                # additionalProperties, or a required key absent from
+                # properties) count as one extra failed check, so the score
+                # stays below 1.0 without dropping to 0.0.
+                uncovered_missing = required - properties.keys() - data.keys()
+                schema_level_failure = bool(uncovered_missing) or any(
+                    not error.absolute_path and error.validator != "required"
+                    for error in errors
+                )
+                total_checks = len(applicable_properties) + int(schema_level_failure)
+                score = valid_properties / total_checks
 
                 return MetricResult(
                     score=score,

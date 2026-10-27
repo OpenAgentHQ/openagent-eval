@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Created `scripts/changelog_validator.py` to automatically verify Keep a Changelog formatting.
 - Added a section to `CONTRIBUTING.md` documenting the changelog update process for future contributors.
 
+### Fixed
+- `schema_conformance` no longer scores an answer with all-valid fields plus a schema-level violation (e.g. a disallowed extra key) as 0.0, below answers with wrongly typed fields.
+- `schema_conformance` now returns a zero score instead of raising on boolean (`false`) or malformed JSON schemas, and no longer gives a full score when a required key outside `properties` is missing.
+
+### Removed
+- Removed unused threshold constants from `diagnosis/blame.py` and `diagnosis/chunking.py`.
+
 ---
 
 ## [0.4.10] - 2026-08-24
