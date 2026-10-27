@@ -24,7 +24,6 @@ from openagent_eval.diagnosis.models import ChunkingIssue
 
 DEFAULT_OVERLAP_SIMILARITY_THRESHOLD = 0.8  # Jaccard similarity for overlap detection
 DEFAULT_MIN_CHUNK_LENGTH = 50  # minimum expected chunk length in characters
-DEFAULT_MAX_CHUNK_LENGTH = 5000  # maximum expected chunk length in characters
 DEFAULT_INCONSISTENCY_RATIO = 4.0  # max/min length ratio
 DEFAULT_MAX_SIZE_DEVIATION = 0.5  # max deviation from expected chunk_size (50%)
 

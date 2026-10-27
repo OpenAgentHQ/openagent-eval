@@ -278,6 +278,97 @@ class TestSchemaConformance:
         assert result.score < 1.0
         assert result.metadata["valid"] is False
 
+    def test_extra_property_scores_above_wrong_field(self):
+        """All-valid fields plus an extra key outscores a wrongly typed field."""
+        schema = {
+            **self.schema,
+            "additionalProperties": False,
+        }
+
+        extra = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25, "extra": "value"}',
+            metadata={"json_schema": schema},
+        )
+        wrong = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "twenty"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert 0.0 < extra.score < 1.0
+        assert extra.score > wrong.score
+
+    def test_missing_required_key_outside_properties(self):
+        """A required key not declared in properties still blocks a full score."""
+        schema = {**self.schema, "required": ["name", "age", "email"]}
+
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25}',
+            metadata={"json_schema": schema},
+        )
+
+        assert 0.0 < result.score < 1.0
+        assert result.metadata["valid"] is False
+
+    @pytest.mark.parametrize(
+        ("extra_schema", "answer"),
+        [
+            (
+                {"additionalProperties": {"type": "integer"}},
+                '{"name": "Alice", "age": 25, "extra": "value"}',
+            ),
+            (
+                {"patternProperties": {"^x": {"type": "integer"}}},
+                '{"name": "Alice", "age": 25, "x1": "value"}',
+            ),
+            (
+                {
+                    "properties": {
+                        "name": {"type": "string"},
+                        "age": {"type": "integer"},
+                        "email": {"type": "string"},
+                    },
+                    "allOf": [{"required": ["email"]}],
+                },
+                '{"name": "Alice", "age": 25}',
+            ),
+            (
+                {"allOf": [{"properties": {"age": {"minimum": 30}}}]},
+                '{"name": "Alice", "age": 25}',
+            ),
+        ],
+    )
+    def test_any_violation_blocks_full_score(self, extra_schema, answer):
+        """No schema violation, wherever it is reported, yields a 1.0 score."""
+        result = self.metric.evaluate(
+            answer=answer,
+            metadata={"json_schema": {**self.schema, **extra_schema}},
+        )
+
+        assert result.score < 1.0
+        assert result.metadata["valid"] is False
+
+    def test_false_boolean_schema_rejects_without_error(self):
+        """The ``false`` boolean schema is valid and rejects every value."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice"}',
+            metadata={"json_schema": False},
+        )
+
+        assert result.score == 0.0
+        assert result.metadata["valid"] is False
+        assert result.metadata["json_parseable"] is True
+
+    def test_invalid_schema_scores_zero(self):
+        """A malformed schema receives zero score instead of raising."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice"}',
+            metadata={"json_schema": {"type": "not-a-type"}},
+        )
+
+        assert result.score == 0.0
+        assert result.reason == "Invalid JSON schema"
+        assert result.metadata["valid"] is False
+
 
 class TestSemanticSimilarity:
     """Tests for SemanticSimilarity metric."""

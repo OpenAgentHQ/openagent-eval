@@ -22,7 +22,6 @@ from openagent_eval.diagnosis.models import (
 # ---------------------------------------------------------------------------
 
 # Retrieval thresholds
-EMPTY_RETRIEVAL_THRESHOLD = 0  # contexts returned
 LOW_CONTEXT_PRECISION = 0.3
 LOW_CONTEXT_RECALL = 0.3
 
@@ -32,7 +31,6 @@ LOW_RELEVANCY = 0.4
 ANSWER_TOO_SHORT = 10  # characters
 
 # Chunking thresholds
-SINGLE_CONTEXT_THRESHOLD = 1  # if only 1 context, chunking may be the issue
 CONTEXT_LENGTH_VARIANCE_RATIO = 5.0  # max/min ratio indicating uneven chunks
 
 
