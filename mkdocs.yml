@@ -190,3 +190,5 @@ nav:
       - Contributing: contributing.md
       - Roadmap: roadmap.md
       - FAQ: faq.md
+      - RFCs:
+          - Opt-in community benchmarks: rfcs/0001-opt-in-community-benchmarks.md
