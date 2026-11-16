@@ -52,7 +52,7 @@ Aggregate metrics can still reveal information, especially for small or sensitiv
 ## Opt-in and user experience
 
 - No setting is enabled by default. No background upload or automatic submission is permitted.
-- Submission requires an explicit command or action (proposed CLI shape: `oaeval benchmark submit <run-id>`), separate from `oaeval run`.
+- Submission requires an explicit command or action (proposed CLI shape: `oaeval benchmark submit <report-id>`, where the ID is a report UUID or `latest`), separate from `oaeval run`.
 - Before network access, show the destination, the exact payload or a readable equivalent, and the fact that it will be public. Require a positive confirmation for that submission.
 - Provide a non-interactive confirmation flag only for automation (for example, `--yes`); the flag must be explicit and documented. It must not be stored as a global or project default.
 - Offer a local preview/export command so users can inspect the candidate payload without sending it.
