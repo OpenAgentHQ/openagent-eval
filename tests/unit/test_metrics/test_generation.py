@@ -398,6 +398,27 @@ class TestSchemaConformance:
         assert result.score == 0.5
         assert result.metadata["valid_properties"] == 1
 
+    def test_property_with_own_id_resolves_ref_in_its_scope(self):
+        """A property with its own $id resolves local $refs within that resource."""
+        schema = {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "$id": "https://example.com/name",
+                    "$defs": {"value": {"type": "string"}},
+                    "$ref": "#/$defs/value",
+                },
+                "age": {"type": "integer"},
+            },
+        }
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "old"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.score == 0.5
+        assert result.metadata["valid_properties"] == 1
+
     def test_root_combinator_does_not_double_count_field(self):
         """A root anyOf failing only because of a bad field adds no extra check."""
         schema = {

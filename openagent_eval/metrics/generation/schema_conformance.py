@@ -93,9 +93,13 @@ class SchemaConformance(BaseMetric):
 
                     property_schema = properties[name]
 
-                    # evolve() keeps the root schema's resolver so local
-                    # $refs such as "#/$defs/..." still resolve.
-                    if validator.evolve(schema=property_schema).is_valid(data[name]):
+                    # descend() keeps the root resolver and enters the
+                    # property's own $id resource, so local $refs resolve in
+                    # the right scope.
+                    if (
+                        next(validator.descend(data[name], property_schema), None)
+                        is None
+                    ):
                         valid_properties += 1
                     else:
                         failed_properties.add(name)
