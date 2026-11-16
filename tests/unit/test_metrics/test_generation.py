@@ -278,6 +278,173 @@ class TestSchemaConformance:
         assert result.score < 1.0
         assert result.metadata["valid"] is False
 
+    def test_extra_property_scores_above_wrong_field(self):
+        """All-valid fields plus an extra key outscores a wrongly typed field."""
+        schema = {
+            **self.schema,
+            "additionalProperties": False,
+        }
+
+        extra = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25, "extra": "value"}',
+            metadata={"json_schema": schema},
+        )
+        wrong = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "twenty"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert 0.0 < extra.score < 1.0
+        assert extra.score > wrong.score
+
+    def test_missing_required_key_outside_properties(self):
+        """A required key not declared in properties still blocks a full score."""
+        schema = {**self.schema, "required": ["name", "age", "email"]}
+
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25}',
+            metadata={"json_schema": schema},
+        )
+
+        assert 0.0 < result.score < 1.0
+        assert result.metadata["valid"] is False
+
+    @pytest.mark.parametrize(
+        ("extra_schema", "answer"),
+        [
+            (
+                {"additionalProperties": {"type": "integer"}},
+                '{"name": "Alice", "age": 25, "extra": "value"}',
+            ),
+            (
+                {"patternProperties": {"^x": {"type": "integer"}}},
+                '{"name": "Alice", "age": 25, "x1": "value"}',
+            ),
+            (
+                {
+                    "properties": {
+                        "name": {"type": "string"},
+                        "age": {"type": "integer"},
+                        "email": {"type": "string"},
+                    },
+                    "allOf": [{"required": ["email"]}],
+                },
+                '{"name": "Alice", "age": 25}',
+            ),
+            (
+                {"allOf": [{"properties": {"age": {"minimum": 30}}}]},
+                '{"name": "Alice", "age": 25}',
+            ),
+        ],
+    )
+    def test_any_violation_blocks_full_score(self, extra_schema, answer):
+        """No schema violation, wherever it is reported, yields a 1.0 score."""
+        result = self.metric.evaluate(
+            answer=answer,
+            metadata={"json_schema": {**self.schema, **extra_schema}},
+        )
+
+        assert result.score < 1.0
+        assert result.metadata["valid"] is False
+
+    def test_false_boolean_schema_rejects_without_error(self):
+        """The ``false`` boolean schema is valid and rejects every value."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice"}',
+            metadata={"json_schema": False},
+        )
+
+        assert result.score == 0.0
+        assert result.metadata["valid"] is False
+        assert result.metadata["json_parseable"] is True
+
+    def test_invalid_schema_scores_zero(self):
+        """A malformed schema receives zero score instead of raising."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice"}',
+            metadata={"json_schema": {"type": "not-a-type"}},
+        )
+
+        assert result.score == 0.0
+        assert result.reason == "Invalid JSON schema"
+        assert result.metadata["valid"] is False
+
+    def test_unresolvable_ref_scores_zero(self):
+        """A schema whose $ref points nowhere receives zero instead of raising."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice"}',
+            metadata={"json_schema": {"$ref": "#/$defs/missing"}},
+        )
+
+        assert result.score == 0.0
+        assert result.metadata["valid"] is False
+        assert result.metadata["json_parseable"] is True
+
+    def test_property_local_ref_resolves(self):
+        """Per-property scoring resolves $refs against the root schema."""
+        schema = {
+            "type": "object",
+            "properties": {
+                "name": {"$ref": "#/$defs/name"},
+                "age": {"type": "integer"},
+            },
+            "$defs": {"name": {"type": "string"}},
+        }
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "old"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.score == 0.5
+        assert result.metadata["valid_properties"] == 1
+
+    def test_property_with_own_id_resolves_ref_in_its_scope(self):
+        """A property with its own $id resolves local $refs within that resource."""
+        schema = {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "$id": "https://example.com/name",
+                    "$defs": {"value": {"type": "string"}},
+                    "$ref": "#/$defs/value",
+                },
+                "age": {"type": "integer"},
+            },
+        }
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "old"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.score == 0.5
+        assert result.metadata["valid_properties"] == 1
+
+    def test_root_combinator_does_not_double_count_field(self):
+        """A root anyOf failing only because of a bad field adds no extra check."""
+        schema = {
+            **self.schema,
+            "anyOf": [{"properties": {"age": {"type": "integer"}}}],
+        }
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "old"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.score == 0.5
+        assert result.metadata["total_checks"] == 2
+
+    def test_total_checks_includes_schema_level_failure(self):
+        """total_checks reports the denominator used for the score."""
+        schema = {**self.schema, "additionalProperties": False}
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25, "extra": 1}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.metadata["total_properties"] == 2
+        assert result.metadata["total_checks"] == 3
+        assert result.score == result.metadata["valid_properties"] / 3
+
 
 class TestSemanticSimilarity:
     """Tests for SemanticSimilarity metric."""
