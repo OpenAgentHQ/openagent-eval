@@ -369,6 +369,61 @@ class TestSchemaConformance:
         assert result.reason == "Invalid JSON schema"
         assert result.metadata["valid"] is False
 
+    def test_unresolvable_ref_scores_zero(self):
+        """A schema whose $ref points nowhere receives zero instead of raising."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice"}',
+            metadata={"json_schema": {"$ref": "#/$defs/missing"}},
+        )
+
+        assert result.score == 0.0
+        assert result.metadata["valid"] is False
+        assert result.metadata["json_parseable"] is True
+
+    def test_property_local_ref_resolves(self):
+        """Per-property scoring resolves $refs against the root schema."""
+        schema = {
+            "type": "object",
+            "properties": {
+                "name": {"$ref": "#/$defs/name"},
+                "age": {"type": "integer"},
+            },
+            "$defs": {"name": {"type": "string"}},
+        }
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "old"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.score == 0.5
+        assert result.metadata["valid_properties"] == 1
+
+    def test_root_combinator_does_not_double_count_field(self):
+        """A root anyOf failing only because of a bad field adds no extra check."""
+        schema = {
+            **self.schema,
+            "anyOf": [{"properties": {"age": {"type": "integer"}}}],
+        }
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "old"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.score == 0.5
+        assert result.metadata["total_checks"] == 2
+
+    def test_total_checks_includes_schema_level_failure(self):
+        """total_checks reports the denominator used for the score."""
+        schema = {**self.schema, "additionalProperties": False}
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25, "extra": 1}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.metadata["total_properties"] == 2
+        assert result.metadata["total_checks"] == 3
+        assert result.score == result.metadata["valid_properties"] / 3
+
 
 class TestSemanticSimilarity:
     """Tests for SemanticSimilarity metric."""

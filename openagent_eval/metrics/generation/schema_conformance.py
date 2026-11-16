@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from jsonschema import Draft202012Validator, SchemaError
+from referencing.exceptions import Unresolvable
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 
@@ -47,7 +48,14 @@ class SchemaConformance(BaseMetric):
             )
 
         validator = Draft202012Validator(schema)
-        errors = list(validator.iter_errors(data))
+        try:
+            errors = list(validator.iter_errors(data))
+        except Unresolvable:
+            return MetricResult(
+                score=0.0,
+                reason="Invalid JSON schema: unresolvable $ref",
+                metadata={"valid": False, "json_parseable": True},
+            )
 
         if not errors:
             return MetricResult(
@@ -85,7 +93,9 @@ class SchemaConformance(BaseMetric):
 
                     property_schema = properties[name]
 
-                    if Draft202012Validator(property_schema).is_valid(data[name]):
+                    # evolve() keeps the root schema's resolver so local
+                    # $refs such as "#/$defs/..." still resolve.
+                    if validator.evolve(schema=property_schema).is_valid(data[name]):
                         valid_properties += 1
                     else:
                         failed_properties.add(name)
@@ -100,6 +110,10 @@ class SchemaConformance(BaseMetric):
                     if error.validator == "required":
                         missing = [k for k in error.validator_value if k not in data]
                         return bool(missing) and set(missing) <= failed_properties
+                    if error.context:
+                        # A failed combinator (anyOf/oneOf/allOf/...) only adds
+                        # a check if some branch fails for an uncounted reason.
+                        return all(is_counted(sub) for sub in error.context)
                     return False
 
                 schema_level_failure = not all(is_counted(error) for error in errors)
@@ -114,6 +128,7 @@ class SchemaConformance(BaseMetric):
                         "json_parseable": True,
                         "valid_properties": valid_properties,
                         "total_properties": len(applicable_properties),
+                        "total_checks": total_checks,
                     },
                 )
 

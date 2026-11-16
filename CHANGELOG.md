@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - `schema_conformance` no longer scores an answer with all-valid fields plus a schema-level violation (e.g. a disallowed extra key) as 0.0, below answers with wrongly typed fields.
 - `schema_conformance` now returns a zero score instead of raising on boolean (`false`) or malformed JSON schemas, and no longer gives a full score when a required key outside `properties` is missing.
+- `schema_conformance` now resolves local `$ref`s (e.g. `#/$defs/...`) during per-field scoring, returns zero instead of raising on unresolvable `$ref`s, no longer double-penalises a field when a root-level `anyOf`/`oneOf`/`allOf` fails only because of it, and reports the score denominator as `total_checks`.
 
 ### Removed
 - Removed unused threshold constants from `diagnosis/blame.py` and `diagnosis/chunking.py`.
