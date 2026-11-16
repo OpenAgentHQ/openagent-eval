@@ -7,14 +7,15 @@ import os
 import pytest
 
 from openagent_eval.metrics.generation import (
+    BLEU,
+    ROUGE,
     AnswerRelevancy,
     BERTScore,
-    BLEU,
     ExactMatch,
     F1Score,
     Faithfulness,
     HallucinationDetection,
-    ROUGE,
+    SchemaConformance,
     SemanticSimilarity,
 )
 
@@ -38,6 +39,14 @@ class TestExactMatch:
         result = self.metric.evaluate(
             answer="python is a language",
             ground_truth="Python is a Language",
+        )
+        assert result.score == 1.0
+
+    def test_internal_whitespace_normalized(self):
+        """Match collapses internal whitespace."""
+        result = self.metric.evaluate(
+            answer="hello  world",
+            ground_truth="hello world",
         )
         assert result.score == 1.0
 
@@ -164,6 +173,111 @@ class TestROUGE:
         )
         assert result.score < 0.5
 
+    def test_fallback_sensitive_to_repetition(self, monkeypatch):
+        """Fallback recall counts occurrences, not unique word types."""
+
+        def _force_fallback(*args, **kwargs):
+            raise ImportError("force fallback path")
+
+        monkeypatch.setattr(self.metric, "_evaluate_with_hf", _force_fallback)
+
+        partial = self.metric.evaluate(
+            answer="cat",
+            ground_truth="cat cat cat",
+        )
+        full = self.metric.evaluate(
+            answer="cat cat cat",
+            ground_truth="cat cat cat",
+        )
+
+        assert partial.score == pytest.approx(1 / 3)
+        assert full.score == 1.0
+        assert partial.metadata["method"] == "simple_recall"
+
+
+class TestSchemaConformance:
+    """Tests for SchemaConformance metric."""
+
+    def setup_method(self):
+        self.metric = SchemaConformance()
+        self.schema = {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"},
+            },
+            "required": ["name", "age"],
+        }
+
+    def test_valid_output(self):
+        """Fully conformant JSON receives a perfect score."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25}',
+            metadata={"json_schema": self.schema},
+        )
+
+        assert result.score == 1.0
+        assert result.metadata["valid"] is True
+        assert result.metadata["json_parseable"] is True
+
+    def test_invalid_json(self):
+        """Malformed JSON receives zero score."""
+        result = self.metric.evaluate(
+            answer="not valid json",
+            metadata={"json_schema": self.schema},
+        )
+
+        assert result.score == 0.0
+        assert result.metadata["valid"] is False
+        assert result.metadata["json_parseable"] is False
+
+    def test_partial_schema_violation(self):
+        """Valid JSON with one invalid field receives a partial score."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": "twenty"}',
+            metadata={"json_schema": self.schema},
+        )
+
+        assert result.score == 0.5
+        assert result.metadata["valid"] is False
+        assert result.metadata["json_parseable"] is True
+
+    def test_missing_schema(self):
+        """Missing schema receives zero score."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25}',
+            metadata={},
+        )
+
+        assert result.score == 0.0
+        assert result.metadata["valid"] is False
+
+    def test_empty_schema_accepts_valid_json(self):
+        """An empty JSON Schema accepts any valid JSON value."""
+        result = self.metric.evaluate(
+            answer='{"name": "Alice"}',
+            metadata={"json_schema": {}},
+        )
+
+        assert result.score == 1.0
+        assert result.metadata["valid"] is True
+        assert result.metadata["json_parseable"] is True
+
+    def test_extra_property_is_not_fully_conformant(self):
+        """Extra properties prevent full schema conformance."""
+        schema = {
+            **self.schema,
+            "additionalProperties": False,
+        }
+
+        result = self.metric.evaluate(
+            answer='{"name": "Alice", "age": 25, "extra": "value"}',
+            metadata={"json_schema": schema},
+        )
+
+        assert result.score < 1.0
+        assert result.metadata["valid"] is False
+
 
 class TestSemanticSimilarity:
     """Tests for SemanticSimilarity metric."""
@@ -175,6 +289,7 @@ class TestSemanticSimilarity:
         """Same meaning returns high score."""
         import sys
         from unittest.mock import MagicMock, patch
+
         import numpy as np
 
         if hasattr(self.metric, "_cached_model"):
@@ -185,12 +300,15 @@ class TestSemanticSimilarity:
         mock_sklearn = MagicMock()
         mock_sklearn.cosine_similarity.return_value = np.array([[0.8]])
 
-        with patch.dict(sys.modules, {
-            "sentence_transformers": mock_st,
-            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
-            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
-            "sklearn.metrics.pairwise": mock_sklearn,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": mock_st,
+                "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+                "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+                "sklearn.metrics.pairwise": mock_sklearn,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="The car is red",
                 ground_truth="The automobile is red",
@@ -201,6 +319,7 @@ class TestSemanticSimilarity:
         """Different meaning returns lower score."""
         import sys
         from unittest.mock import MagicMock, patch
+
         import numpy as np
 
         if hasattr(self.metric, "_cached_model"):
@@ -211,12 +330,15 @@ class TestSemanticSimilarity:
         mock_sklearn = MagicMock()
         mock_sklearn.cosine_similarity.return_value = np.array([[0.0]])
 
-        with patch.dict(sys.modules, {
-            "sentence_transformers": mock_st,
-            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
-            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
-            "sklearn.metrics.pairwise": mock_sklearn,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": mock_st,
+                "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+                "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+                "sklearn.metrics.pairwise": mock_sklearn,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="The sky is blue",
                 ground_truth="Python is a programming language",
@@ -352,9 +474,12 @@ class TestBERTScore:
 
         mock_bert_score = MagicMock(return_value=(mock_precision, mock_recall, mock_f1))
 
-        with patch.dict(sys.modules, {
-            "bert_score": mock_bert_score,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "bert_score": mock_bert_score,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="The cat sat on the mat",
                 ground_truth="The cat sat on the mat",
@@ -375,9 +500,12 @@ class TestBERTScore:
 
         mock_bert_score = MagicMock(return_value=(mock_precision, mock_recall, mock_f1))
 
-        with patch.dict(sys.modules, {
-            "bert_score": mock_bert_score,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "bert_score": mock_bert_score,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="The feline sat on the mat",
                 ground_truth="The cat sat on the mat",
@@ -398,9 +526,12 @@ class TestBERTScore:
 
         mock_bert_score = MagicMock(return_value=(mock_precision, mock_recall, mock_f1))
 
-        with patch.dict(sys.modules, {
-            "bert_score": mock_bert_score,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "bert_score": mock_bert_score,
+            },
+        ):
             result = self.metric.evaluate(
                 answer="Python is a language",
                 ground_truth="The cat sat on the mat",
@@ -418,6 +549,7 @@ class TestSimilarityCosineClamp:
         """L22: Even with negative cosine similarity, score must be >= 0."""
         import sys
         from unittest.mock import MagicMock, patch
+
         import numpy as np
 
         metric = SemanticSimilarity()
@@ -432,12 +564,15 @@ class TestSimilarityCosineClamp:
         mock_sklearn = MagicMock()
         mock_sklearn.cosine_similarity.return_value = np.array([[-1.0]])
 
-        with patch.dict(sys.modules, {
-            "sentence_transformers": mock_st,
-            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
-            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
-            "sklearn.metrics.pairwise": mock_sklearn,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": mock_st,
+                "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+                "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+                "sklearn.metrics.pairwise": mock_sklearn,
+            },
+        ):
             result = metric.evaluate(answer="a", ground_truth="b")
 
         assert result.score >= 0.0
@@ -447,6 +582,7 @@ class TestSimilarityCosineClamp:
         """L22: Cosine of 0.0 maps to 0.5 after rescaling."""
         import sys
         from unittest.mock import MagicMock, patch
+
         import numpy as np
 
         metric = SemanticSimilarity()
@@ -458,12 +594,15 @@ class TestSimilarityCosineClamp:
         mock_sklearn = MagicMock()
         mock_sklearn.cosine_similarity.return_value = np.array([[0.0]])
 
-        with patch.dict(sys.modules, {
-            "sentence_transformers": mock_st,
-            "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
-            "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
-            "sklearn.metrics.pairwise": mock_sklearn,
-        }):
+        with patch.dict(
+            sys.modules,
+            {
+                "sentence_transformers": mock_st,
+                "sklearn": MagicMock(metrics=MagicMock(pairwise=mock_sklearn)),
+                "sklearn.metrics": MagicMock(pairwise=mock_sklearn),
+                "sklearn.metrics.pairwise": mock_sklearn,
+            },
+        ):
             result = metric.evaluate(answer="a", ground_truth="b")
 
         assert result.score == pytest.approx(0.5)
@@ -474,7 +613,7 @@ class TestBERTScoreCosineClamp:
 
     def test_negative_f1_clamped_to_zero(self):
         """L22: Even if BERTScore returns negative F1, score must be >= 0."""
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
 
         metric = BERTScore()
         mock_precision = MagicMock()

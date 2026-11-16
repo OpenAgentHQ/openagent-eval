@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from openagent_eval.datasets.base import Dataset, DatasetItem
 
 

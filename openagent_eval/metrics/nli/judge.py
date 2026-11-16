@@ -8,14 +8,14 @@ whether a hypothesis is entailed by a premise.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
 from typing import Any
 
 from loguru import logger
 
 
-class NLILabel(str, Enum):
+class NLILabel(StrEnum):
     """NLI prediction labels."""
 
     ENTAILMENT = "entailment"
@@ -118,10 +118,7 @@ class NLIJudge:
         predictions = self.pipeline(inputs)
 
         # predictions is a list of dicts: [{"label": "entailment", "score": 0.99}, ...]
-        score_map = {
-            pred["label"].lower(): pred["score"]
-            for pred in predictions[0]
-        }
+        score_map = {pred["label"].lower(): pred["score"] for pred in predictions[0]}
 
         entailed_score = score_map.get("entailment", 0.0)
         contradiction_score = score_map.get("contradiction", 0.0)
@@ -142,9 +139,7 @@ class NLIJudge:
             entailed_score=entailed_score,
         )
 
-    def batch_evaluate(
-        self, pairs: list[tuple[str, str]]
-    ) -> list[NLIResult]:
+    def batch_evaluate(self, pairs: list[tuple[str, str]]) -> list[NLIResult]:
         """Evaluate multiple premise-hypothesis pairs.
 
         Args:

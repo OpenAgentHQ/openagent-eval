@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from openagent_eval.diagnosis.blame import (
-    BlameAttribution,
     LOW_CONTEXT_PRECISION,
     LOW_CONTEXT_RECALL,
     LOW_FAITHFULNESS,
     LOW_RELEVANCY,
+    BlameAttribution,
 )
 from openagent_eval.diagnosis.models import (
     BlameTarget,
@@ -63,9 +63,7 @@ class TestBlameAttribution:
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.RETRIEVAL
         assert result.confidence >= 0.9
-        assert any(
-            f.mode == FailureMode.EMPTY_RETRIEVAL for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.EMPTY_RETRIEVAL for f in result.failure_modes)
 
     def test_low_context_precision(self) -> None:
         """Low context precision should blame retrieval."""
@@ -95,9 +93,7 @@ class TestBlameAttribution:
         )
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.RETRIEVAL
-        assert any(
-            f.mode == FailureMode.MISSING_CONTEXT for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.MISSING_CONTEXT for f in result.failure_modes)
 
     # ------------------------------------------------------------------
     # Generation failures
@@ -115,9 +111,7 @@ class TestBlameAttribution:
         )
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.GENERATION
-        assert any(
-            f.mode == FailureMode.HALLUCINATION for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.HALLUCINATION for f in result.failure_modes)
 
     def test_low_relevancy(self) -> None:
         """Low relevancy should blame generation for off-topic answer."""
@@ -131,22 +125,61 @@ class TestBlameAttribution:
         )
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.GENERATION
-        assert any(
-            f.mode == FailureMode.OFF_TOPIC_ANSWER for f in result.failure_modes
-        )
+        assert any(f.mode == FailureMode.OFF_TOPIC_ANSWER for f in result.failure_modes)
 
     def test_empty_answer_blames_generation(self) -> None:
-        """Empty answer with non-empty contexts should blame generation."""
+        """Short answer corroborated by low relevancy should blame generation."""
         scores = ComponentScores(
             question="What is AI?",
             retrieval_scores={"context_precision": 0.8},
-            generation_scores={},
+            generation_scores={"answer_relevancy": LOW_RELEVANCY - 0.1},
             context_count=3,
             context_lengths=[200, 200, 200],
             answer_length=5,  # Too short
         )
         result = self.blamer.analyze(scores)
         assert result.target == BlameTarget.GENERATION
+
+    def test_short_answer_with_good_scores_not_blamed(self) -> None:
+        """Legitimate short answers ("Yes.", "42", "Paris") must not be blamed.
+
+        Regression test for issue #66: a short answer corroborated as fine by
+        the other generation metrics is not an OFF_TOPIC_ANSWER.
+        """
+        for answer in ("Yes.", "42", "Paris"):
+            scores = ComponentScores(
+                question="What is the capital of France?",
+                retrieval_scores={"context_precision": 0.9, "context_recall": 0.85},
+                generation_scores={"faithfulness": 0.95, "answer_relevancy": 0.9},
+                context_count=3,
+                context_lengths=[200, 200, 200],
+                answer_length=len(answer),
+            )
+            result = self.blamer.analyze(scores)
+            assert result.target == BlameTarget.NONE, answer
+            assert not any(
+                f.mode == FailureMode.OFF_TOPIC_ANSWER for f in result.failure_modes
+            ), answer
+
+    def test_short_answer_with_low_relevancy_still_blamed(self) -> None:
+        """A short answer corroborated by low relevancy is still flagged.
+
+        Guards against the fix degenerating into disabling the heuristic.
+        """
+        scores = ComponentScores(
+            question="What is the capital of France?",
+            retrieval_scores={"context_precision": 0.9, "context_recall": 0.85},
+            generation_scores={
+                "faithfulness": 0.95,
+                "answer_relevancy": LOW_RELEVANCY - 0.1,
+            },
+            context_count=3,
+            context_lengths=[200, 200, 200],
+            answer_length=4,  # Too short, e.g. "idk."
+        )
+        result = self.blamer.analyze(scores)
+        assert result.target == BlameTarget.GENERATION
+        assert any(f.mode == FailureMode.OFF_TOPIC_ANSWER for f in result.failure_modes)
 
     # ------------------------------------------------------------------
     # Chunking failures
@@ -179,7 +212,8 @@ class TestBlameAttribution:
         result = self.blamer.analyze(scores)
         # Should detect chunking split issue
         chunking_failures = [
-            f for f in result.failure_modes
+            f
+            for f in result.failure_modes
             if f.mode == FailureMode.CHUNKING_SPLIT_INFO_LOST
         ]
         assert len(chunking_failures) > 0

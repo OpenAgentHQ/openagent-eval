@@ -11,17 +11,19 @@ import inspect
 import json
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
-from openagent_eval.providers.base.llm import LLMProvider
 
-_JSON_SCORE_INSTRUCTION = (
-    'Respond with ONLY a JSON object on a single line: {{"score": <number from 0.0 to 1.0>}}'
+if TYPE_CHECKING:
+    from openagent_eval.providers.base.llm import LLMProvider
+
+_JSON_SCORE_INSTRUCTION = 'Respond with ONLY a JSON object on a single line: {{"score": <number from 0.0 to 1.0>}}'
+_JSON_FENCE_RE = re.compile(
+    r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IGNORECASE
 )
-_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IGNORECASE)
 _JSON_OBJECT_RE = re.compile(r"\{[^{}]*\}")
 _SCORE_LABEL_RE = re.compile(r"score\s*[:=]\s*(\d+\.?\d*)", re.IGNORECASE)
 _BARE_DECIMAL_RE = re.compile(r"^\s*(\d+\.?\d*)\s*$")

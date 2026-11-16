@@ -6,11 +6,14 @@ results as a structured .md file with tables, headers, and sections.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from openagent_eval.core.engine import EvaluationReport
 from openagent_eval.reports.base import ReportGenerator
+
+if TYPE_CHECKING:
+    from openagent_eval.core.engine import EvaluationReport
 
 
 class MarkdownReport(ReportGenerator):
@@ -37,7 +40,7 @@ class MarkdownReport(ReportGenerator):
         result = report.result
         summary = report.summary
         config = report.config
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
         sections: list[str] = []
 
@@ -53,9 +56,7 @@ class MarkdownReport(ReportGenerator):
         sections.append("| Metric | Value |")
         sections.append("|--------|-------|")
         sections.append(f"| Total Items | {summary.get('total_items', 0)} |")
-        sections.append(
-            f"| Successful | {summary.get('successful_evaluations', 0)} |"
-        )
+        sections.append(f"| Successful | {summary.get('successful_evaluations', 0)} |")
         sections.append(f"| Failed | {summary.get('failed_evaluations', 0)} |")
         sections.append("")
 
@@ -74,9 +75,7 @@ class MarkdownReport(ReportGenerator):
                     indicator = "🟡"
                 else:
                     indicator = "🔴"
-                sections.append(
-                    f"| {metric_name} | {indicator} {avg_score:.4f} |"
-                )
+                sections.append(f"| {metric_name} | {indicator} {avg_score:.4f} |")
             sections.append("")
 
             # Overall score
@@ -102,8 +101,10 @@ class MarkdownReport(ReportGenerator):
             # Error details
             sections.append("### Error Details")
             sections.append("")
-            for i, err in enumerate(result.errors[:config.report.max_examples], 1):
-                sections.append(f"{i}. **{err.get('error_type', 'Unknown')}**: {err.get('error', 'No message')}")
+            for i, err in enumerate(result.errors[: config.report.max_examples], 1):
+                sections.append(
+                    f"{i}. **{err.get('error_type', 'Unknown')}**: {err.get('error', 'No message')}"
+                )
             sections.append("")
 
         # Example Results
@@ -133,7 +134,9 @@ class MarkdownReport(ReportGenerator):
                     sections.append("<summary>Contexts</summary>")
                     sections.append("")
                     for ctx in eval_result.contexts:
-                        sections.append(f"> {ctx[:200]}{'...' if len(ctx) > 200 else ''}")
+                        sections.append(
+                            f"> {ctx[:200]}{'...' if len(ctx) > 200 else ''}"
+                        )
                         sections.append("")
                     sections.append("</details>")
                     sections.append("")
@@ -142,16 +145,16 @@ class MarkdownReport(ReportGenerator):
         sections.append("## Configuration")
         sections.append("")
         sections.append("```yaml")
-        sections.append(f"dataset:")
+        sections.append("dataset:")
         sections.append(f"  path: {config.dataset.path}")
         if config.dataset.format:
             sections.append(f"  format: {config.dataset.format}")
-        sections.append(f"llm:")
+        sections.append("llm:")
         sections.append(f"  provider: {config.llm.provider}")
         sections.append(f"  model: {config.llm.model}")
-        sections.append(f"retriever:")
+        sections.append("retriever:")
         sections.append(f"  provider: {config.retriever.provider}")
-        sections.append(f"report:")
+        sections.append("report:")
         sections.append(f"  output: {config.report.output.value}")
         sections.append(f"  output_dir: {config.report.output_dir}")
         sections.append("```")
@@ -166,7 +169,9 @@ class MarkdownReport(ReportGenerator):
 
         return "\n".join(sections)
 
-    def generate_to_file(self, report: EvaluationReport, output_path: Path | str) -> Path:
+    def generate_to_file(
+        self, report: EvaluationReport, output_path: Path | str
+    ) -> Path:
         """Generate Markdown report and write to file.
 
         Args:

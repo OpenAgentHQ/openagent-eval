@@ -27,10 +27,13 @@ import asyncio
 import sys
 import time
 from pathlib import Path
-from typing import Any, Generator
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.cicd.models import CICDConfig, EvaluationGate, ThresholdConfig
 from openagent_eval.cicd.thresholds import EvaluationResult, ThresholdEvaluator
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -175,18 +178,29 @@ class OAEvalPlugin:
 
             dataset_items = load_dataset_for_run(eval_config)
 
-            # Run async evaluation
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # If we're already in an async context, create a new task
+            # Run async evaluation. Use get_running_loop() instead of
+            # get_event_loop(): after any completed asyncio.run() in the
+            # process, the event-loop policy holds no current loop
+            # (asyncio.run calls set_event_loop(None) on completion), so
+            # get_event_loop() raises RuntimeError before is_running() is
+            # ever reached — and the broad `except Exception` below then
+            # swallowed it into an error summary (issue #261).
+            # get_running_loop() only asks whether a loop is running right
+            # now, independent of the policy's current-loop state.
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                # No loop is running: the normal synchronous case.
+                result = asyncio.run(engine.run(dataset_items))
+            else:
+                # We're already inside a live async context; offload to a
+                # thread and run it there, preserving the timeout.
                 import concurrent.futures
 
                 with concurrent.futures.ThreadPoolExecutor() as pool:
-                    result = pool.submit(
-                        asyncio.run, engine.run(dataset_items)
-                    ).result(timeout=timeout)
-            else:
-                result = loop.run_until_complete(engine.run(dataset_items))
+                    result = pool.submit(asyncio.run, engine.run(dataset_items)).result(
+                        timeout=timeout
+                    )
 
             # Extract metrics from summary
             metrics = result.summary.get("metrics_summary", {})
@@ -227,6 +241,14 @@ class OAEvalPlugin:
         # Evaluate thresholds
         evaluator = ThresholdEvaluator(cicd_config)
         eval_result = evaluator.evaluate_all_gates(flat_metrics)
+        # Expose the plugin's threshold-target mapping so downstream
+        # consumers (e.g. the `oaeval test` threshold path) can evaluate
+        # gates against it. This is the engine's metric set plus the
+        # execution counts (total_items, successful_evaluations,
+        # failed_evaluations) that the plugin already supports as gate
+        # targets, so it is a superset of the engine summary's own
+        # `metrics_summary`, not the same set.
+        eval_result.summary["metrics_summary"] = flat_metrics
         eval_result.summary["duration_seconds"] = duration
 
         return eval_result
@@ -280,9 +302,7 @@ if sys.modules.get("pytest") is not None:
     pytest_runtest_setup = pytest.hookimpl(tryfirst=True)(pytest_runtest_setup)
 
 
-def pytest_sessionfinish(
-    session: pytest.Session, exitstatus: int
-) -> None:
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """Called after whole test run finished."""
     # Store final status for CI/CD
     session._oaeval_exitstatus = exitstatus  # type: ignore[attr-defined]

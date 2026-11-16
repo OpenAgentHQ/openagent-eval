@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, cast
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any, cast
 
 from openagent_eval.core.engine import EvaluationReport
 from openagent_eval.core.pipeline import EvaluationResult, PipelineResult
 from openagent_eval.exceptions import ConfigurationError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class ReportManager:
@@ -49,7 +51,7 @@ class ReportManager:
 
         payload = {
             "report_id": report_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "config": report.config.model_dump(),
             "summary": report.summary,
             "metadata": report.metadata,

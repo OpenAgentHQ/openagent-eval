@@ -131,7 +131,9 @@ class TestDiagnosisAnalyzer:
         report = self.analyzer.analyze(results)
         assert len(report.recommendations) > 0
         # Should contain retrieval-specific recommendation
-        assert any("retrieval" in r.lower() or "RETRIEVAL" in r for r in report.recommendations)
+        assert any(
+            "retrieval" in r.lower() or "RETRIEVAL" in r for r in report.recommendations
+        )
 
     def test_no_recommendations_when_healthy(self) -> None:
         """Healthy report should have generic recommendation."""

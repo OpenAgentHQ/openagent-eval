@@ -213,16 +213,19 @@ oaeval completion zsh >> ~/.zshrc
 oaeval completion fish > ~/.config/fish/completions/oaeval.fish
 ```
 
-## Exit codes
+## Exit Codes
+
+The CLI returns the following exit codes so scripts and CI/CD pipelines can check command results.
 
 | Code | Meaning |
 | --- | --- |
 | `0` | Success |
-| `1` | Runtime or configuration error |
+| `1` | General or runtime error |
 | `2` | Invalid CLI usage or configuration error |
 | `3` | Dataset error |
 | `4` | Provider error |
 | `5` | Metric error |
+| `6` | Corpus error |
 
 ## Config auto-discovery
 

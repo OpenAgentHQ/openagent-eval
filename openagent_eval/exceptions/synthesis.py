@@ -48,7 +48,7 @@ class SynthesisExecutionError(SynthesisError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if original_error:
+        if original_error is not None:
             error_details["original_error"] = str(original_error)
 
         super().__init__(message=message, details=error_details)

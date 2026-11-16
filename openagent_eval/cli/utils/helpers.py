@@ -43,9 +43,7 @@ def get_report_generator(format_name: str) -> object:
     return generators[format_name]()
 
 
-def resolve_report_id(
-    report_id: str, output_dir: Path, manager: object
-) -> dict:
+def resolve_report_id(report_id: str, output_dir: Path, manager: object) -> dict:
     """Resolve report ID to report data.
 
     Handles 'latest' keyword and direct file paths.
@@ -82,9 +80,7 @@ def resolve_report_id(
     if report_id == "latest":
         reports = manager.list_reports(output_dir)
         if not reports:
-            raise CommandError(
-                message="No reports found", exit_code=1
-            )
+            raise CommandError(message="No reports found", exit_code=1)
         report_id = reports[0]["report_id"]
 
     try:

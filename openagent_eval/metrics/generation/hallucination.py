@@ -62,9 +62,7 @@ class HallucinationDetection(BaseMetric):
         # Fallback: word coverage
         return self._evaluate_simple(answer, contexts)
 
-    def _evaluate_with_deepeval(
-        self, answer: str, contexts: list[str]
-    ) -> MetricResult:
+    def _evaluate_with_deepeval(self, answer: str, contexts: list[str]) -> MetricResult:
         """Evaluate using DeepEval hallucination metric."""
         from deepeval.metrics import HallucinationMetric
         from deepeval.test_case import LLMTestCase
@@ -92,9 +90,7 @@ class HallucinationDetection(BaseMetric):
             metadata={"method": "deepeval"},
         )
 
-    def _evaluate_simple(
-        self, answer: str, contexts: list[str]
-    ) -> MetricResult:
+    def _evaluate_simple(self, answer: str, contexts: list[str]) -> MetricResult:
         """Simple word coverage fallback."""
         answer_words = set(answer.lower().split())
         context_text = " ".join(contexts).lower()

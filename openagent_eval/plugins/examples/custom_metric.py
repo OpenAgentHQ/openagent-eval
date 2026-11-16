@@ -29,29 +29,27 @@ class WordCountMetric(BaseMetric):
             MetricResult with word count score.
         """
         answer = kwargs.get("answer", "")
-        
+
         if not answer:
             return MetricResult(
-                score=0.0,
-                reason="No answer provided",
-                metadata={"word_count": 0}
+                score=0.0, reason="No answer provided", metadata={"word_count": 0}
             )
-        
+
         # Count words
         words = answer.split()
         word_count = len(words)
-        
+
         # Normalize score (assuming 100 words is a good length)
         # This is a simple normalization - you can customize this
         normalized_score = min(word_count / 100.0, 1.0)
-        
+
         return MetricResult(
             score=normalized_score,
             reason=f"Answer contains {word_count} words",
             metadata={
                 "word_count": word_count,
                 "normalized_score": normalized_score,
-            }
+            },
         )
 
     def validate_inputs(self, **kwargs) -> None:
@@ -65,6 +63,4 @@ class WordCountMetric(BaseMetric):
         """
         answer = kwargs.get("answer")
         if answer is not None and not isinstance(answer, str):
-            raise ValueError(
-                f"Answer must be a string, got {type(answer).__name__}"
-            )
+            raise ValueError(f"Answer must be a string, got {type(answer).__name__}")

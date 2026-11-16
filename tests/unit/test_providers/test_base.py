@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from openagent_eval.providers.base.llm import LLMProvider
 from openagent_eval.providers.base.retriever import Retriever
@@ -47,7 +48,7 @@ class TestTokenUsage:
     def test_frozen_model(self):
         """TokenUsage is immutable."""
         usage = TokenUsage(prompt_tokens=1, completion_tokens=2, total_tokens=3)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             usage.prompt_tokens = 10  # type: ignore[misc]
 
 
@@ -135,7 +136,7 @@ class TestLLMResponse:
     def test_negative_latency_raises(self):
         """LLMResponse rejects negative latency."""
         usage = TokenUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             LLMResponse(
                 content="x",
                 model="gpt-4o",
@@ -166,7 +167,7 @@ class TestLLMResponse:
             provider="openai",
             latency_ms=0.0,
         )
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             response.content = "y"  # type: ignore[misc]
 
 
@@ -230,7 +231,7 @@ class TestDocument:
     def test_frozen_model(self):
         """Document is immutable."""
         doc = Document(content="x")
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             doc.content = "y"  # type: ignore[misc]
 
 

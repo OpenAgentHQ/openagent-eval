@@ -31,7 +31,7 @@ class ProviderError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if provider_name:
+        if provider_name is not None:
             error_details["provider_name"] = provider_name
 
         super().__init__(message=message, details=error_details)
@@ -42,7 +42,9 @@ class ProviderError(OpenAgentEvalError):
         provider_prefix = f"[{self.provider_name}] " if self.provider_name else ""
         base = f"{provider_prefix}{self.error_type}: {self.message}"
         if self.details:
-            details_items = {k: v for k, v in self.details.items() if k != "provider_name"}
+            details_items = {
+                k: v for k, v in self.details.items() if k != "provider_name"
+            }
             if details_items:
                 details_str = ", ".join(f"{k}={v}" for k, v in details_items.items())
                 return f"{base} ({details_str})"
@@ -68,14 +70,16 @@ class ProviderNotFoundError(ProviderError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if available_providers:
+        if available_providers is not None:
             error_details["available_providers"] = available_providers
 
         message = f"Provider not found: {provider_name}"
         if available_providers:
             message += f". Available providers: {', '.join(available_providers)}"
 
-        super().__init__(message=message, provider_name=provider_name, details=error_details)
+        super().__init__(
+            message=message, provider_name=provider_name, details=error_details
+        )
         self.available_providers = available_providers or []
 
 
@@ -104,10 +108,12 @@ class ProviderConnectionError(ProviderError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if original_error:
+        if original_error is not None:
             error_details["original_error"] = str(original_error)
 
-        super().__init__(message=message, provider_name=provider_name, details=error_details)
+        super().__init__(
+            message=message, provider_name=provider_name, details=error_details
+        )
         self.original_error = original_error
 
 
@@ -136,8 +142,10 @@ class ProviderExecutionError(ProviderError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if original_error:
+        if original_error is not None:
             error_details["original_error"] = str(original_error)
 
-        super().__init__(message=message, provider_name=provider_name, details=error_details)
+        super().__init__(
+            message=message, provider_name=provider_name, details=error_details
+        )
         self.original_error = original_error

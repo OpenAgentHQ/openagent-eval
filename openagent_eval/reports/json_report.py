@@ -7,12 +7,14 @@ results into a machine-readable format for programmatic consumption.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from openagent_eval.core.engine import EvaluationReport
 from openagent_eval.reports.base import ReportGenerator
+
+if TYPE_CHECKING:
+    from openagent_eval.core.engine import EvaluationReport
 
 
 class JSONReport(ReportGenerator):
@@ -55,7 +57,7 @@ class JSONReport(ReportGenerator):
             "metadata": {
                 "engine": report.metadata.get("engine", "openagent-eval"),
                 "version": report.metadata.get("version", "0.1.0"),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "title": report.metadata.get("title", "OpenAgent Eval Report"),
             },
             "summary": {
@@ -91,14 +93,16 @@ class JSONReport(ReportGenerator):
         # Format individual results, respecting the configured example limit
         max_examples = min(len(result.results), config.report.max_examples)
         for eval_result in result.results[:max_examples]:
-            report_data["results"].append({
-                "question": eval_result.question,
-                "answer": eval_result.answer,
-                "ground_truth": eval_result.ground_truth,
-                "contexts": eval_result.contexts,
-                "metrics": eval_result.metrics,
-                "metadata": eval_result.metadata,
-            })
+            report_data["results"].append(
+                {
+                    "question": eval_result.question,
+                    "answer": eval_result.answer,
+                    "ground_truth": eval_result.ground_truth,
+                    "contexts": eval_result.contexts,
+                    "metrics": eval_result.metrics,
+                    "metadata": eval_result.metadata,
+                }
+            )
 
         # Compute failure analysis
         if result.errors:
@@ -118,7 +122,9 @@ class JSONReport(ReportGenerator):
             ensure_ascii=False,
         )
 
-    def generate_to_file(self, report: EvaluationReport, output_path: Path | str) -> Path:
+    def generate_to_file(
+        self, report: EvaluationReport, output_path: Path | str
+    ) -> Path:
         """Generate JSON report and write to file.
 
         Args:

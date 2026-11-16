@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 import httpx
+import pytest
 
 # Skip tests if anthropic is not installed
 anthropic = pytest.importorskip("anthropic", reason="anthropic not installed")
@@ -22,7 +21,9 @@ def _make_httpx_response(status_code: int = 200, text: str = "") -> httpx.Respon
     """Create a real httpx.Response for use in exception constructors."""
     return httpx.Response(
         status_code=status_code,
-        request=httpx.Request(method="POST", url="https://api.anthropic.com/v1/messages"),
+        request=httpx.Request(
+            method="POST", url="https://api.anthropic.com/v1/messages"
+        ),
         content=text.encode(),
     )
 
@@ -96,7 +97,9 @@ class TestAnthropicGenerate:
     """Tests for Anthropic.generate()."""
 
     @pytest.mark.asyncio
-    async def test_generate_success(self, provider_with_key: Anthropic, mock_anthropic_client):
+    async def test_generate_success(
+        self, provider_with_key: Anthropic, mock_anthropic_client
+    ):
         """generate() returns content on successful API call."""
         mock_text_block = MagicMock()
         mock_text_block.type = "text"
@@ -114,7 +117,9 @@ class TestAnthropicGenerate:
         assert result == "Claude response"
 
     @pytest.mark.asyncio
-    async def test_generate_sends_max_tokens(self, provider_with_key: Anthropic, mock_anthropic_client):
+    async def test_generate_sends_max_tokens(
+        self, provider_with_key: Anthropic, mock_anthropic_client
+    ):
         """H9: generate() must always send max_tokens (required by the API)."""
         mock_text_block = MagicMock()
         mock_text_block.type = "text"
@@ -216,7 +221,7 @@ class TestAnthropicGenerate:
         self, provider_with_key: Anthropic, mock_anthropic_client
     ):
         """generate() raises ProviderExecutionError on generic API error."""
-        response = _make_httpx_response(status_code=500, text="Something went wrong")
+        _make_httpx_response(status_code=500, text="Something went wrong")
         error = anthropic.APIError(
             message="Something went wrong",
             request=MagicMock(),
@@ -235,7 +240,9 @@ class TestAnthropicTokenCount:
     """Tests for Anthropic.get_token_count()."""
 
     @pytest.mark.asyncio
-    async def test_token_count_success(self, provider_with_key: Anthropic, mock_anthropic_client):
+    async def test_token_count_success(
+        self, provider_with_key: Anthropic, mock_anthropic_client
+    ):
         """get_token_count() returns token count."""
         mock_count_response = MagicMock()
         mock_count_response.input_tokens = 5

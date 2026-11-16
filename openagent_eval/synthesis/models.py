@@ -7,10 +7,10 @@ module to represent generated test cases and datasets.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class TestCaseType(str, Enum):
+class TestCaseType(StrEnum):
     """Type of synthetic test case.
 
     Attributes:

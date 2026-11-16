@@ -7,9 +7,12 @@ enabling more accurate faithfulness evaluation.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from openagent_eval.metrics.nli.claim_extractor import Claim
 from openagent_eval.metrics.nli.judge import NLIJudge, NLIResult, get_default_judge
+
+if TYPE_CHECKING:
+    from openagent_eval.metrics.nli.claim_extractor import Claim
 
 
 @dataclass(frozen=True)
@@ -58,9 +61,7 @@ class EvidenceFinder:
         """
         self._judge = judge or get_default_judge()
 
-    def find_evidence(
-        self, claim: Claim, contexts: list[str]
-    ) -> EvidenceMatch | None:
+    def find_evidence(self, claim: Claim, contexts: list[str]) -> EvidenceMatch | None:
         """Find the best supporting evidence for a claim.
 
         Args:
@@ -120,7 +121,8 @@ class EvidenceFinder:
 
         matches = self.find_evidence_batch(claims, contexts)
         supported = sum(
-            1 for m in matches
+            1
+            for m in matches
             if m is not None and m.nli_result.entailed_score >= threshold
         )
 

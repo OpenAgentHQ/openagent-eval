@@ -49,7 +49,9 @@ def create_banner(console: Console | None = None, show_version: bool = False) ->
 
     # Add tagline
     styled_art.append("\n", style="default")
-    styled_art.append("      OpenAgent Eval • Production-Ready RAG Evaluation", style="italic")
+    styled_art.append(
+        "      OpenAgent Eval • Production-Ready RAG Evaluation", style="italic"
+    )
 
     # Create a panel
     panel = Panel(

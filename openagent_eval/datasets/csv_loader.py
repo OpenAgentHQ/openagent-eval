@@ -7,12 +7,14 @@ The CSV should have a header row with column names.
 from __future__ import annotations
 
 import csv
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.datasets.base import BaseDatasetLoader, Dataset, DatasetItem
 from openagent_eval.datasets.models import DatasetItemModel
 from openagent_eval.exceptions import DatasetValidationError, InvalidDatasetError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class CSVDatasetLoader(BaseDatasetLoader):
@@ -135,7 +137,9 @@ class CSVDatasetLoader(BaseDatasetLoader):
         for i, row in enumerate(rows):
             try:
                 # Build item data from CSV columns
-                item_data: dict[str, Any] = {"question": row.get("question", "").strip()}
+                item_data: dict[str, Any] = {
+                    "question": row.get("question", "").strip()
+                }
 
                 # Add optional fields if present
                 if "ground_truth" in row and row["ground_truth"]:
@@ -151,7 +155,9 @@ class CSVDatasetLoader(BaseDatasetLoader):
                     try:
                         parsed = json.loads(row["metadata"])
                         item_data["metadata"] = (
-                            parsed if isinstance(parsed, dict) else {"raw": row["metadata"]}
+                            parsed
+                            if isinstance(parsed, dict)
+                            else {"raw": row["metadata"]}
                         )
                     except (json.JSONDecodeError, TypeError):
                         item_data["metadata"] = {"raw": row["metadata"]}

@@ -82,9 +82,7 @@ class AnswerRelevancy(BaseMetric):
             self._cached_ragas_rel = ragas_relevancy
         return self._cached_ragas_rel
 
-    def _evaluate_with_ragas(
-        self, question: str, answer: str
-    ) -> MetricResult:
+    def _evaluate_with_ragas(self, question: str, answer: str) -> MetricResult:
         """Evaluate using Ragas answer_relevancy."""
         from datasets import Dataset
 
@@ -104,9 +102,7 @@ class AnswerRelevancy(BaseMetric):
             metadata={"method": "ragas"},
         )
 
-    def _evaluate_with_nli(
-        self, question: str, answer: str
-    ) -> MetricResult:
+    def _evaluate_with_nli(self, question: str, answer: str) -> MetricResult:
         """Evaluate using NLI: check if answer entails the question.
 
         For relevancy, we check if the answer is relevant to the question
@@ -137,15 +133,43 @@ class AnswerRelevancy(BaseMetric):
         """Simple word overlap fallback."""
         # Remove common stop words and punctuation
         stop_words = {
-            "the", "a", "an", "is", "are", "was", "were", "be", "been",
-            "being", "have", "has", "had", "do", "does", "did", "will",
-            "would", "could", "should", "may", "might", "shall", "can",
-            "what", "how", "why", "when", "where", "who", "which",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "shall",
+            "can",
+            "what",
+            "how",
+            "why",
+            "when",
+            "where",
+            "who",
+            "which",
         }
 
         import re
+
         def _normalize(text: str) -> set[str]:
-            words = re.findall(r'\b\w+\b', text.lower())
+            words = re.findall(r"\b\w+\b", text.lower())
             return set(words) - stop_words
 
         question_words = _normalize(question)

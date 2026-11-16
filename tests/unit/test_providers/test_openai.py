@@ -99,24 +99,32 @@ class TestOpenAIGenerate:
     async def test_generate_success(self, provider_with_key: OpenAIProvider):
         """generate() returns content on successful API call."""
         mock_completion = MagicMock()
-        mock_completion.choices = [MagicMock(message=MagicMock(content="Hello, world!"))]
+        mock_completion.choices = [
+            MagicMock(message=MagicMock(content="Hello, world!"))
+        ]
         mock_completion.usage = MagicMock(total_tokens=10)
 
         provider_with_key._client = AsyncMock()
-        provider_with_key._client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        provider_with_key._client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         result = await provider_with_key.generate("Test prompt")
         assert result == "Hello, world!"
 
     @pytest.mark.asyncio
-    async def test_generate_with_system_message(self, provider_with_key: OpenAIProvider):
+    async def test_generate_with_system_message(
+        self, provider_with_key: OpenAIProvider
+    ):
         """generate() includes system message when provided."""
         mock_completion = MagicMock()
         mock_completion.choices = [MagicMock(message=MagicMock(content="Response"))]
         mock_completion.usage = MagicMock(total_tokens=5)
 
         provider_with_key._client = AsyncMock()
-        provider_with_key._client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        provider_with_key._client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         result = await provider_with_key.generate(
             "Test prompt",
@@ -131,13 +139,17 @@ class TestOpenAIGenerate:
         assert messages[1]["role"] == "user"
 
     @pytest.mark.asyncio
-    async def test_generate_empty_choices_raises(self, provider_with_key: OpenAIProvider):
+    async def test_generate_empty_choices_raises(
+        self, provider_with_key: OpenAIProvider
+    ):
         """generate() raises ProviderExecutionError on empty choices."""
         mock_completion = MagicMock()
         mock_completion.choices = []
 
         provider_with_key._client = AsyncMock()
-        provider_with_key._client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        provider_with_key._client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         with pytest.raises(ProviderExecutionError, match="empty choices"):
             await provider_with_key.generate("Test prompt")
@@ -176,14 +188,18 @@ class TestOpenAIGenerate:
             await provider_with_key.generate("Test prompt")
 
     @pytest.mark.asyncio
-    async def test_generate_with_temperature_override(self, provider_with_key: OpenAIProvider):
+    async def test_generate_with_temperature_override(
+        self, provider_with_key: OpenAIProvider
+    ):
         """generate() respects temperature override."""
         mock_completion = MagicMock()
         mock_completion.choices = [MagicMock(message=MagicMock(content="ok"))]
         mock_completion.usage = MagicMock(total_tokens=5)
 
         provider_with_key._client = AsyncMock()
-        provider_with_key._client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        provider_with_key._client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         await provider_with_key.generate("Test", temperature=0.9)
 
@@ -192,14 +208,18 @@ class TestOpenAIGenerate:
         assert params["temperature"] == 0.9
 
     @pytest.mark.asyncio
-    async def test_generate_with_max_tokens_override(self, provider_with_key: OpenAIProvider):
+    async def test_generate_with_max_tokens_override(
+        self, provider_with_key: OpenAIProvider
+    ):
         """generate() respects max_tokens override."""
         mock_completion = MagicMock()
         mock_completion.choices = [MagicMock(message=MagicMock(content="ok"))]
         mock_completion.usage = MagicMock(total_tokens=5)
 
         provider_with_key._client = AsyncMock()
-        provider_with_key._client.chat.completions.create = AsyncMock(return_value=mock_completion)
+        provider_with_key._client.chat.completions.create = AsyncMock(
+            return_value=mock_completion
+        )
 
         await provider_with_key.generate("Test", max_tokens=256)
 
@@ -231,5 +251,7 @@ class TestOpenAITokenCount:
     async def test_token_count_longer_text(self, provider_with_key: OpenAIProvider):
         """get_token_count() returns more tokens for longer text."""
         short = await provider_with_key.get_token_count("Hi")
-        long = await provider_with_key.get_token_count("This is a much longer sentence for testing purposes")
+        long = await provider_with_key.get_token_count(
+            "This is a much longer sentence for testing purposes"
+        )
         assert long > short

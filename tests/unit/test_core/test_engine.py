@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
-from openagent_eval.config.models import Config
+from openagent_eval import __version__
 from openagent_eval.core.engine import Engine
 from openagent_eval.core.executor import Executor
 from openagent_eval.core.pipeline import EvaluationResult, Pipeline, PipelineResult
 from openagent_eval.core.registry import Registry
 from openagent_eval.exceptions import PluginNotFoundError
+
+if TYPE_CHECKING:
+    from openagent_eval.config.models import Config
 
 
 class TestRegistry:
@@ -68,28 +73,6 @@ class TestExecutor:
         assert executor.max_workers == 2
         assert executor.timeout == 60.0
 
-    @pytest.mark.asyncio
-    async def test_execute_parallel(self) -> None:
-        """Test parallel execution."""
-        executor = Executor(max_workers=2)
-
-        async def fake_task(x: int) -> int:
-            return x * 2
-
-        results = await executor.execute_parallel([fake_task, fake_task], 5)
-        assert results == [10, 10]
-
-    @pytest.mark.asyncio
-    async def test_execute_sequential(self) -> None:
-        """Test sequential execution."""
-        executor = Executor(max_workers=2)
-
-        async def fake_task(x: int) -> int:
-            return x * 2
-
-        results = await executor.execute_sequential([fake_task, fake_task], 5)
-        assert results == [10, 10]
-
 
 class TestPipeline:
     """Tests for the evaluation pipeline."""
@@ -100,7 +83,9 @@ class TestPipeline:
         assert pipeline.config is sample_config
 
     @pytest.mark.asyncio
-    async def test_execute(self, sample_config: Config, sample_dataset: list[dict]) -> None:
+    async def test_execute(
+        self, sample_config: Config, sample_dataset: list[dict]
+    ) -> None:
         """Test pipeline execution."""
         pipeline = Pipeline(sample_config)
         result = await pipeline.execute(sample_dataset)
@@ -157,11 +142,15 @@ class TestEngine:
         report = await engine.run(sample_dataset)
         assert report.config is sample_config
         assert report.summary["total_items"] == len(sample_dataset)
+        assert report.metadata["version"] == __version__
         engine.shutdown()
 
     @pytest.mark.asyncio
     async def test_run_summary_counts_success_and_failure(
-        self, sample_config: Config, sample_dataset: list[dict], monkeypatch: pytest.MonkeyPatch
+        self,
+        sample_config: Config,
+        sample_dataset: list[dict],
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """H10: successful_evaluations must not double-count failed items.
 

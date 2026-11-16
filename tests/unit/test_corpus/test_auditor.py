@@ -33,7 +33,9 @@ class TestCorpusAuditor:
         # Create test files
         (corpus_dir / "doc1.txt").write_text("This is document one about Python.")
         (corpus_dir / "doc2.txt").write_text("This is document two about Java.")
-        (corpus_dir / "doc3.md").write_text("# Document Three\n\nAbout Rust programming.")
+        (corpus_dir / "doc3.md").write_text(
+            "# Document Three\n\nAbout Rust programming."
+        )
 
         return corpus_dir
 
@@ -110,8 +112,22 @@ class TestCorpusAuditor:
     @pytest.mark.asyncio
     async def test_audit_with_valid_checks_still_works(self, temp_corpus):
         """A fully valid check list still produces a normal audit report."""
+        import sys
+        from unittest.mock import MagicMock, patch
+
+        import numpy as np
+
+        # Stub the embedding model so the duplicate analyzer runs its real
+        # similarity pipeline without downloading weights from the Hugging
+        # Face hub — network access is not guaranteed in CI.
+        mock_st = MagicMock()
+        mock_st.SentenceTransformer.return_value.encode.return_value = np.array(
+            [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+        )
+
         auditor = CorpusAuditor(checks=["staleness", "duplicate"])
-        report = await auditor.audit(str(temp_corpus))
+        with patch.dict(sys.modules, {"sentence_transformers": mock_st}):
+            report = await auditor.audit(str(temp_corpus))
 
         assert report.total_documents == 3
         assert "staleness" in report.checks_performed
@@ -262,8 +278,7 @@ class TestCorpusAuditorJsonl:
         """Loaded JSONL docs carry per-line content, ids, and metadata."""
         jsonl_file = tmp_path / "data.jsonl"
         jsonl_file.write_text(
-            '{"id": 1, "text": "first"}\n'
-            '{"id": 2, "text": "second"}\n'
+            '{"id": 1, "text": "first"}\n{"id": 2, "text": "second"}\n'
         )
 
         auditor = CorpusAuditor(checks=["staleness"])
@@ -283,13 +298,7 @@ class TestCorpusAuditorJsonl:
     async def test_jsonl_skips_empty_and_whitespace_lines(self, tmp_path):
         """Blank and whitespace-only lines are skipped."""
         jsonl_file = tmp_path / "data.jsonl"
-        jsonl_file.write_text(
-            '{"id": 1}\n'
-            "\n"
-            "   \n"
-            "\t\n"
-            '{"id": 2}\n'
-        )
+        jsonl_file.write_text('{"id": 1}\n\n   \n\t\n{"id": 2}\n')
 
         auditor = CorpusAuditor(checks=["staleness"])
         report = await auditor.audit(str(jsonl_file))
@@ -300,11 +309,7 @@ class TestCorpusAuditorJsonl:
     def test_jsonl_skips_malformed_line_silently(self, tmp_path):
         """A line that is not valid JSON is skipped without raising."""
         jsonl_file = tmp_path / "data.jsonl"
-        jsonl_file.write_text(
-            '{"id": 1}\n'
-            "not valid json {\n"
-            '{"id": 2}\n'
-        )
+        jsonl_file.write_text('{"id": 1}\nnot valid json {\n{"id": 2}\n')
 
         auditor = CorpusAuditor(checks=["staleness"])
         # Must not raise; the malformed line is dropped, valid ones kept.

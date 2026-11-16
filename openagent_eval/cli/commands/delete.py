@@ -98,7 +98,9 @@ def _delete_single_report(
             report_path.unlink()
             console.print(f"[green]OK[/green] Deleted report: {report_id}")
         else:
-            console.print(f"[yellow]Warning:[/yellow] Report file not found: {report_path}")
+            console.print(
+                f"[yellow]Warning:[/yellow] Report file not found: {report_path}"
+            )
     except OSError as exc:
         console.print(f"[red]Error:[/red] Failed to delete report: {exc}")
         raise typer.Exit(code=1) from exc

@@ -21,7 +21,9 @@ class TestChunkingQualityAnalyzer:
         """A single normal context should return no issues."""
         issues = self.analyzer.analyze(
             "Explain Python programming language",
-            ["Python is a high-level programming language used for web development and data science."],
+            [
+                "Python is a high-level programming language used for web development and data science."
+            ],
         )
         assert issues == []
 
@@ -46,12 +48,8 @@ class TestChunkingQualityAnalyzer:
         """Highly uneven chunk sizes should be detected."""
         ctx_short = "Short."
         ctx_long = "x" * 500  # 500 chars vs 6 chars = 83x ratio
-        issues = self.analyzer.analyze(
-            "What is this?", [ctx_short, ctx_long]
-        )
-        size_issues = [
-            i for i in issues if i.issue_type == "inconsistent_chunk_sizes"
-        ]
+        issues = self.analyzer.analyze("What is this?", [ctx_short, ctx_long])
+        size_issues = [i for i in issues if i.issue_type == "inconsistent_chunk_sizes"]
         assert len(size_issues) > 0
 
     def test_consistent_chunk_sizes_no_issue(self) -> None:
@@ -59,19 +57,13 @@ class TestChunkingQualityAnalyzer:
         ctx_a = "A" * 100
         ctx_b = "B" * 120
         issues = self.analyzer.analyze("Test?", [ctx_a, ctx_b])
-        size_issues = [
-            i for i in issues if i.issue_type == "inconsistent_chunk_sizes"
-        ]
+        size_issues = [i for i in issues if i.issue_type == "inconsistent_chunk_sizes"]
         assert len(size_issues) == 0
 
     def test_empty_chunk_detected(self) -> None:
         """Very short contexts should be detected."""
-        issues = self.analyzer.analyze(
-            "What is AI?", ["", "   ", "a"]
-        )
-        empty_issues = [
-            i for i in issues if i.issue_type == "empty_or_small_chunk"
-        ]
+        issues = self.analyzer.analyze("What is AI?", ["", "   ", "a"])
+        empty_issues = [i for i in issues if i.issue_type == "empty_or_small_chunk"]
         assert len(empty_issues) > 0
 
     def test_content_gap_detected(self) -> None:
@@ -92,6 +84,17 @@ class TestChunkingQualityAnalyzer:
         )
         gap_issues = [i for i in issues if i.issue_type == "content_gap"]
         assert len(gap_issues) == 0
+
+    def test_content_gap_detected_for_substring_only_matches(self) -> None:
+        """Keywords appearing only as substrings should still be considered missing."""
+        issues = self.analyzer.analyze(
+            "Explain code format model",
+            ["The decoded data was reformatted and remodeled successfully."],
+        )
+
+        gap_issues = [i for i in issues if i.issue_type == "content_gap"]
+
+        assert len(gap_issues) > 0
 
     def test_multiple_issues_detected(self) -> None:
         """Multiple issues should be detected simultaneously."""
@@ -141,7 +144,10 @@ class TestMetadataUsage:
         """Multiple chunks with mixed deviations should be flagged."""
         issues = self.analyzer.analyze(
             "What is Python?",
-            ["Short.", "This is a much longer chunk that exceeds the expected size significantly."],
+            [
+                "Short.",
+                "This is a much longer chunk that exceeds the expected size significantly.",
+            ],
             metadata={"chunk_size": 20.0},
         )
         size_issues = [i for i in issues if i.issue_type == "chunk_size_deviation"]
@@ -207,7 +213,8 @@ class TestMetadataUsage:
         )
         # Should have no metadata-specific issues
         metadata_issues = [
-            i for i in issues
+            i
+            for i in issues
             if i.issue_type in ("chunk_size_deviation", "excessive_overlap")
         ]
         assert len(metadata_issues) == 0
@@ -239,9 +246,7 @@ class TestCharOverlap:
 
     def test_suffix_prefix_match(self) -> None:
         """Suffix of A matching prefix of B should be detected."""
-        overlap = ChunkingQualityAnalyzer._char_overlap(
-            "the cat sat", "cat sat on"
-        )
+        overlap = ChunkingQualityAnalyzer._char_overlap("the cat sat", "cat sat on")
         assert overlap == 7  # "cat sat"
 
     def test_no_overlap(self) -> None:
@@ -265,16 +270,12 @@ class TestJaccardSimilarity:
 
     def test_identical_texts(self) -> None:
         """Identical texts should have similarity 1.0."""
-        sim = ChunkingQualityAnalyzer._jaccard_similarity(
-            "hello world", "hello world"
-        )
+        sim = ChunkingQualityAnalyzer._jaccard_similarity("hello world", "hello world")
         assert sim == 1.0
 
     def test_disjoint_texts(self) -> None:
         """Disjoint texts should have similarity 0.0."""
-        sim = ChunkingQualityAnalyzer._jaccard_similarity(
-            "hello", "world"
-        )
+        sim = ChunkingQualityAnalyzer._jaccard_similarity("hello", "world")
         assert sim == 0.0
 
     def test_partial_overlap(self) -> None:
@@ -291,7 +292,5 @@ class TestJaccardSimilarity:
 
     def test_case_insensitive(self) -> None:
         """Similarity should be case-insensitive."""
-        sim = ChunkingQualityAnalyzer._jaccard_similarity(
-            "Hello World", "hello world"
-        )
+        sim = ChunkingQualityAnalyzer._jaccard_similarity("Hello World", "hello world")
         assert sim == 1.0

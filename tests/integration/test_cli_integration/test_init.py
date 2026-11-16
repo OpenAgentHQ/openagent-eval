@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from typer.testing import CliRunner
+from typing import TYPE_CHECKING
 
 from openagent_eval.cli.main import app
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from typer.testing import CliRunner
 
 
 def test_init_creates_config(runner: CliRunner, tmp_path: Path) -> None:
     """init command creates a valid config.yaml file."""
     config_path = tmp_path / "config.yaml"
 
-    result = runner.invoke(app, ["init", "--config", str(config_path), "--no-interactive"])
+    result = runner.invoke(
+        app, ["init", "--config", str(config_path), "--no-interactive"]
+    )
 
     assert result.exit_code == 0
     assert config_path.exists()
@@ -28,7 +33,9 @@ def test_init_force_overwrite(runner: CliRunner, tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
     config_path.write_text("existing content", encoding="utf-8")
 
-    result = runner.invoke(app, ["init", "--config", str(config_path), "--force", "--no-interactive"])
+    result = runner.invoke(
+        app, ["init", "--config", str(config_path), "--force", "--no-interactive"]
+    )
 
     assert result.exit_code == 0
     content = config_path.read_text(encoding="utf-8")
@@ -40,7 +47,9 @@ def test_init_creates_parent_directories(runner: CliRunner, tmp_path: Path) -> N
     """init creates parent directories if they don't exist."""
     config_path = tmp_path / "subdir" / "config.yaml"
 
-    result = runner.invoke(app, ["init", "--config", str(config_path), "--no-interactive"])
+    result = runner.invoke(
+        app, ["init", "--config", str(config_path), "--no-interactive"]
+    )
 
     assert result.exit_code == 0
     assert config_path.exists()

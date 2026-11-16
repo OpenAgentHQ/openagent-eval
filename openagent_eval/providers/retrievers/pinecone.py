@@ -7,15 +7,17 @@ embedded locally with the configured
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.retriever import Retriever
-from openagent_eval.providers.embedders.base import Embedder
 from openagent_eval.providers.models import Document
+
+if TYPE_CHECKING:
+    from openagent_eval.providers.embedders.base import Embedder
 
 
 class PineconeRetriever(Retriever):

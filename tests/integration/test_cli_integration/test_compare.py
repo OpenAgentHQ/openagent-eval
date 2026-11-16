@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-
-from typer.testing import CliRunner
+from typing import TYPE_CHECKING
 
 from openagent_eval.cli.main import app
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-def _create_sample_report(reports_dir: Path, report_id: str, faithfulness: float = 0.9) -> Path:
+    from typer.testing import CliRunner
+
+
+def _create_sample_report(
+    reports_dir: Path, report_id: str, faithfulness: float = 0.9
+) -> Path:
     """Create a sample report JSON file for testing."""
     report_data = {
         "report_id": report_id,
@@ -72,7 +77,15 @@ def test_compare_with_metrics_filter(runner: CliRunner, reports_dir: Path) -> No
 
     result = runner.invoke(
         app,
-        ["compare", "filter_a", "filter_b", "--metrics", "faithfulness", "--output-dir", str(reports_dir)],
+        [
+            "compare",
+            "filter_a",
+            "filter_b",
+            "--metrics",
+            "faithfulness",
+            "--output-dir",
+            str(reports_dir),
+        ],
     )
 
     assert result.exit_code == 0

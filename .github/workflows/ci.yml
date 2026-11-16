@@ -51,7 +51,11 @@ jobs:
         continue-on-error: true
 
       - name: Run MyPy type checker
-        run: uv run mypy src --ignore-missing-imports || true
+        run: |
+          # A missing target is a config error, not a finding: surface it
+          # instead of letting `|| true` report success.
+          test -d openagent_eval
+          uv run mypy openagent_eval --ignore-missing-imports || true
         continue-on-error: true
 
   # ──────────────────────────────────────────────────────────────

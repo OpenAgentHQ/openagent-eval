@@ -107,7 +107,7 @@ def diagnose_command(
         console.print(f"[red]Error:[/red] Report file not found: {path}")
         raise typer.Exit(code=2)
 
-    if not path.suffix == ".json":
+    if path.suffix != ".json":
         console.print("[red]Error:[/red] Report file must be a JSON file.")
         raise typer.Exit(code=2)
 
@@ -119,7 +119,9 @@ def diagnose_command(
         raise typer.Exit(code=2) from e
 
     if not results:
-        console.print("[yellow]Warning:[/yellow] No evaluation results found in report.")
+        console.print(
+            "[yellow]Warning:[/yellow] No evaluation results found in report."
+        )
         raise typer.Exit(code=0)
 
     # Run diagnosis
@@ -257,9 +259,7 @@ def _display_terminal(report: object, verbose: bool) -> None:
     if report.chunking_issues:
         console.print("[bold]Chunking Issues:[/bold]\n")
         for issue in report.chunking_issues[:10]:
-            console.print(
-                f"  [cyan]{issue.issue_type}[/cyan]: {issue.description}\n"
-            )
+            console.print(f"  [cyan]{issue.issue_type}[/cyan]: {issue.description}\n")
 
     # Recommendations
     if report.recommendations:

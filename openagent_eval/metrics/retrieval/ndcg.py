@@ -32,6 +32,7 @@ def _dcg(relevances: list[int], k: int) -> float:
 def _log2(x: float) -> float:
     """Compute log base 2."""
     import math
+
     return math.log2(x) if x > 0 else 0.0
 
 
@@ -82,7 +83,9 @@ class NDCG(BaseMetric):
             MetricResult with NDCG score.
         """
         retrieved = [normalize_context(c) for c in kwargs.get("retrieved_contexts", [])]
-        ground_truth = [normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])]
+        ground_truth = [
+            normalize_context(c) for c in kwargs.get("ground_truth_contexts", [])
+        ]
         k = kwargs.get("k", len(retrieved))
 
         if not ground_truth:
@@ -100,10 +103,7 @@ class NDCG(BaseMetric):
             )
 
         ground_truth_set = set(ground_truth)
-        relevances = [
-            1 if ctx in ground_truth_set else 0
-            for ctx in retrieved[:k]
-        ]
+        relevances = [1 if ctx in ground_truth_set else 0 for ctx in retrieved[:k]]
 
         # Ideal ranking: place every relevant (ground-truth) document first,
         # capped at k. This must be derived from the total number of relevant

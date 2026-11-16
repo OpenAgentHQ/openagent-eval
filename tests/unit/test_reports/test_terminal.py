@@ -58,9 +58,7 @@ class TestTerminalReport:
         assert "Total items" in result
         assert "0" in result
 
-    def test_generate_to_file(
-        self, evaluation_report: Any, tmp_path: Path
-    ) -> None:
+    def test_generate_to_file(self, evaluation_report: Any, tmp_path: Path) -> None:
         """generate_to_file() writes to a file."""
         report = TerminalReport()
         output_path = tmp_path / "report.txt"
@@ -118,9 +116,7 @@ class TestTerminalReport:
         assert result_path.name == "explicit.txt"
         assert result_path.exists()
 
-    def test_print_report(
-        self, evaluation_report: Any, tmp_path: Path
-    ) -> None:
+    def test_print_report(self, evaluation_report: Any, tmp_path: Path) -> None:
         """print_report() outputs to console."""
         output_file = tmp_path / "console_output.txt"
         console = Console(file=open(output_file, "w", encoding="utf-8"))  # noqa: SIM115

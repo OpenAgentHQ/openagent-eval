@@ -28,7 +28,7 @@ class DatasetError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if dataset_path:
+        if dataset_path is not None:
             error_details["dataset_path"] = dataset_path
 
         super().__init__(message=message, details=error_details)
@@ -79,12 +79,14 @@ class InvalidDatasetError(DatasetError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if data_format:
+        if data_format is not None:
             error_details["format"] = data_format
-        if line_number:
+        if line_number is not None:
             error_details["line_number"] = line_number
 
-        super().__init__(message=message, dataset_path=dataset_path, details=error_details)
+        super().__init__(
+            message=message, dataset_path=dataset_path, details=error_details
+        )
         self.data_format = data_format
         self.line_number = line_number
 
@@ -112,8 +114,10 @@ class DatasetValidationError(DatasetError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if validation_errors:
+        if validation_errors is not None:
             error_details["validation_errors"] = validation_errors
 
-        super().__init__(message=message, dataset_path=dataset_path, details=error_details)
+        super().__init__(
+            message=message, dataset_path=dataset_path, details=error_details
+        )
         self.validation_errors = validation_errors or []

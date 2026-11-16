@@ -56,6 +56,17 @@ class TestLatencyMetric:
         assert result.metadata["stage"] == "embedding"
         assert result.metadata["latency_ms"] == 100.0
 
+    def test_none_latency_does_not_raise(self):
+        """None latency (e.g. no LLM configured, or generation failure) is handled gracefully."""
+        result = self.metric.evaluate(latency_ms=None, stage="llm")
+        assert result.score == 0.0
+        assert result.metadata["latency_ms"] is None
+
+    def test_missing_latency_kwarg_does_not_raise(self):
+        """Omitting latency_ms entirely behaves the same as passing None."""
+        result = self.metric.evaluate(stage="llm")
+        assert result.score == 0.0
+
 
 class TestTokenCountMetric:
     """Tests for TokenCountMetric."""

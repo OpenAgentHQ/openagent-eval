@@ -7,13 +7,16 @@ precedence over the file's values.
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
 from typer.testing import CliRunner
 
 from openagent_eval.cli.main import app
 from openagent_eval.corpus.models import AuditReport
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 runner = CliRunner()
 
@@ -122,9 +125,7 @@ def test_audit_positional_path_overrides_config_path(tmp_path, monkeypatch):
     auditor = _patch_auditor(monkeypatch)
     config_path = _write_config(tmp_path, config_dir)
 
-    result = runner.invoke(
-        app, ["audit", str(cli_dir), "--config", str(config_path)]
-    )
+    result = runner.invoke(app, ["audit", str(cli_dir), "--config", str(config_path)])
 
     assert result.exit_code == 0, result.output
     assert auditor.captured["corpus_path"] == str(cli_dir)

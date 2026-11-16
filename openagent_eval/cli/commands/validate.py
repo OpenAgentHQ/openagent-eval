@@ -111,10 +111,14 @@ def validate_command(
     console.print("\n[bold]5. Checking output directory...[/bold]")
     output_dir = Path(config.report.output_dir)
     if output_dir.exists():
-        console.print(f"  [green]OK[/green] Output directory exists: {config.report.output_dir}")
+        console.print(
+            f"  [green]OK[/green] Output directory exists: {config.report.output_dir}"
+        )
     else:
         warnings.append(f"Output directory will be created: {config.report.output_dir}")
-        console.print(f"  [yellow]NOTE[/yellow] Will create: {config.report.output_dir}")
+        console.print(
+            f"  [yellow]NOTE[/yellow] Will create: {config.report.output_dir}"
+        )
 
     # 6. Check provider configuration
     console.print("\n[bold]6. Checking provider configuration...[/bold]")
@@ -131,11 +135,17 @@ def validate_command(
     )
     console.print(f"  [dim]Configured: {len(all_metrics)} metrics[/dim]")
     if config.metrics.retrieval:
-        console.print(f"    [dim]Retrieval: {', '.join(config.metrics.retrieval)}[/dim]")
+        console.print(
+            f"    [dim]Retrieval: {', '.join(config.metrics.retrieval)}[/dim]"
+        )
     if config.metrics.generation:
-        console.print(f"    [dim]Generation: {', '.join(config.metrics.generation)}[/dim]")
+        console.print(
+            f"    [dim]Generation: {', '.join(config.metrics.generation)}[/dim]"
+        )
     if config.metrics.performance:
-        console.print(f"    [dim]Performance: {', '.join(config.metrics.performance)}[/dim]")
+        console.print(
+            f"    [dim]Performance: {', '.join(config.metrics.performance)}[/dim]"
+        )
     if config.metrics.cost:
         console.print(f"    [dim]Cost: {', '.join(config.metrics.cost)}[/dim]")
 

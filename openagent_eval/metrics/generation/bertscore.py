@@ -76,9 +76,7 @@ class BERTScore(BaseMetric):
             metadata={"method": "word_overlap"},
         )
 
-    def _evaluate_with_bertscore(
-        self, answer: str, ground_truth: str
-    ) -> MetricResult:
+    def _evaluate_with_bertscore(self, answer: str, ground_truth: str) -> MetricResult:
         """Evaluate using bert-score library."""
         from bert_score import score as bert_score
 

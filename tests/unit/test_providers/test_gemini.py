@@ -39,6 +39,7 @@ def mock_genai():
 def provider_with_key(mock_genai):
     """Create a Gemini provider with explicit API key."""
     from openagent_eval.providers.llm.gemini import Gemini
+
     return Gemini(api_key="test-gemini-api-key-12345")
 
 
@@ -51,6 +52,7 @@ class TestGeminiInit:
     def test_init_with_explicit_api_key(self, mock_genai):
         """Provider initializes with explicit API key."""
         from openagent_eval.providers.llm.gemini import Gemini
+
         provider = Gemini(api_key="test-gemini-api-key-12345")
         assert provider.name == "gemini"
         assert provider.description == "Google Gemini LLM provider"
@@ -59,6 +61,7 @@ class TestGeminiInit:
     def test_init_from_env_var(self, mock_gemini_env, mock_genai):
         """Provider initializes from GEMINI_API_KEY env var."""
         from openagent_eval.providers.llm.gemini import Gemini
+
         provider = Gemini()
         assert provider._model == "gemini-2.5-flash"
 
@@ -66,12 +69,14 @@ class TestGeminiInit:
         """Provider raises ProviderConnectionError without API key."""
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         from openagent_eval.providers.llm.gemini import Gemini
+
         with pytest.raises(ProviderConnectionError, match="API key not provided"):
             Gemini()
 
     def test_init_with_custom_params(self, mock_genai):
         """Provider initializes with custom parameters."""
         from openagent_eval.providers.llm.gemini import Gemini
+
         provider = Gemini(
             api_key="test-key",
             model="gemini-2.5-pro",
@@ -136,7 +141,9 @@ class TestGeminiGenerate:
         assert result == "Gemini response"
 
     @pytest.mark.asyncio
-    async def test_generate_with_temperature_override(self, provider_with_key, mock_genai):
+    async def test_generate_with_temperature_override(
+        self, provider_with_key, mock_genai
+    ):
         """generate() respects temperature override."""
         _, _, mock_aclient = mock_genai
 

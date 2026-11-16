@@ -7,10 +7,10 @@ used to attribute blame when RAG evaluations fail.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class FailureMode(str, Enum):
+class FailureMode(StrEnum):
     """Enumeration of RAG failure modes.
 
     Each mode maps to a specific component failure:
@@ -30,7 +30,7 @@ class FailureMode(str, Enum):
     EMBEDDING_MISMATCH = "embedding_mismatch"
 
 
-class BlameTarget(str, Enum):
+class BlameTarget(StrEnum):
     """Which component is blamed for a failure.
 
     NONE indicates analysis completed with no failures detected.

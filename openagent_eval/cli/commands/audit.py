@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import typer
 from rich.console import Console
@@ -21,11 +22,13 @@ from rich.table import Table
 from openagent_eval import __version__
 from openagent_eval.cli.context import get_context
 from openagent_eval.cli.utils.helpers import load_config_from_path
-from openagent_eval.config.models import CorpusConfig
 from openagent_eval.corpus.auditor import CorpusAuditor
 from openagent_eval.corpus.models import AuditReport, IssueSeverity
 from openagent_eval.exceptions import ConfigurationError
 from openagent_eval.exceptions.corpus import CorpusAuditError, CorpusNotFoundError
+
+if TYPE_CHECKING:
+    from openagent_eval.config.models import CorpusConfig
 
 console = Console()
 
@@ -213,7 +216,9 @@ def audit_command(
         for check in check_list:
             if check not in valid_checks:
                 console.print(f"[red]Error:[/red] Unknown check: {check}")
-                console.print(f"[dim]Valid checks: {', '.join(sorted(valid_checks))}[/dim]")
+                console.print(
+                    f"[dim]Valid checks: {', '.join(sorted(valid_checks))}[/dim]"
+                )
                 raise typer.Exit(code=2)
 
     # Create auditor
@@ -239,10 +244,14 @@ def audit_command(
         task = progress.add_task("Loading corpus...", total=None)
 
         def progress_callback(description: str, completed: int, total: int) -> None:
-            progress.update(task, description=description, completed=completed, total=total)
+            progress.update(
+                task, description=description, completed=completed, total=total
+            )
 
         try:
-            report = asyncio.run(auditor.audit(corpus_path, progress_callback=progress_callback))
+            report = asyncio.run(
+                auditor.audit(corpus_path, progress_callback=progress_callback)
+            )
         except CorpusNotFoundError as e:
             console.print(f"[red]Error:[/red] {e.message}")
             raise typer.Exit(code=2) from e
@@ -270,8 +279,20 @@ def _display_report(report: AuditReport, elapsed: float, verbose: bool) -> None:
         verbose: Whether to show verbose output.
     """
     # Health score panel
-    score_color = "green" if report.health_score >= 0.8 else "yellow" if report.health_score >= 0.5 else "red"
-    score_label = "Healthy" if report.health_score >= 0.8 else "Needs Attention" if report.health_score >= 0.5 else "Unhealthy"
+    score_color = (
+        "green"
+        if report.health_score >= 0.8
+        else "yellow"
+        if report.health_score >= 0.5
+        else "red"
+    )
+    score_label = (
+        "Healthy"
+        if report.health_score >= 0.8
+        else "Needs Attention"
+        if report.health_score >= 0.5
+        else "Unhealthy"
+    )
 
     console.print()
     console.print(
@@ -300,7 +321,9 @@ def _display_report(report: AuditReport, elapsed: float, verbose: bool) -> None:
             IssueSeverity.LOW: "dim",
         }
 
-        for issue in sorted(report.issues, key=lambda i: list(IssueSeverity).index(i.severity)):
+        for issue in sorted(
+            report.issues, key=lambda i: list(IssueSeverity).index(i.severity)
+        ):
             style = severity_styles.get(issue.severity, "")
             docs = ", ".join(issue.document_ids[:3])
             if len(issue.document_ids) > 3:
@@ -320,7 +343,9 @@ def _display_report(report: AuditReport, elapsed: float, verbose: bool) -> None:
 
     # Verbose details
     if verbose:
-        console.print(f"\n[dim]Checks performed: {', '.join(report.checks_performed)}[/dim]")
+        console.print(
+            f"\n[dim]Checks performed: {', '.join(report.checks_performed)}[/dim]"
+        )
         console.print(f"[dim]Documents analyzed: {report.total_documents}[/dim]")
         console.print(f"[dim]Time elapsed: {elapsed:.1f}s[/dim]")
 

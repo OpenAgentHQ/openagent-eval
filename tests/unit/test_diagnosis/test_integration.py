@@ -219,7 +219,6 @@ class TestDiagnosisPipeline:
         assert deserialized["overall_health"] == report.overall_health
         assert len(deserialized["recommendations"]) == len(report.recommendations)
 
-
     def test_chunking_receives_validated_contexts(self) -> None:
         """Chunking analyzer should receive only validated string contexts."""
 
@@ -258,11 +257,8 @@ class TestDiagnosisPipeline:
 
         assert captured["question"] == "What is Python?"
         assert captured["metadata"] == {}
-        assert captured["contexts"] == [
-            "Python is a programming language."
-        ]
+        assert captured["contexts"] == ["Python is a programming language."]
         assert len(captured["contexts"]) == 1
-
 
 
 class TestDiagnosisReportFileOutput:
@@ -299,4 +295,3 @@ class TestDiagnosisReportFileOutput:
 
         assert loaded["total_items"] == 1
         assert loaded["overall_health"] == 1.0
-

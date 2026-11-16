@@ -50,7 +50,6 @@ Document chunk:
 \"\"\"
 
 Generate {count} unanswerable question-answer pairs as a JSON array:""",
-
     TestCaseType.AMBIGUOUS: """\
 You are a test case generator for a RAG evaluation system.
 
@@ -76,7 +75,6 @@ Document chunk:
 \"\"\"
 
 Generate {count} ambiguous question-answer pairs as a JSON array:""",
-
     TestCaseType.MISLEADING: """\
 You are a test case generator for a RAG evaluation system.
 
@@ -102,7 +100,6 @@ Document chunk:
 \"\"\"
 
 Generate {count} misleading question-answer pairs as a JSON array:""",
-
     TestCaseType.MULTI_HOP: """\
 You are a test case generator for a RAG evaluation system.
 
@@ -127,7 +124,6 @@ Document chunk:
 \"\"\"
 
 Generate {count} multi-hop question-answer pairs as a JSON array:""",
-
     TestCaseType.COUNTERFACTUAL: """\
 You are a test case generator for a RAG evaluation system.
 
@@ -214,7 +210,9 @@ class AdversarialTestCaseGenerator:
                 details={"supported_types": [t.value for t in TestCaseType]},
             )
 
-        prompt = prompt_template.format(count=count, context=context.strip().replace("{", "{{").replace("}", "}}"))
+        prompt = prompt_template.format(
+            count=count, context=context.strip().replace("{", "{{").replace("}", "}}")
+        )
 
         try:
             raw_response = await self._llm.generate(prompt)

@@ -104,9 +104,7 @@ class TestHTMLReport:
         assert "<!DOCTYPE html>" in result
         assert "0" in result
 
-    def test_generate_to_file(
-        self, evaluation_report: Any, tmp_path: Path
-    ) -> None:
+    def test_generate_to_file(self, evaluation_report: Any, tmp_path: Path) -> None:
         """generate_to_file() writes to an HTML file."""
         report = HTMLReport()
         output_path = tmp_path / "report.html"
@@ -149,9 +147,7 @@ class TestHTMLReport:
         assert result_path.exists()
         assert result_path.parent.exists()
 
-    def test_custom_template_path(
-        self, evaluation_report: Any, tmp_path: Path
-    ) -> None:
+    def test_custom_template_path(self, evaluation_report: Any, tmp_path: Path) -> None:
         """HTMLReport accepts a custom template path."""
         custom_template = tmp_path / "custom.html"
         custom_template.write_text(

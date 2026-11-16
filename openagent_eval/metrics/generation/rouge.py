@@ -5,6 +5,7 @@ Measures overlap between answer and ground truth using ROUGE scores.
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
@@ -65,9 +66,14 @@ class ROUGE(BaseMetric):
         )
 
     def _evaluate_simple(self, answer: str, ground_truth: str) -> MetricResult:
-        """Simple unigram recall fallback."""
-        answer_words = set(answer.lower().split())
-        truth_words = set(ground_truth.lower().split())
+        """Simple unigram recall fallback over word occurrences.
+
+        Overlap is counted per occurrence (not per word type), so a term
+        repeated in the reference contributes to the recall denominator
+        each time it appears.
+        """
+        answer_words = answer.lower().split()
+        truth_words = ground_truth.lower().split()
 
         if not truth_words:
             return MetricResult(
@@ -76,11 +82,13 @@ class ROUGE(BaseMetric):
                 metadata={"method": "simple_recall"},
             )
 
-        overlap = answer_words & truth_words
-        recall = len(overlap) / len(truth_words)
+        answer_counts = Counter(answer_words)
+        truth_counts = Counter(truth_words)
+        overlap = sum((answer_counts & truth_counts).values())
+        recall = overlap / sum(truth_counts.values())
 
         return MetricResult(
             score=recall,
             reason=f"Simple ROUGE recall: {recall:.4f}",
-            metadata={"method": "simple_recall", "overlap": len(overlap)},
+            metadata={"method": "simple_recall", "overlap": overlap},
         )

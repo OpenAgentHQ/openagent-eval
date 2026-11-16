@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-
+from openagent_eval.metrics.base import MetricResult
 from openagent_eval.metrics.generation.faithfulness import Faithfulness
 from openagent_eval.metrics.generation.relevancy import AnswerRelevancy
 from openagent_eval.metrics.nli import (
@@ -16,11 +16,9 @@ from openagent_eval.metrics.nli import (
     ClaimExtractor,
     EvidenceFinder,
     NLIJudge,
-    NLIResult,
     NLILabel,
+    NLIResult,
 )
-from openagent_eval.metrics.base import MetricResult
-
 
 # ============================================================
 # Mocked NLI Pipeline Fixtures
@@ -29,11 +27,13 @@ from openagent_eval.metrics.base import MetricResult
 
 def _make_nli_result(entailed: float, neutral: float = 0.0, contradiction: float = 0.0):
     """Helper to create NLI pipeline output."""
-    return [[
-        {"label": "entailment", "score": entailed},
-        {"label": "neutral", "score": neutral},
-        {"label": "contradiction", "score": contradiction},
-    ]]
+    return [
+        [
+            {"label": "entailment", "score": entailed},
+            {"label": "neutral", "score": neutral},
+            {"label": "contradiction", "score": contradiction},
+        ]
+    ]
 
 
 # ============================================================
@@ -56,7 +56,9 @@ class TestFaithfulnessNLIIntegration:
         assert result.score == 0.0
         assert "No contexts" in result.reason
 
-    @patch("openagent_eval.metrics.generation.faithfulness.Faithfulness._evaluate_with_ragas")
+    @patch(
+        "openagent_eval.metrics.generation.faithfulness.Faithfulness._evaluate_with_ragas"
+    )
     def test_faithfulness_fallback_to_simple(self, mock_ragas):
         """When Ragas and NLI unavailable, should use simple overlap."""
         mock_ragas.side_effect = ImportError("No ragas")
@@ -74,18 +76,18 @@ class TestFaithfulnessNLIIntegration:
             assert result.score > 0.0
             assert result.metadata["method"] == "simple_overlap"
 
-    @patch("openagent_eval.metrics.generation.faithfulness.Faithfulness._evaluate_with_ragas")
+    @patch(
+        "openagent_eval.metrics.generation.faithfulness.Faithfulness._evaluate_with_ragas"
+    )
     def test_faithfulness_with_mocked_nli(self, mock_ragas):
         """Test NLI fallback path when Ragas unavailable."""
         mock_ragas.side_effect = ImportError("No ragas")
 
-        with patch(
-            "openagent_eval.metrics.nli.NLIJudge"
-        ) as MockJudge, patch(
-            "openagent_eval.metrics.nli.ClaimExtractor"
-        ) as MockExtractor, patch(
-            "openagent_eval.metrics.nli.EvidenceFinder"
-        ) as MockFinder:
+        with (
+            patch("openagent_eval.metrics.nli.NLIJudge") as MockJudge,
+            patch("openagent_eval.metrics.nli.ClaimExtractor") as MockExtractor,
+            patch("openagent_eval.metrics.nli.EvidenceFinder") as MockFinder,
+        ):
             # Setup mocks
             mock_judge_instance = MagicMock()
             mock_judge_instance._model_name = "test-model"
@@ -140,7 +142,9 @@ class TestAnswerRelevancyNLIIntegration:
         assert result.score == 0.0
         assert "No answer" in result.reason
 
-    @patch("openagent_eval.metrics.generation.relevancy.AnswerRelevancy._evaluate_with_ragas")
+    @patch(
+        "openagent_eval.metrics.generation.relevancy.AnswerRelevancy._evaluate_with_ragas"
+    )
     def test_relevancy_fallback_to_simple(self, mock_ragas):
         """When Ragas and NLI unavailable, should use simple overlap."""
         mock_ragas.side_effect = ImportError("No ragas")
@@ -157,14 +161,14 @@ class TestAnswerRelevancyNLIIntegration:
             assert result.score > 0.0
             assert result.metadata["method"] == "word_overlap"
 
-    @patch("openagent_eval.metrics.generation.relevancy.AnswerRelevancy._evaluate_with_ragas")
+    @patch(
+        "openagent_eval.metrics.generation.relevancy.AnswerRelevancy._evaluate_with_ragas"
+    )
     def test_relevancy_with_mocked_nli(self, mock_ragas):
         """Test NLI fallback path when Ragas unavailable."""
         mock_ragas.side_effect = ImportError("No ragas")
 
-        with patch(
-            "openagent_eval.metrics.nli.NLIJudge"
-        ) as MockJudge:
+        with patch("openagent_eval.metrics.nli.NLIJudge") as MockJudge:
             mock_judge_instance = MagicMock()
             mock_judge_instance._model_name = "test-model"
             mock_judge_instance.evaluate.return_value = NLIResult(
@@ -212,9 +216,7 @@ class TestNLIPipelineIntegration:
         finder = EvidenceFinder(judge=mock_judge)
 
         # Extract claims
-        claims = extractor.extract(
-            "Python is open source. It was created in 1991."
-        )
+        claims = extractor.extract("Python is open source. It was created in 1991.")
         assert len(claims) >= 2
 
         # Find evidence and score

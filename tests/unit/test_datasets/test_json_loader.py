@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -13,6 +13,9 @@ from openagent_eval.exceptions import (
     DatasetValidationError,
     InvalidDatasetError,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestJSONDatasetLoader:

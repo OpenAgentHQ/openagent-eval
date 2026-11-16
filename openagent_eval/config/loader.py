@@ -29,15 +29,30 @@ _LEGACY_METRIC_MAP: dict[str, str] = {
 }
 
 # Metric classification categories for legacy flat metrics lists.
-_RETRIEVAL_METRICS = frozenset({
-    "context_precision", "context_recall", "recall_at_k",
-    "precision_at_k", "hit_rate", "mrr", "ndcg",
-})
-_GENERATION_METRICS = frozenset({
-    "faithfulness", "answer_relevancy", "hallucination",
-    "semantic_similarity", "exact_match", "f1_score",
-    "bleu", "rouge", "bertscore",
-})
+_RETRIEVAL_METRICS = frozenset(
+    {
+        "context_precision",
+        "context_recall",
+        "recall_at_k",
+        "precision_at_k",
+        "hit_rate",
+        "mrr",
+        "ndcg",
+    }
+)
+_GENERATION_METRICS = frozenset(
+    {
+        "faithfulness",
+        "answer_relevancy",
+        "hallucination",
+        "semantic_similarity",
+        "exact_match",
+        "f1_score",
+        "bleu",
+        "rouge",
+        "bertscore",
+    }
+)
 _PERFORMANCE_METRICS = frozenset({"latency"})
 _COST_METRICS = frozenset({"token_count"})
 
@@ -65,17 +80,13 @@ def _format_validation_error(
         location = ".".join(str(part) for part in err["loc"])
 
         if err["type"] == "missing":
-            lines.append(
-                f"Missing required field '{location}' in {config_path}"
-            )
+            lines.append(f"Missing required field '{location}' in {config_path}")
 
             hint = _FIELD_FORMAT_HINTS.get(location)
             if hint:
                 lines.append(f"Expected format:\n{hint}")
         else:
-            lines.append(
-                f"Invalid value for '{location}': {err['msg']}"
-            )
+            lines.append(f"Invalid value for '{location}': {err['msg']}")
 
     return "\n\n".join(lines)
 
@@ -135,9 +146,9 @@ def load_config(config_path: str | Path) -> Config:
         # legacy metric names to the canonical registry names.
         if isinstance(raw_config.get("metrics"), list):
             metrics_list = raw_config.pop("metrics")
-            normalised = list(dict.fromkeys(
-                _LEGACY_METRIC_MAP.get(m, m) for m in metrics_list
-            ))
+            normalised = list(
+                dict.fromkeys(_LEGACY_METRIC_MAP.get(m, m) for m in metrics_list)
+            )
             raw_config["metrics"] = {
                 "retrieval": [m for m in normalised if m in _RETRIEVAL_METRICS],
                 "generation": [m for m in normalised if m in _GENERATION_METRICS],
@@ -197,5 +208,4 @@ def load_config(config_path: str | Path) -> Config:
         raise ConfigurationError(
             message=f"Invalid configuration: {e}",
             config_path=str(config_path),
-
         ) from e

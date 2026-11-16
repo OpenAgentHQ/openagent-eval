@@ -9,16 +9,18 @@ vector.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.retriever import Retriever
-from openagent_eval.providers.embedders.base import Embedder
 from openagent_eval.providers.models import Document
 from openagent_eval.providers.retrievers._scoring import minmax_normalize
+
+if TYPE_CHECKING:
+    from openagent_eval.providers.embedders.base import Embedder
 
 
 class ElasticsearchRetriever(Retriever):
@@ -125,7 +127,7 @@ class ElasticsearchRetriever(Retriever):
         norm = minmax_normalize(raw_scores)
 
         documents: list[Document] = []
-        for hit, score in zip(hits, norm):
+        for hit, score in zip(hits, norm, strict=False):
             source = hit.get("_source", {})
             documents.append(
                 Document(

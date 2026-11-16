@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+from io import StringIO
+
+import pytest
+import typer
+from rich.console import Console
 from typer.testing import CliRunner
 
+from openagent_eval.cli import main
 from openagent_eval.cli.main import app
 
 runner = CliRunner()
@@ -88,6 +94,37 @@ def test_cli_invalid_command():
     """Test that CLI handles invalid commands gracefully."""
     result = runner.invoke(app, ["invalid-command"])
     assert result.exit_code != 0
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "boom",
+        "dynamic [bold] text",
+        "dynamic [/dim] text",
+        "[bold][italic]nested[/italic][/bold]",
+        "[bold]unmatched",
+        r"\[",
+        r"slashes \\\\ [bold] " + r"\\\\",
+    ],
+)
+def test_unexpected_cli_exception_preserves_diagnostic_and_exit_code(
+    monkeypatch, message
+):
+    """Unexpected errors render arbitrary diagnostics and exit through Typer."""
+    output = StringIO()
+    console = Console(file=output, force_terminal=False, color_system=None)
+    monkeypatch.setattr(main, "Console", lambda **kwargs: console)
+
+    with pytest.raises(BaseException) as exc_info:
+        main._cli_exception_handler(RuntimeError, RuntimeError(message), None)
+
+    assert isinstance(exc_info.value, typer.Exit)
+    assert exc_info.value.exit_code == 1
+    rendered = output.getvalue()
+    assert "Unexpected error" in rendered
+    assert message in rendered
+    assert "https://github.com/OpenAgentHQ/openagent-eval/issues" in rendered
 
 
 # ------------------------------------------------------------------ #

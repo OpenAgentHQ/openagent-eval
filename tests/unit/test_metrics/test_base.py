@@ -83,6 +83,7 @@ class TestBaseMetric:
             def evaluate(self, **kwargs):
                 return MetricResult(score=0.5)
 
+
         metric = ValidMetric()
         assert metric.name == "valid"
         result = metric.evaluate()
@@ -99,5 +100,6 @@ class TestBaseMetric:
                 return MetricResult(score=1.0)
 
         metric = SimpleMetric()
+
         # Should not raise
         metric.validate_inputs(anything="value")

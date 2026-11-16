@@ -57,7 +57,9 @@ def discover_plugins(group_name: str) -> dict[str, type[Any]]:
                 plugin_name = ep.name
 
                 # Validate that the class has required attributes
-                if hasattr(plugin_class, "name") and hasattr(plugin_class, "description"):
+                if hasattr(plugin_class, "name") and hasattr(
+                    plugin_class, "description"
+                ):
                     plugins[plugin_name] = plugin_class
                     logger.debug(f"Discovered plugin: {plugin_name} ({ep.value})")
                 else:

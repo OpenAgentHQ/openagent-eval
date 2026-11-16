@@ -14,7 +14,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class MetricResult:
-    """Result of a metric evaluation.
+    """Result of a metric evaluation
 
     Attributes:
         score: The metric score (typically 0.0 to 1.0).
@@ -29,9 +29,7 @@ class MetricResult:
     def __post_init__(self) -> None:
         """Validate score is within reasonable bounds."""
         if not 0.0 <= self.score <= 1.0:
-            raise ValueError(
-                f"Score must be between 0.0 and 1.0, got {self.score}"
-            )
+            raise ValueError(f"Score must be between 0.0 and 1.0, got {self.score}")
 
 
 class BaseMetric(ABC):
@@ -71,11 +69,11 @@ class BaseMetric(ABC):
             MetricTimeoutError: If evaluation times out.
         """
         ...
-
     def validate_inputs(self, **kwargs: Any) -> None:
         """Validate metric inputs before evaluation.
 
-        Override this method to add custom input validation.
+        This is a no-op by default. Override this method in subclasses
+        to add custom input validation.
 
         Args:
             **kwargs: Inputs to validate.
@@ -83,3 +81,4 @@ class BaseMetric(ABC):
         Raises:
             ValueError: If inputs are invalid.
         """
+        return None

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from openagent_eval.config.models import Config
 from openagent_eval.exceptions import ConfigurationError
+
+if TYPE_CHECKING:
+    from openagent_eval.config.models import Config
 
 
 def validate_config(config: Config) -> list[str]:
@@ -53,7 +56,9 @@ def validate_config(config: Config) -> list[str]:
 
     # Warn about timeout
     if config.timeout < 60:
-        warnings.append("Timeout is set to less than 60 seconds, evaluations may time out")
+        warnings.append(
+            "Timeout is set to less than 60 seconds, evaluations may time out"
+        )
 
     return warnings
 

@@ -9,15 +9,17 @@ query locally instead. Scores come from Weaviate ``certainty`` (already in
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.retriever import Retriever
-from openagent_eval.providers.embedders.base import Embedder
 from openagent_eval.providers.models import Document
+
+if TYPE_CHECKING:
+    from openagent_eval.providers.embedders.base import Embedder
 
 
 class WeaviateRetriever(Retriever):
@@ -56,15 +58,24 @@ class WeaviateRetriever(Retriever):
 
         try:
             if url:
-                self._client = weaviate.connect_to_local(
-                    host=url.replace("http://", "").replace("https://", ""),
-                    auth_credentials=weaviate.auth.AuthApiKey(api_key) if api_key else None,
-                ) if "localhost" in url else weaviate.connect_to_weaviate_cloud(
-                    cluster_url=url, auth_credentials=weaviate.auth.AuthApiKey(api_key)
+                self._client = (
+                    weaviate.connect_to_local(
+                        host=url.replace("http://", "").replace("https://", ""),
+                        auth_credentials=weaviate.auth.AuthApiKey(api_key)
+                        if api_key
+                        else None,
+                    )
+                    if "localhost" in url
+                    else weaviate.connect_to_weaviate_cloud(
+                        cluster_url=url,
+                        auth_credentials=weaviate.auth.AuthApiKey(api_key),
+                    )
                 )
             else:
                 self._client = weaviate.connect_to_local(
-                    auth_credentials=weaviate.auth.AuthApiKey(api_key) if api_key else None
+                    auth_credentials=weaviate.auth.AuthApiKey(api_key)
+                    if api_key
+                    else None
                 )
         except Exception as exc:
             raise ProviderConnectionError(
@@ -100,7 +111,9 @@ class WeaviateRetriever(Retriever):
                 Document(
                     content=str(props.get("content", "")),
                     metadata={k: v for k, v in props.items() if k != "content"},
-                    score=max(0.0, min(1.0, float(getattr(obj, "certainty", 0.0) or 0.0))),
+                    score=max(
+                        0.0, min(1.0, float(getattr(obj, "certainty", 0.0) or 0.0))
+                    ),
                     id=str(obj.uuid),
                 )
             )

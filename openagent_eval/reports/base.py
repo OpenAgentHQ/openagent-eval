@@ -9,10 +9,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.core.engine import EvaluationReport
-from openagent_eval.core.pipeline import PipelineResult
+
+if TYPE_CHECKING:
+    from openagent_eval.core.pipeline import PipelineResult
 
 
 @dataclass(frozen=True)

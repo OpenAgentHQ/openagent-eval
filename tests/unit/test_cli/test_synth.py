@@ -171,9 +171,7 @@ def test_synth_text_is_wired_to_generate_from_text(fake_generator: dict) -> None
 
 def test_synth_default_count_is_ten(fake_generator: dict) -> None:
     """Omitting --count must fall back to the documented default of 10."""
-    result = runner.invoke(
-        app, ["synth", "--llm-provider", "mock", "--corpus", "kb/"]
-    )
+    result = runner.invoke(app, ["synth", "--llm-provider", "mock", "--corpus", "kb/"])
     assert result.exit_code == 0, result.output
 
     kwargs = fake_generator["instances"][0].generate.await_args.kwargs
@@ -274,16 +272,12 @@ def test_synth_provider_options_are_wired(fake_generator: dict) -> None:
 def test_synth_synthesis_error_exits_one(fake_generator: dict) -> None:
     """A SynthesisError from generation surfaces as exit code 1 with its message."""
     fake_generator["generate_error"] = SynthesisError("corpus was empty")
-    result = runner.invoke(
-        app, ["synth", "--llm-provider", "mock", "--corpus", "kb/"]
-    )
+    result = runner.invoke(app, ["synth", "--llm-provider", "mock", "--corpus", "kb/"])
     assert result.exit_code == 1
     assert "corpus was empty" in strip_ansi(result.output)
 
 
-def test_synth_output_writes_dataset_file(
-    fake_generator: dict, tmp_path: Path
-) -> None:
+def test_synth_output_writes_dataset_file(fake_generator: dict, tmp_path: Path) -> None:
     """--output writes the generated dataset to the requested path as JSON."""
     out_path = tmp_path / "nested" / "dataset.json"
     result = runner.invoke(

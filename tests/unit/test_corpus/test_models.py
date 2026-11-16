@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC
 
 import pytest
+from pydantic import ValidationError
 
 from openagent_eval.corpus.models import (
     AuditReport,
@@ -42,7 +43,7 @@ class TestCorpusIssue:
             description="Test",
         )
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             issue.title = "Changed"  # type: ignore
 
     def test_issue_with_metadata(self):

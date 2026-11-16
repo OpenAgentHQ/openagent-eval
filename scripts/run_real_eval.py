@@ -30,11 +30,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from openagent_eval.config.models import (
     Config,
     DatasetConfig,
+    EmbedderConfig,
     LLMConfig,
     MetricsConfig,
     ReportConfig,
     RetrieverConfig,
-    EmbedderConfig,
 )
 from openagent_eval.core.engine import Engine
 

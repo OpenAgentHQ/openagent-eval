@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -13,6 +13,9 @@ from openagent_eval.exceptions import (
     DatasetValidationError,
     InvalidDatasetError,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestJSONLDatasetLoader:
@@ -26,7 +29,12 @@ class TestJSONLDatasetLoader:
         """Test loading a valid JSONL dataset."""
         lines = [
             json.dumps({"question": "What is Python?", "ground_truth": "A language."}),
-            json.dumps({"question": "What is RAG?", "ground_truth": "Retrieval-Augmented Generation."}),
+            json.dumps(
+                {
+                    "question": "What is RAG?",
+                    "ground_truth": "Retrieval-Augmented Generation.",
+                }
+            ),
         ]
         jsonl_path = tmp_path / "test.jsonl"
         jsonl_path.write_text("\n".join(lines), encoding="utf-8")

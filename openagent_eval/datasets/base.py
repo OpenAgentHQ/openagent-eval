@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @dataclass
@@ -104,7 +106,9 @@ class Dataset:
             New Dataset with filtered items.
         """
         if predicate is None:
-            return Dataset(items=list(self.items), name=self.name, metadata=self.metadata)
+            return Dataset(
+                items=list(self.items), name=self.name, metadata=self.metadata
+            )
         filtered = [item for item in self.items if predicate(item)]
         return Dataset(
             items=filtered,

@@ -128,9 +128,9 @@ class DiagnosisAnalyzer:
             # Run chunking analysis
             if scores.context_count > 0:
                 chunking_issues = self._chunking_analyzer.analyze(
-                        question,
-                        contexts,
-                        metadata,
+                    question,
+                    contexts,
+                    metadata,
                 )
                 all_chunking_issues.extend(chunking_issues)
 
@@ -141,11 +141,7 @@ class DiagnosisAnalyzer:
         # Build recommendations
         recommendations = self._build_recommendations(blame_counts, failure_counts)
 
-        overall_health = (
-            1.0
-            if not results
-            else healthy_count / len(results)
-        )
+        overall_health = 1.0 if not results else healthy_count / len(results)
 
         return DiagnosisReport(
             total_items=len(results),
@@ -200,11 +196,7 @@ class DiagnosisAnalyzer:
         if not isinstance(raw_contexts, list):
             contexts: list[str] = []
         else:
-            contexts = [
-                context
-                for context in raw_contexts
-                if isinstance(context, str)
-            ]
+            contexts = [context for context in raw_contexts if isinstance(context, str)]
 
         return ComponentScores(
             question=question,
@@ -215,7 +207,6 @@ class DiagnosisAnalyzer:
             answer_length=len(str(item.get("answer", ""))),
             latency_ms=metadata.get("latency_ms"),
         )
-
 
     def _extract_validated_contexts(
         self,
@@ -228,11 +219,7 @@ class DiagnosisAnalyzer:
         if not isinstance(raw_contexts, list):
             return []
 
-        return [
-            context
-            for context in raw_contexts
-            if isinstance(context, str)
-        ]
+        return [context for context in raw_contexts if isinstance(context, str)]
 
     def _build_recommendations(
         self,

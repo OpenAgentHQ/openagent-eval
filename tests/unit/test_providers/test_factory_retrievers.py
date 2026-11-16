@@ -46,5 +46,7 @@ class TestGetRetriever:
 
     def test_bm25_without_embedder(self):
         # BM25 is lexical and needs no embedder.
-        r = get_retriever(RetrieverConfig(provider="bm25", settings={"documents": [{"content": "x"}]}))
+        r = get_retriever(
+            RetrieverConfig(provider="bm25", settings={"documents": [{"content": "x"}]})
+        )
         assert r.name == "bm25"

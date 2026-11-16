@@ -13,6 +13,7 @@ actually running it, and troubleshooting.
 | File | Purpose |
 |---|---|
 | `tutorial.ipynb` | The 6-section notebook: setup → data → config → run → analyze → improve |
+| `openagent_eval_colab_tutorial.ipynb` | Comprehensive Google Colab tutorial for OpenAgent Eval |
 | `config.yaml` | Evaluation configuration referenced throughout the notebook |
 | `data/sample_qa.json` | 16 hand-authored QA pairs (question, ground truth, context) |
 | `data/corpus.json` | 19 passages indexed by the local retriever (16 relevant + 3 distractors) |

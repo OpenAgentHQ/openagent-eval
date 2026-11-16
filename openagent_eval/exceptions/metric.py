@@ -28,7 +28,7 @@ class MetricError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if metric_name:
+        if metric_name is not None:
             error_details["metric_name"] = metric_name
 
         super().__init__(message=message, details=error_details)
@@ -52,14 +52,16 @@ class MetricNotFoundError(MetricError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if available_metrics:
+        if available_metrics is not None:
             error_details["available_metrics"] = available_metrics
 
         message = f"Metric not found: {metric_name}"
         if available_metrics:
             message += f". Available metrics: {', '.join(available_metrics)}"
 
-        super().__init__(message=message, metric_name=metric_name, details=error_details)
+        super().__init__(
+            message=message, metric_name=metric_name, details=error_details
+        )
         self.available_metrics = available_metrics or []
 
 
@@ -86,10 +88,12 @@ class MetricExecutionError(MetricError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if original_error:
+        if original_error is not None:
             error_details["original_error"] = str(original_error)
 
-        super().__init__(message=message, metric_name=metric_name, details=error_details)
+        super().__init__(
+            message=message, metric_name=metric_name, details=error_details
+        )
         self.original_error = original_error
 
 
@@ -119,5 +123,7 @@ class MetricTimeoutError(MetricError):
         if timeout_seconds is not None:
             error_details["timeout_seconds"] = timeout_seconds
 
-        super().__init__(message=message, metric_name=metric_name, details=error_details)
+        super().__init__(
+            message=message, metric_name=metric_name, details=error_details
+        )
         self.timeout_seconds = timeout_seconds

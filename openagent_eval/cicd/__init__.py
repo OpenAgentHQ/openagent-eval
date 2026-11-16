@@ -6,12 +6,12 @@ for CI/CD pipelines.
 
 from openagent_eval.cicd.models import (
     CICDConfig,
-    ThresholdConfig,
-    TestResult,
     EvaluationGate,
+    TestResult,
+    ThresholdConfig,
 )
-from openagent_eval.cicd.thresholds import ThresholdEvaluator, GateResult
 from openagent_eval.cicd.plugin import OAEvalPlugin
+from openagent_eval.cicd.thresholds import GateResult, ThresholdEvaluator
 
 __all__ = [
     "CICDConfig",

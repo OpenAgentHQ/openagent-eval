@@ -10,21 +10,23 @@ external services are available.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from openagent_eval.config.models import (
-    EmbedderConfig,
-    LLMConfig,
-    RetrieverConfig,
-)
 from openagent_eval.exceptions.provider import ProviderNotFoundError
 from openagent_eval.providers.base.llm import LLMProvider
 from openagent_eval.providers.base.retriever import Retriever
-from openagent_eval.providers.embedders.base import Embedder
 from openagent_eval.providers.models import Document, LLMResponse, TokenUsage
 from openagent_eval.providers.retrievers._validation import (
     validate_retriever_settings,
 )
+
+if TYPE_CHECKING:
+    from openagent_eval.config.models import (
+        EmbedderConfig,
+        LLMConfig,
+        RetrieverConfig,
+    )
+    from openagent_eval.providers.embedders.base import Embedder
 
 # --------------------------------------------------------------------------- #
 # LLM provider registry                                                       #

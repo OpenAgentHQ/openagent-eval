@@ -41,7 +41,7 @@ class ClaimExtractor:
     """
 
     # Sentence-ending patterns
-    _SENTENCE_SPLIT = re.compile(r'(?<=[.!?])\s+')
+    _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
 
     def extract(self, answer: str) -> list[Claim]:
         """Extract atomic claims from an answer.
@@ -80,11 +80,15 @@ class ClaimExtractor:
         Handles conjunctions like 'and', 'but', 'also'.
         """
         # Split on coordinating conjunctions preceded by comma
-        parts = re.split(r',\s*(?:and|but|also|moreover|furthermore|however)\s+', sentence, flags=re.IGNORECASE)
+        parts = re.split(
+            r",\s*(?:and|but|also|moreover|furthermore|however)\s+",
+            sentence,
+            flags=re.IGNORECASE,
+        )
 
         # If no split happened, try splitting on semicolons
         if len(parts) == 1:
-            parts = re.split(r';\s*', sentence)
+            parts = re.split(r";\s*", sentence)
 
         return parts if len(parts) > 1 else [sentence]
 
@@ -92,9 +96,9 @@ class ClaimExtractor:
         """Clean and normalize a claim string."""
         text = text.strip()
         # Remove leading/trailing punctuation
-        text = text.strip('.,;:!?')
+        text = text.strip(".,;:!?")
         # Normalize whitespace
-        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r"\s+", " ", text)
         return text
 
     def extract_with_context(

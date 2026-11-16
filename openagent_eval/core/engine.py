@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from openagent_eval.config.models import Config
+from openagent_eval import __version__
 from openagent_eval.core.executor import Executor
 from openagent_eval.core.pipeline import Pipeline, PipelineResult
 from openagent_eval.core.registry import Registry
 from openagent_eval.exceptions.metric import MetricNotFoundError
 from openagent_eval.metrics import METRIC_REGISTRY, get_metric
-from openagent_eval.metrics.base import BaseMetric
 from openagent_eval.providers.factory import get_llm_provider, get_retriever
+
+if TYPE_CHECKING:
+    from openagent_eval.config.models import Config
+    from openagent_eval.metrics.base import BaseMetric
 
 
 @dataclass
@@ -56,7 +59,9 @@ class Engine:
             max_workers=config.max_workers,
             timeout=config.timeout,
         )
-        self._retriever = retriever if retriever is not None else self._build_retriever()
+        self._retriever = (
+            retriever if retriever is not None else self._build_retriever()
+        )
         self._llm = llm if llm is not None else self._build_llm()
         self._metrics = metrics if metrics is not None else self._build_metrics()
         self.pipeline = Pipeline(
@@ -92,7 +97,7 @@ class Engine:
             result=result,
             summary=summary,
             metadata={
-                "version": "0.1.0",
+                "version": __version__,
                 "engine": "openagent-eval",
                 "llm_provider": getattr(self._llm, "name", None),
                 "retriever_provider": getattr(self._retriever, "name", None),

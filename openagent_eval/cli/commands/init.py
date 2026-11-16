@@ -77,7 +77,12 @@ METRIC_PRESETS = {
     },
     "comprehensive": {
         "retrieval": ["context_precision", "context_recall", "mrr", "ndcg", "hit_rate"],
-        "generation": ["faithfulness", "answer_relevancy", "hallucination", "semantic_similarity"],
+        "generation": [
+            "faithfulness",
+            "answer_relevancy",
+            "hallucination",
+            "semantic_similarity",
+        ],
         "performance": ["latency"],
         "cost": ["token_count"],
     },
@@ -124,8 +129,12 @@ def init_command(
     ctx = get_context()
     path = Path(config_path)
 
-    if path.exists() and not force and not Confirm.ask(
-        f"Configuration file '{config_path}' already exists. Overwrite?"
+    if (
+        path.exists()
+        and not force
+        and not Confirm.ask(
+            f"Configuration file '{config_path}' already exists. Overwrite?"
+        )
     ):
         console.print("[yellow]Aborted.[/yellow]")
         raise typer.Exit()
@@ -206,7 +215,7 @@ def _interactive_wizard() -> str:
     console.print("  2. Standard (5 metrics) - Balanced (recommended)")
     console.print("  3. Comprehensive (9 metrics) - Thorough, slower")
     metrics_idx = Prompt.ask(
-      "  Select metric preset",
+        "  Select metric preset",
         default="2",
         choices=["1", "2", "3"],
     )
@@ -284,13 +293,13 @@ retriever:
 
 metrics:
   retrieval:
-{chr(10).join(f'    - {m}' for m in metrics['retrieval'])}
+{chr(10).join(f"    - {m}" for m in metrics["retrieval"])}
   generation:
-{chr(10).join(f'    - {m}' for m in metrics['generation'])}
+{chr(10).join(f"    - {m}" for m in metrics["generation"])}
   performance:
-{chr(10).join(f'    - {m}' for m in metrics['performance'])}
+{chr(10).join(f"    - {m}" for m in metrics["performance"])}
   cost:
-{chr(10).join(f'    - {m}' for m in metrics['cost'])}
+{chr(10).join(f"    - {m}" for m in metrics["cost"])}
 
 report:
   output: {output_format}

@@ -6,12 +6,14 @@ Each line in the file should be a valid JSON object representing one dataset ent
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.datasets.base import BaseDatasetLoader, Dataset, DatasetItem
 from openagent_eval.datasets.models import DatasetItemModel
 from openagent_eval.exceptions import DatasetValidationError, InvalidDatasetError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class JSONLDatasetLoader(BaseDatasetLoader):

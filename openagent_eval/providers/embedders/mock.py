@@ -37,7 +37,7 @@ class MockEmbedder(Embedder):
         dim = self.dimension
         raw: list[float] = []
         for i in range(dim):
-            digest = hashlib.sha256(f"{i}:{text}".encode("utf-8")).digest()
+            digest = hashlib.sha256(f"{i}:{text}".encode()).digest()
             value = (struct.unpack("!H", digest[:2])[0] / 65535.0) * 2.0 - 1.0
             raw.append(value)
         norm = (sum(v * v for v in raw) ** 0.5) or 1.0

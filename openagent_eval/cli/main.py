@@ -7,6 +7,7 @@ from importlib.metadata import PackageNotFoundError, version
 
 import typer
 from rich.console import Console
+from rich.text import Text
 from typer.core import TyperGroup
 
 from openagent_eval.cli.banner import create_mini_banner
@@ -499,9 +500,11 @@ def _cli_exception_handler(
     else:
         # For unexpected errors, show a user-friendly message
         console = Console(stderr=True)
-        console.print(f"\n[red]Unexpected error:[/red] {exc_value}")
-        console.print("[dim]This is a bug. Please report it at:")
-        console.print("  https://github.com/OpenAgentHQ/openagent-eval/issues[/dim]")
+        console.print(Text.assemble(("\nUnexpected error:", "red"), f" {exc_value}"))
+        console.print("[dim]This is a bug. Please report it at:[/dim]")
+        console.print(
+            "  [dim]https://github.com/OpenAgentHQ/openagent-eval/issues[/dim]"
+        )
         raise typer.Exit(code=1) from None
 
 

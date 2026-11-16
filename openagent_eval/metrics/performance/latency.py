@@ -40,8 +40,15 @@ class LatencyMetric(BaseMetric):
         Returns:
             MetricResult with latency score.
         """
-        latency_ms = kwargs.get("latency_ms", 0.0)
+        latency_ms = kwargs.get("latency_ms")
         stage = kwargs.get("stage", "unknown")
+
+        if latency_ms is None:
+            return MetricResult(
+                score=0.0,
+                reason="No latency measurement available",
+                metadata={"stage": stage, "latency_ms": None},
+            )
 
         if latency_ms < 0:
             return MetricResult(

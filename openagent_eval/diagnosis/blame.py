@@ -136,15 +136,23 @@ class BlameAttribution:
         failures: list[FailureInstance] = []
         gen_scores = scores.generation_scores
 
-        # Empty or very short answer with non-empty contexts
-        if scores.answer_length < ANSWER_TOO_SHORT and scores.context_count > 0:
+        # Empty or very short answer with non-empty contexts is only flagged
+        # when corroborated by low answer relevancy: legitimate short answers
+        # ("Yes.", "42", "Paris") are not failures on their own (issue #66).
+        relevancy = gen_scores.get("answer_relevancy", 1.0)
+        if (
+            scores.answer_length < ANSWER_TOO_SHORT
+            and scores.context_count > 0
+            and relevancy < LOW_RELEVANCY
+        ):
             failures.append(
                 FailureInstance(
                     mode=FailureMode.OFF_TOPIC_ANSWER,
                     blame=BlameTarget.GENERATION,
                     confidence=0.7,
-                    reason="Generated answer is empty or very short despite "
-                    "having retrieved contexts.",
+                    reason=f"Generated answer is empty or very short despite "
+                    f"having retrieved contexts, and answer relevancy is low "
+                    f"({relevancy:.2f}), corroborating a generation problem.",
                     question=question,
                     evidence=gen_scores,
                 )
@@ -166,7 +174,6 @@ class BlameAttribution:
             )
 
         # Low relevancy
-        relevancy = gen_scores.get("answer_relevancy", 1.0)
         if relevancy < LOW_RELEVANCY and scores.answer_length >= ANSWER_TOO_SHORT:
             failures.append(
                 FailureInstance(

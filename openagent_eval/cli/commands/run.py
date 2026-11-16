@@ -140,7 +140,12 @@ def run_command(
         total_items = len(dataset_items)
         progress.update(task, description=f"Loaded {total_items} items")
 
-        progress.update(task, description=f"Running evaluation ({total_items} items)...", total=total_items, completed=0)
+        progress.update(
+            task,
+            description=f"Running evaluation ({total_items} items)...",
+            total=total_items,
+            completed=0,
+        )
         report = execute_evaluation(config, dataset_items)
         progress.update(task, completed=total_items)
 
@@ -167,7 +172,9 @@ def run_command(
     if ctx.json_output:
         _output_json_result(report, report_path, elapsed)
     else:
-        display_run_result(report, format_name, report_path, output_dir, verbose, format_file)
+        display_run_result(
+            report, format_name, report_path, output_dir, verbose, format_file
+        )
 
 
 def _apply_metrics_override(config: object, metrics_str: str) -> None:
@@ -183,13 +190,24 @@ def _apply_metrics_override(config: object, metrics_str: str) -> None:
 
     # Categorize metrics
     retrieval_metrics = [
-        "context_precision", "context_recall", "mrr", "ndcg",
-        "hit_rate", "precision_at_k", "recall_at_k",
+        "context_precision",
+        "context_recall",
+        "mrr",
+        "ndcg",
+        "hit_rate",
+        "precision_at_k",
+        "recall_at_k",
     ]
     generation_metrics = [
-        "faithfulness", "answer_relevancy", "hallucination",
-        "semantic_similarity", "exact_match", "f1_score",
-        "bleu", "rouge", "bertscore",
+        "faithfulness",
+        "answer_relevancy",
+        "hallucination",
+        "semantic_similarity",
+        "exact_match",
+        "f1_score",
+        "bleu",
+        "rouge",
+        "bertscore",
     ]
     performance_metrics = ["latency"]
     cost_metrics = ["token_count"]
@@ -231,9 +249,13 @@ def _run_dry_run(config: object, config_path: Path) -> None:
     if config.metrics.retrieval:
         console.print(f"  [dim]Retrieval: {', '.join(config.metrics.retrieval)}[/dim]")
     if config.metrics.generation:
-        console.print(f"  [dim]Generation: {', '.join(config.metrics.generation)}[/dim]")
+        console.print(
+            f"  [dim]Generation: {', '.join(config.metrics.generation)}[/dim]"
+        )
     if config.metrics.performance:
-        console.print(f"  [dim]Performance: {', '.join(config.metrics.performance)}[/dim]")
+        console.print(
+            f"  [dim]Performance: {', '.join(config.metrics.performance)}[/dim]"
+        )
     if config.metrics.cost:
         console.print(f"  [dim]Cost: {', '.join(config.metrics.cost)}[/dim]")
 
@@ -261,7 +283,9 @@ def _run_dry_run(config: object, config_path: Path) -> None:
             f"  [yellow]Timeout is low ({config.timeout}s) - evaluations may time out[/yellow]"
         )
     if len(config.metrics.generation) > 5:
-        console.print(f"  [yellow]Running {len(config.metrics.generation)} generation metrics may be slow[/yellow]")
+        console.print(
+            f"  [yellow]Running {len(config.metrics.generation)} generation metrics may be slow[/yellow]"
+        )
 
     console.print("\n[dim]This was a dry run. No evaluations were performed.[/dim]")
     console.print("[dim]Run 'oaeval run <config>' to execute the evaluation.[/dim]")

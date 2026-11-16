@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-
+from openagent_eval.exceptions.base import OpenAgentEvalError
 from openagent_eval.exceptions.corpus import (
     CorpusAuditError,
     CorpusError,
     CorpusNotFoundError,
     CorpusValidationError,
 )
-from openagent_eval.exceptions.base import OpenAgentEvalError
 
 
 class TestCorpusError:

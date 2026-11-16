@@ -111,7 +111,10 @@ class QuestionGenerator:
             raise SynthesisExecutionError(
                 message=f"LLM generation failed: {e}",
                 original_error=e,
-                details={"source_document": source_document, "chunk_index": chunk_index},
+                details={
+                    "source_document": source_document,
+                    "chunk_index": chunk_index,
+                },
             ) from e
 
         return self._parse_response(

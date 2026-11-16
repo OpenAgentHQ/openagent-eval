@@ -7,15 +7,18 @@ similarity. Documents/queries are embedded locally with the configured
 
 from __future__ import annotations
 
-from typing import Any
+import importlib.util
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.retriever import Retriever
-from openagent_eval.providers.embedders.base import Embedder
 from openagent_eval.providers.models import Document
+
+if TYPE_CHECKING:
+    from openagent_eval.providers.embedders.base import Embedder
 
 
 class PGVectorRetriever(Retriever):
@@ -58,12 +61,15 @@ class PGVectorRetriever(Retriever):
         self._conn: Any = None
 
         try:
-            import psycopg
-        except ImportError as exc:  # pragma: no cover - depends on installed dep
-            raise ImportError(
-                "psycopg + pgvector are required for the pgvector retriever. "
-                "Install it with: pip install openagent-eval[pgvector]"
-            ) from exc
+            if importlib.util.find_spec("psycopg") is None:  # pragma: no cover - depends on installed dep
+                raise ImportError(
+                    "psycopg + pgvector are required for the pgvector retriever. "
+                    "Install it with: pip install openagent-eval[pgvector]"
+                )
+        except ValueError:  # pragma: no cover - mocked module in tests
+            # importlib.util.find_spec raises ValueError for mocked modules
+            # (e.g., in tests where psycopg is patched into sys.modules)
+            pass
 
     async def _ensure_connection(self) -> None:
         """Lazily open the async Postgres connection on first use.

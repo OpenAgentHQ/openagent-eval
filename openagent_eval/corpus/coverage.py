@@ -148,8 +148,8 @@ class CoverageAnalyzer(BaseCorpusAnalyzer):
         embeddings = embedder.encode(contents, show_progress_bar=False)
 
         # Cluster documents using simple K-means
-        from sklearn.cluster import KMeans
         import numpy as np
+        from sklearn.cluster import KMeans
 
         # Determine number of clusters (sqrt of document count, min 2)
         n_clusters = max(2, min(int(len(documents) ** 0.5), 20))
@@ -163,7 +163,9 @@ class CoverageAnalyzer(BaseCorpusAnalyzer):
 
         for cluster_id in range(n_clusters):
             cluster_mask = labels == cluster_id
-            cluster_docs = [doc for doc, mask in zip(documents, cluster_mask) if mask]
+            cluster_docs = [
+                doc for doc, mask in zip(documents, cluster_mask, strict=False) if mask
+            ]
             cluster_size = len(cluster_docs)
 
             # Find the centroid representative

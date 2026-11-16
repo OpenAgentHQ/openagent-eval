@@ -28,7 +28,7 @@ class CLIError(OpenAgentEvalError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if command:
+        if command is not None:
             error_details["command"] = command
 
         super().__init__(message=message, details=error_details)
@@ -87,9 +87,9 @@ class ValidationError(CLIError):
             details: Additional context about the error.
         """
         error_details = details or {}
-        if field:
+        if field is not None:
             error_details["field"] = field
-        if value:
+        if value is not None:
             error_details["value"] = value
 
         super().__init__(message=message, command=command, details=error_details)

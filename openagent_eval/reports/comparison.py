@@ -6,7 +6,7 @@ two experiment runs, showing metric deltas and statistical significance.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from openagent_eval.reports.base import ExperimentComparison, ReportGenerator
@@ -39,7 +39,7 @@ class ComparisonReport(ReportGenerator):
             )
 
         lines: list[str] = []
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
         # Header
         lines.append("=" * 60)
@@ -95,23 +95,21 @@ class ComparisonReport(ReportGenerator):
             lines.append("-" * 60)
             lines.append(f"  Metrics improved:  {improved}")
             lines.append(f"  Metrics regressed: {regressed}")
-            lines.append(f"  Metrics unchanged: {len(all_metrics) - improved - regressed}")
+            lines.append(
+                f"  Metrics unchanged: {len(all_metrics) - improved - regressed}"
+            )
             lines.append("")
 
             # Overall scores (common metrics only for fair comparison)
             if baseline_metrics and experiment_metrics:
-                common_metrics = sorted(
-                    set(baseline_metrics) & set(experiment_metrics)
-                )
+                common_metrics = sorted(set(baseline_metrics) & set(experiment_metrics))
                 if common_metrics:
-                    base_overall = (
-                        sum(baseline_metrics[m] for m in common_metrics)
-                        / len(common_metrics)
-                    )
-                    exp_overall = (
-                        sum(experiment_metrics[m] for m in common_metrics)
-                        / len(common_metrics)
-                    )
+                    base_overall = sum(
+                        baseline_metrics[m] for m in common_metrics
+                    ) / len(common_metrics)
+                    exp_overall = sum(
+                        experiment_metrics[m] for m in common_metrics
+                    ) / len(common_metrics)
                     lines.append(f"  Baseline overall:    {base_overall:.4f}")
                     lines.append(f"  Experiment overall:  {exp_overall:.4f}")
                     overall_delta = exp_overall - base_overall
@@ -129,10 +127,14 @@ class ComparisonReport(ReportGenerator):
                     lines.append("  No common metrics to compare overall scores.")
                     lines.append("")
             elif baseline_metrics:
-                lines.append(f"  Baseline overall:    {sum(baseline_metrics.values()) / len(baseline_metrics):.4f}")
+                lines.append(
+                    f"  Baseline overall:    {sum(baseline_metrics.values()) / len(baseline_metrics):.4f}"
+                )
                 lines.append("")
             elif experiment_metrics:
-                lines.append(f"  Experiment overall:  {sum(experiment_metrics.values()) / len(experiment_metrics):.4f}")
+                lines.append(
+                    f"  Experiment overall:  {sum(experiment_metrics.values()) / len(experiment_metrics):.4f}"
+                )
                 lines.append("")
         else:
             lines.append("  No metrics available for comparison.")
@@ -151,12 +153,8 @@ class ComparisonReport(ReportGenerator):
         # Result count comparison
         lines.append("RESULT COUNTS")
         lines.append("-" * 60)
-        lines.append(
-            f"  Baseline results:   {len(report.baseline_results.results)}"
-        )
-        lines.append(
-            f"  Experiment results: {len(report.experiment_results.results)}"
-        )
+        lines.append(f"  Baseline results:   {len(report.baseline_results.results)}")
+        lines.append(f"  Experiment results: {len(report.experiment_results.results)}")
         lines.append("")
         lines.append("=" * 60)
 

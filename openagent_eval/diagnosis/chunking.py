@@ -73,14 +73,20 @@ class ChunkingQualityAnalyzer:
 
         # Extract metadata values (default to None if not provided)
         expected_chunk_size = (
-            int(metadata["chunk_size"]) if metadata and "chunk_size" in metadata else None
+            int(metadata["chunk_size"])
+            if metadata and "chunk_size" in metadata
+            else None
         )
         expected_overlap = (
-            int(metadata["chunk_overlap"]) if metadata and "chunk_overlap" in metadata else None
+            int(metadata["chunk_overlap"])
+            if metadata and "chunk_overlap" in metadata
+            else None
         )
 
         issues.extend(self._check_overlap(question, contexts, expected_overlap))
-        issues.extend(self._check_size_consistency(question, contexts, expected_chunk_size))
+        issues.extend(
+            self._check_size_consistency(question, contexts, expected_chunk_size)
+        )
         issues.extend(self._check_empty_chunks(question, contexts, expected_chunk_size))
         issues.extend(self._check_content_gaps(question, contexts))
 
@@ -274,23 +280,40 @@ class ChunkingQualityAnalyzer:
         # Extract meaningful words from the question (4+ chars, lowercase)
         # Skip common short words (what, how, the, etc.)
         stop_words = {
-            "what", "how", "why", "when", "where", "which", "who",
-            "does", "have", "been", "from", "with", "that", "this",
-            "will", "about", "into", "your", "some", "than",
+            "what",
+            "how",
+            "why",
+            "when",
+            "where",
+            "which",
+            "who",
+            "does",
+            "have",
+            "been",
+            "from",
+            "with",
+            "that",
+            "this",
+            "will",
+            "about",
+            "into",
+            "your",
+            "some",
+            "than",
         }
-        question_words = set(
-            w.lower() for w in re.findall(r"\b\w{4,}\b", question)
-        ) - stop_words
+        question_words = (
+            set(w.lower() for w in re.findall(r"\b\w{4,}\b", question)) - stop_words
+        )
         if not question_words:
             return issues
 
-        # Combine all contexts
-        all_context_text = " ".join(contexts).lower()
+        # Extract whole words from all contexts to avoid substring matches
+        context_words = set(
+            w.lower() for w in re.findall(r"\b\w+\b", " ".join(contexts))
+        )
 
         # Find question words missing from all contexts
-        missing_words = [
-            w for w in question_words if w not in all_context_text
-        ]
+        missing_words = [w for w in question_words if w not in context_words]
 
         # Only flag if most question words are missing (>60%)
         if len(missing_words) > len(question_words) * 0.6:

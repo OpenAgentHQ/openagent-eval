@@ -7,12 +7,14 @@ The expected format is a JSON array of dataset entries.
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.datasets.base import BaseDatasetLoader, Dataset, DatasetItem
 from openagent_eval.datasets.models import DatasetItemModel
 from openagent_eval.exceptions import DatasetValidationError, InvalidDatasetError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class JSONDatasetLoader(BaseDatasetLoader):

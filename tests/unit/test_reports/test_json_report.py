@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any
-
+from typing import TYPE_CHECKING, Any
 
 from openagent_eval.reports.json_report import JSONReport
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestJSONReport:
@@ -73,9 +74,7 @@ class TestJSONReport:
         assert "errors" in data
         assert len(data["errors"]) == 2
 
-    def test_generate_contains_failure_analysis(
-        self, evaluation_report: Any
-    ) -> None:
+    def test_generate_contains_failure_analysis(self, evaluation_report: Any) -> None:
         """generate() includes failure analysis."""
         report = JSONReport()
         result = report.generate(evaluation_report)
@@ -93,15 +92,16 @@ class TestJSONReport:
         data = json.loads(result)
         assert len(data["results"]) == 2
 
-    def test_generate_contains_configuration(
-        self, evaluation_report: Any
-    ) -> None:
+    def test_generate_contains_configuration(self, evaluation_report: Any) -> None:
         """generate() includes configuration."""
         report = JSONReport()
         result = report.generate(evaluation_report)
         data = json.loads(result)
         assert "configuration" in data
-        assert data["configuration"]["dataset"]["path"] == "tests/sample_data/test_dataset.json"
+        assert (
+            data["configuration"]["dataset"]["path"]
+            == "tests/sample_data/test_dataset.json"
+        )
         assert data["configuration"]["llm"]["provider"] == "openai"
         assert data["configuration"]["llm"]["model"] == "gpt-4o"
 
@@ -113,9 +113,7 @@ class TestJSONReport:
         assert data["summary"]["total_items"] == 0
         assert data["results"] == []
 
-    def test_generate_to_file(
-        self, evaluation_report: Any, tmp_path: Path
-    ) -> None:
+    def test_generate_to_file(self, evaluation_report: Any, tmp_path: Path) -> None:
         """generate_to_file() writes to a JSON file."""
         report = JSONReport()
         output_path = tmp_path / "report.json"
