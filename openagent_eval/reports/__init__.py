@@ -5,6 +5,7 @@ This package provides multiple report formats for evaluation results:
 - Markdown: Structured .md files
 - HTML: Styled web pages via Jinja2
 - JSON: Machine-readable structured data
+- EvalPort: Portable ResultSet JSON (https://github.com/adhabnr-ux/evalport)
 - Comparison: Side-by-side experiment comparison
 """
 
@@ -16,6 +17,7 @@ from openagent_eval.reports.base import (
     ReportInput,
 )
 from openagent_eval.reports.comparison import ComparisonReport
+from openagent_eval.reports.evalport import EvalPortReport
 from openagent_eval.reports.html import HTMLReport
 from openagent_eval.reports.json_report import JSONReport
 from openagent_eval.reports.markdown import MarkdownReport
@@ -31,5 +33,6 @@ __all__ = [
     "MarkdownReport",
     "HTMLReport",
     "JSONReport",
+    "EvalPortReport",
     "ComparisonReport",
 ]
