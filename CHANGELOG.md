@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 ### Added
+- Added per-provider token-bucket rate limiting (`TokenBucketRateLimiter` in `openagent_eval/core/executor.py`), configurable via `LLMConfig.rate_limit` in `openagent_eval/config/models.py` and enforced in `Pipeline._generate()` (#354).
 - Added `oaeval doctor` warnings for configured providers whose optional extras are not installed.
 - Created `scripts/changelog_validator.py` to automatically verify Keep a Changelog formatting.
 - Added a section to `CONTRIBUTING.md` documenting the changelog update process for future contributors.
