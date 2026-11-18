@@ -52,6 +52,19 @@ class JSONReport(ReportGenerator):
         summary = report.summary
         config = report.config
 
+        summary_data: dict[str, Any] = {
+            "total_items": summary.get("total_items", 0),
+            "successful_evaluations": summary.get("successful_evaluations", 0),
+            "failed_evaluations": summary.get("failed_evaluations", 0),
+            "metrics_summary": summary.get("metrics_summary", {}),
+        }
+        if summary.get("total_tokens") is not None:
+            summary_data["total_tokens"] = summary["total_tokens"]
+        if summary.get("total_estimated_cost_usd") is not None:
+            summary_data["total_estimated_cost_usd"] = summary[
+                "total_estimated_cost_usd"
+            ]
+
         # Build structured data
         report_data: dict[str, Any] = {
             "metadata": {
@@ -60,12 +73,7 @@ class JSONReport(ReportGenerator):
                 "timestamp": datetime.now(UTC).isoformat(),
                 "title": report.metadata.get("title", "OpenAgent Eval Report"),
             },
-            "summary": {
-                "total_items": summary.get("total_items", 0),
-                "successful_evaluations": summary.get("successful_evaluations", 0),
-                "failed_evaluations": summary.get("failed_evaluations", 0),
-                "metrics_summary": summary.get("metrics_summary", {}),
-            },
+            "summary": summary_data,
             "results": [],
             "errors": result.errors,
             "configuration": {

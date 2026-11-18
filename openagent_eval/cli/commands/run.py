@@ -210,7 +210,7 @@ def _apply_metrics_override(config: object, metrics_str: str) -> None:
         "bertscore",
     ]
     performance_metrics = ["latency"]
-    cost_metrics = ["token_count"]
+    cost_metrics = ["token_count", "cost_estimate"]
 
     config.metrics = MetricsConfig(
         retrieval=[m for m in metric_list if m in retrieval_metrics],

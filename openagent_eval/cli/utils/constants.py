@@ -40,6 +40,7 @@ metrics:
     - latency
   cost:
     - token_count
+    - cost_estimate
 
 report:
   output: terminal

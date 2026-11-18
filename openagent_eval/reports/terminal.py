@@ -66,6 +66,11 @@ class TerminalReport(ReportGenerator):
         lines.append(f"  Total items:      {summary.get('total_items', 0)}")
         lines.append(f"  Successful:       {summary.get('successful_evaluations', 0)}")
         lines.append(f"  Failed:           {summary.get('failed_evaluations', 0)}")
+        if summary.get("total_tokens") is not None:
+            lines.append(f"  Total tokens:     {summary['total_tokens']}")
+        if summary.get("total_estimated_cost_usd") is not None:
+            cost_str = self._format_usd(float(summary["total_estimated_cost_usd"]))
+            lines.append(f"  Estimated cost:   {cost_str}")
         lines.append("")
 
         # Metrics summary
@@ -150,6 +155,13 @@ class TerminalReport(ReportGenerator):
             "Successful", str(summary.get("successful_evaluations", 0))
         )
         summary_table.add_row("Failed", str(summary.get("failed_evaluations", 0)))
+        if summary.get("total_tokens") is not None:
+            summary_table.add_row("Total Tokens", str(summary["total_tokens"]))
+        if summary.get("total_estimated_cost_usd") is not None:
+            summary_table.add_row(
+                "Estimated Cost",
+                self._format_usd(float(summary["total_estimated_cost_usd"])),
+            )
         self.console.print(summary_table)
 
         # Metrics table

@@ -129,12 +129,18 @@ class HTMLReport(ReportGenerator):
             err_type = err.get("error_type", "Unknown")
             error_types[err_type] = error_types.get(err_type, 0) + 1
 
+        total_cost = summary.get("total_estimated_cost_usd")
         context = {
             "title": report.metadata.get("title", "OpenAgent Eval Report"),
             "timestamp": now,
             "total_items": summary.get("total_items", 0),
             "successful": summary.get("successful_evaluations", 0),
             "failed": summary.get("failed_evaluations", 0),
+            "total_tokens": summary.get("total_tokens"),
+            "total_estimated_cost_usd": total_cost,
+            "formatted_estimated_cost": (
+                self._format_usd(float(total_cost)) if total_cost is not None else None
+            ),
             "overall_score": overall_score,
             "metrics": metrics,
             "errors": error_types,

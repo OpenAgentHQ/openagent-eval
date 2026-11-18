@@ -198,7 +198,7 @@ New to the project? [CONTRIBUTING.md](CONTRIBUTING.md) walks through setup, the 
 
 - Latency tracking (embedding, retrieval, LLM stages)
 - Token counting (prompt, completion, total)
-- Cost estimation per provider
+- Per-model USD cost estimation via `openagent_eval.providers.pricing` (`cost_estimate` metric and per-run report totals)
 
 </details>
 
