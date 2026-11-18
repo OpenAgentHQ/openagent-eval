@@ -23,6 +23,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
+from openagent_eval.providers.base.retry import retry_with_backoff
 from openagent_eval.providers.models import TokenUsage
 
 
@@ -149,6 +150,7 @@ class Anthropic(LLMProvider):
         """Return the configured Anthropic model identifier."""
         return self.model
 
+    @retry_with_backoff()
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the LLM.
 
