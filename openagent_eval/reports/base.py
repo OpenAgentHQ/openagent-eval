@@ -172,3 +172,10 @@ class ReportGenerator(ABC):
                 )
             )
         return failures
+
+    @staticmethod
+    def _format_usd(cost: float) -> str:
+        """Format a USD cost value with precision appropriate for its magnitude."""
+        if 0 < abs(cost) < 0.01:
+            return f"${cost:.6f}"
+        return f"${cost:.4f}"

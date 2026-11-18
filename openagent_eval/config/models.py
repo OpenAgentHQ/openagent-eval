@@ -83,7 +83,7 @@ class MetricsConfig(BaseModel):
 
     Metric names must match the keys in ``openagent_eval.metrics.METRIC_REGISTRY``
     (e.g. ``context_precision``, ``context_recall``, ``mrr``, ``faithfulness``,
-    ``answer_relevancy``, ``latency``, ``token_count``).
+    ``answer_relevancy``, ``latency``, ``token_count``, ``cost_estimate``).
     """
 
     retrieval: list[str] = Field(

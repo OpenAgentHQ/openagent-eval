@@ -156,6 +156,12 @@
                     <div class="label">Overall Score</div>
                 </div>
                 {% endif %}
+                {% if formatted_estimated_cost is not none %}
+                <div class="stat">
+                    <div class="value">{{ formatted_estimated_cost }}</div>
+                    <div class="label">Estimated Cost</div>
+                </div>
+                {% endif %}
             </div>
         </div>
 

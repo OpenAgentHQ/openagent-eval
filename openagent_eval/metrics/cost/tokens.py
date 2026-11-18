@@ -8,29 +8,10 @@ from __future__ import annotations
 from typing import Any
 
 from openagent_eval.metrics.base import BaseMetric, MetricResult
+from openagent_eval.providers.pricing import estimate_cost_usd, pricing_as_per_1m_table
 
-# Cost per 1M tokens by provider and model (USD)
-COST_PER_1M_TOKENS: dict[str, dict[str, dict[str, float]]] = {
-    "openai": {
-        "gpt-4o": {"input": 2.50, "output": 10.00},
-        "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-        "gpt-4-turbo": {"input": 10.00, "output": 30.00},
-        "gpt-3.5-turbo": {"input": 0.50, "output": 1.50},
-    },
-    "anthropic": {
-        "claude-3-opus": {"input": 15.00, "output": 75.00},
-        "claude-3-sonnet": {"input": 3.00, "output": 15.00},
-        "claude-3-haiku": {"input": 0.25, "output": 1.25},
-    },
-    "gemini": {
-        "gemini-pro": {"input": 0.50, "output": 1.50},
-        "gemini-1.5-pro": {"input": 3.50, "output": 10.50},
-    },
-    "groq": {
-        "llama-3-70b": {"input": 0.59, "output": 0.79},
-        "llama-3-8b": {"input": 0.05, "output": 0.08},
-    },
-}
+# Cost per 1M tokens derived from the canonical per-1K table in providers/pricing.py.
+COST_PER_1M_TOKENS: dict[str, dict[str, dict[str, float]]] = pricing_as_per_1m_table()
 
 
 class TokenCountMetric(BaseMetric):
@@ -87,27 +68,10 @@ class TokenCountMetric(BaseMetric):
         prompt_tokens: int,
         completion_tokens: int,
     ) -> float:
-        """Estimate cost based on provider and model pricing.
-
-        Args:
-            provider: LLM provider name.
-            model: Model identifier.
-            prompt_tokens: Number of prompt tokens.
-            completion_tokens: Number of completion tokens.
-
-        Returns:
-            Estimated cost in USD.
-        """
-        provider_costs = COST_PER_1M_TOKENS.get(provider, {})
-        model_costs = provider_costs.get(model, {})
-
-        if not model_costs:
-            return 0.0
-
-        input_rate = model_costs.get("input", 0.0)
-        output_rate = model_costs.get("output", 0.0)
-
-        input_cost = (prompt_tokens / 1_000_000) * input_rate
-        output_cost = (completion_tokens / 1_000_000) * output_rate
-
-        return input_cost + output_cost
+        """Estimate cost based on provider and model pricing."""
+        return estimate_cost_usd(
+            prompt_tokens,
+            completion_tokens,
+            provider=provider,
+            model=model,
+        )
