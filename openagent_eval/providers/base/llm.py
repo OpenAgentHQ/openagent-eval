@@ -8,7 +8,10 @@ subclass this interface and provide actual API integrations.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 
 class LLMProvider(ABC):
@@ -81,6 +84,23 @@ class LLMProvider(ABC):
             ProviderError: If token counting fails.
         """
         pass
+
+    async def generate_stream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """Stream generated text chunks from the LLM.
+
+        The default implementation delegates to :meth:`generate` and yields the
+        buffered response as a single chunk so existing provider subclasses
+        continue to work unmodified. Adapters whose backends support token
+        streaming override this method to yield incremental chunks.
+
+        Args:
+            prompt: The input prompt to send to the LLM.
+            **kwargs: Provider-specific parameters forwarded to generation.
+
+        Yields:
+            Text chunks produced by the model.
+        """
+        yield await self.generate(prompt, **kwargs)
 
     @property
     def model_name(self) -> str | None:

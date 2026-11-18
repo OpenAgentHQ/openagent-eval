@@ -12,7 +12,11 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from typing import NoReturn
 
 try:
     import groq
@@ -161,6 +165,59 @@ class Groq(LLMProvider):
         """Return the configured Groq model identifier."""
         return self.model
 
+    def _build_request_params(self, prompt: str, **kwargs: Any) -> dict[str, Any]:
+        """Build Groq chat completion request parameters."""
+        request_params: dict[str, Any] = {
+            "model": kwargs.get("model", self.model),
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": kwargs.get("temperature", self.temperature),
+        }
+        if "max_tokens" in kwargs:
+            request_params["max_tokens"] = kwargs["max_tokens"]
+        elif self.max_tokens is not None:
+            request_params["max_tokens"] = self.max_tokens
+        return request_params
+
+    @staticmethod
+    def _raise_mapped_error(exc: Exception) -> NoReturn:
+        """Translate Groq SDK exceptions into provider hierarchy."""
+        if isinstance(exc, groq.APIConnectionError):
+            raise ProviderConnectionError(
+                message=f"Failed to connect to Groq API: {exc!s}",
+                provider_name="groq",
+                original_error=exc,
+            ) from exc
+        if isinstance(exc, groq.APITimeoutError):
+            raise ProviderConnectionError(
+                message=f"Request to Groq API timed out: {exc!s}",
+                provider_name="groq",
+                original_error=exc,
+            ) from exc
+        if isinstance(exc, groq.APIStatusError):
+            raise ProviderExecutionError(
+                message=f"Groq API error: {exc!s}",
+                provider_name="groq",
+                original_error=exc,
+                details={"status_code": exc.status_code, "response": str(exc.response)},
+            ) from exc
+        if isinstance(exc, groq.AuthenticationError):
+            raise ProviderConnectionError(
+                message=f"Groq authentication failed: {exc!s}",
+                provider_name="groq",
+                original_error=exc,
+            ) from exc
+        if isinstance(exc, groq.RateLimitError):
+            raise ProviderExecutionError(
+                message=f"Groq rate limit exceeded: {exc!s}",
+                provider_name="groq",
+                original_error=exc,
+            ) from exc
+        raise ProviderExecutionError(
+            message=f"Unexpected error during Groq generation: {exc!s}",
+            provider_name="groq",
+            original_error=exc,
+        ) from exc
+
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the LLM.
 
@@ -181,17 +238,7 @@ class Groq(LLMProvider):
             ProviderConnectionError: If the connection to Groq fails.
             ProviderExecutionError: If the API request fails or returns an error.
         """
-        # Build request parameters
-        request_params: dict[str, Any] = {
-            "model": kwargs.get("model", self.model),
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": kwargs.get("temperature", self.temperature),
-        }
-
-        if "max_tokens" in kwargs:
-            request_params["max_tokens"] = kwargs["max_tokens"]
-        elif self.max_tokens is not None:
-            request_params["max_tokens"] = self.max_tokens
+        request_params = self._build_request_params(prompt, **kwargs)
 
         try:
             response = await self.client.chat.completions.create(**request_params)
@@ -208,43 +255,39 @@ class Groq(LLMProvider):
 
             return content
 
-        except groq.APIConnectionError as e:
-            raise ProviderConnectionError(
-                message=f"Failed to connect to Groq API: {str(e)}",
-                provider_name="groq",
-                original_error=e,
-            ) from e
-        except groq.APITimeoutError as e:
-            raise ProviderConnectionError(
-                message=f"Request to Groq API timed out: {str(e)}",
-                provider_name="groq",
-                original_error=e,
-            ) from e
-        except groq.APIStatusError as e:
-            raise ProviderExecutionError(
-                message=f"Groq API error: {str(e)}",
-                provider_name="groq",
-                original_error=e,
-                details={"status_code": e.status_code, "response": str(e.response)},
-            ) from e
-        except groq.AuthenticationError as e:
-            raise ProviderConnectionError(
-                message=f"Groq authentication failed: {str(e)}",
-                provider_name="groq",
-                original_error=e,
-            ) from e
-        except groq.RateLimitError as e:
-            raise ProviderExecutionError(
-                message=f"Groq rate limit exceeded: {str(e)}",
-                provider_name="groq",
-                original_error=e,
-            ) from e
+        except (ProviderConnectionError, ProviderExecutionError):
+            raise
         except Exception as e:
-            raise ProviderExecutionError(
-                message=f"Unexpected error during Groq generation: {str(e)}",
-                provider_name="groq",
-                original_error=e,
-            ) from e
+            self._raise_mapped_error(e)
+
+    async def generate_stream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """Stream generated text chunks from Groq's Chat Completions API.
+
+        Args:
+            prompt: The input prompt to send to the LLM.
+            **kwargs: Additional generation parameters (same as :meth:`generate`).
+
+        Yields:
+            Non-empty text delta strings as they arrive.
+
+        Raises:
+            ProviderConnectionError: If connection or authentication fails.
+            ProviderExecutionError: If the API request fails.
+        """
+        request_params = self._build_request_params(prompt, **kwargs)
+        request_params["stream"] = True
+
+        try:
+            stream = await self.client.chat.completions.create(**request_params)
+            async for chunk in stream:
+                if chunk.choices:
+                    delta = chunk.choices[0].delta.content
+                    if delta:
+                        yield delta
+        except (ProviderConnectionError, ProviderExecutionError):
+            raise
+        except Exception as e:
+            self._raise_mapped_error(e)
 
     async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate a response with detailed token usage information.

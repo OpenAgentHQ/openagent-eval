@@ -52,6 +52,9 @@ from openagent_eval.providers.base.llm import LLMProvider
 from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from typing import NoReturn
+
     from openai.types.chat import ChatCompletion
 
     from openagent_eval.config.models import LLMConfig
@@ -165,6 +168,41 @@ class OpenAIProvider(LLMProvider):
                 self._encoding = tiktoken.get_encoding("cl100k_base")
         return self._encoding
 
+    def _build_request_params(self, prompt: str, **kwargs: Any) -> dict[str, Any]:
+        """Build chat completion request parameters from prompt and overrides."""
+        temperature = kwargs.get("temperature", self._temperature)
+        max_tokens = kwargs.get("max_tokens", self._max_tokens)
+        system_message = kwargs.get("system_message")
+
+        messages: list[dict[str, str]] = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        messages.append({"role": "user", "content": prompt})
+
+        request_params: dict[str, Any] = {
+            "model": self._model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+        if max_tokens is not None:
+            request_params["max_tokens"] = max_tokens
+        return request_params
+
+    def _raise_mapped_error(self, exc: Exception) -> NoReturn:
+        """Translate OpenAI SDK/network exceptions into provider hierarchy."""
+        error_msg = str(exc)
+        if "connection" in error_msg.lower() or "timeout" in error_msg.lower():
+            raise ProviderConnectionError(
+                message=f"Failed to connect to OpenAI API: {error_msg}",
+                provider_name=self.name,
+                original_error=exc,
+            ) from exc
+        raise ProviderExecutionError(
+            message=f"OpenAI API execution failed: {error_msg}",
+            provider_name=self.name,
+            original_error=exc,
+        ) from exc
+
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the OpenAI API.
 
@@ -182,22 +220,7 @@ class OpenAIProvider(LLMProvider):
             ProviderConnectionError: If connection to OpenAI fails.
             ProviderExecutionError: If the API returns an error.
         """
-        temperature = kwargs.get("temperature", self._temperature)
-        max_tokens = kwargs.get("max_tokens", self._max_tokens)
-        system_message = kwargs.get("system_message")
-
-        messages: list[dict[str, str]] = []
-        if system_message:
-            messages.append({"role": "system", "content": system_message})
-        messages.append({"role": "user", "content": prompt})
-
-        request_params: dict[str, Any] = {
-            "model": self._model,
-            "messages": messages,
-            "temperature": temperature,
-        }
-        if max_tokens is not None:
-            request_params["max_tokens"] = max_tokens
+        request_params = self._build_request_params(prompt, **kwargs)
 
         try:
             start_time = time.monotonic()
@@ -222,23 +245,39 @@ class OpenAIProvider(LLMProvider):
 
             return content
 
-        except ProviderConnectionError:
-            raise
-        except ProviderExecutionError:
+        except (ProviderConnectionError, ProviderExecutionError):
             raise
         except Exception as e:
-            error_msg = str(e)
-            if "connection" in error_msg.lower() or "timeout" in error_msg.lower():
-                raise ProviderConnectionError(
-                    message=f"Failed to connect to OpenAI API: {error_msg}",
-                    provider_name=self.name,
-                    original_error=e,
-                ) from e
-            raise ProviderExecutionError(
-                message=f"OpenAI API execution failed: {error_msg}",
-                provider_name=self.name,
-                original_error=e,
-            ) from e
+            self._raise_mapped_error(e)
+
+    async def generate_stream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """Stream generated text chunks from the OpenAI Chat Completions API.
+
+        Args:
+            prompt: The input prompt to send to the LLM.
+            **kwargs: Additional parameters (same as :meth:`generate`).
+
+        Yields:
+            Non-empty text delta strings as they arrive.
+
+        Raises:
+            ProviderConnectionError: If connection to OpenAI fails.
+            ProviderExecutionError: If the API returns an error.
+        """
+        request_params = self._build_request_params(prompt, **kwargs)
+        request_params["stream"] = True
+
+        try:
+            stream = await self._client.chat.completions.create(**request_params)
+            async for chunk in stream:
+                if chunk.choices:
+                    delta = chunk.choices[0].delta.content
+                    if delta:
+                        yield delta
+        except (ProviderConnectionError, ProviderExecutionError):
+            raise
+        except Exception as e:
+            self._raise_mapped_error(e)
 
     async def get_token_count(self, text: str) -> int:
         """Count the number of tokens in the given text using tiktoken.
@@ -280,22 +319,7 @@ class OpenAIProvider(LLMProvider):
             ProviderConnectionError: If connection to OpenAI fails.
             ProviderExecutionError: If the API returns an error.
         """
-        temperature = kwargs.get("temperature", self._temperature)
-        max_tokens = kwargs.get("max_tokens", self._max_tokens)
-        system_message = kwargs.get("system_message")
-
-        messages: list[dict[str, str]] = []
-        if system_message:
-            messages.append({"role": "system", "content": system_message})
-        messages.append({"role": "user", "content": prompt})
-
-        request_params: dict[str, Any] = {
-            "model": self._model,
-            "messages": messages,
-            "temperature": temperature,
-        }
-        if max_tokens is not None:
-            request_params["max_tokens"] = max_tokens
+        request_params = self._build_request_params(prompt, **kwargs)
 
         try:
             start_time = time.monotonic()
@@ -332,20 +356,7 @@ class OpenAIProvider(LLMProvider):
                 latency_ms=latency_ms,
             )
 
-        except ProviderConnectionError:
-            raise
-        except ProviderExecutionError:
+        except (ProviderConnectionError, ProviderExecutionError):
             raise
         except Exception as e:
-            error_msg = str(e)
-            if "connection" in error_msg.lower() or "timeout" in error_msg.lower():
-                raise ProviderConnectionError(
-                    message=f"Failed to connect to OpenAI API: {error_msg}",
-                    provider_name=self.name,
-                    original_error=e,
-                ) from e
-            raise ProviderExecutionError(
-                message=f"OpenAI API execution failed: {error_msg}",
-                provider_name=self.name,
-                original_error=e,
-            ) from e
+            self._raise_mapped_error(e)

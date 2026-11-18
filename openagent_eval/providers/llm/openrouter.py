@@ -10,9 +10,14 @@ OpenAgent Eval evaluation pipeline.
 
 from __future__ import annotations
 
+import json
 import os
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from typing import NoReturn
 
 import httpx
 
@@ -132,6 +137,53 @@ class OpenRouter(LLMProvider):
         """Return the configured OpenRouter model identifier."""
         return self.model
 
+    def _build_payload(
+        self, prompt: str, *, stream: bool = False, **kwargs: Any
+    ) -> dict[str, Any]:
+        """Build OpenRouter chat completion payload."""
+        payload: dict[str, Any] = {
+            "model": kwargs.get("model", self.model),
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": kwargs.get("temperature", self.temperature),
+        }
+        if "max_tokens" in kwargs:
+            payload["max_tokens"] = kwargs["max_tokens"]
+        elif self.max_tokens is not None:
+            payload["max_tokens"] = self.max_tokens
+        if stream:
+            payload["stream"] = True
+        return payload
+
+    def _build_headers(self) -> dict[str, str]:
+        """Build OpenRouter request headers."""
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/openagent-eval",
+            "X-Title": "OpenAgent Eval",
+        }
+
+    @staticmethod
+    def _raise_mapped_httpx_error(exc: Exception) -> NoReturn:
+        """Translate httpx transport errors into ProviderConnectionError."""
+        if isinstance(exc, httpx.ConnectError):
+            raise ProviderConnectionError(
+                message=f"Failed to connect to OpenRouter API: {exc!s}",
+                provider_name="openrouter",
+                original_error=exc,
+            ) from exc
+        if isinstance(exc, httpx.TimeoutException):
+            raise ProviderConnectionError(
+                message=f"Request to OpenRouter API timed out: {exc!s}",
+                provider_name="openrouter",
+                original_error=exc,
+            ) from exc
+        raise ProviderConnectionError(
+            message=f"Request to OpenRouter API failed: {exc!s}",
+            provider_name="openrouter",
+            original_error=exc,
+        ) from exc
+
     async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate a response and return it with token usage and latency.
 
@@ -152,25 +204,8 @@ class OpenRouter(LLMProvider):
             ProviderConnectionError: If the connection to OpenRouter fails.
             ProviderExecutionError: If the API request fails or returns an error.
         """
-        # Build request payload
-        payload: dict[str, Any] = {
-            "model": kwargs.get("model", self.model),
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": kwargs.get("temperature", self.temperature),
-        }
-
-        if "max_tokens" in kwargs:
-            payload["max_tokens"] = kwargs["max_tokens"]
-        elif self.max_tokens is not None:
-            payload["max_tokens"] = self.max_tokens
-
-        # Prepare headers
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://github.com/openagent-eval",
-            "X-Title": "OpenAgent Eval",
-        }
+        payload = self._build_payload(prompt, **kwargs)
+        headers = self._build_headers()
 
         start_time = time.monotonic()
         try:
@@ -208,7 +243,7 @@ class OpenRouter(LLMProvider):
                         details={"response": result},
                     )
 
-                content = result["choices"][0]["message"]["content"]
+                content = str(result["choices"][0]["message"]["content"])
 
                 latency_ms = (time.monotonic() - start_time) * 1000.0
                 usage = self._extract_usage(result)
@@ -220,24 +255,81 @@ class OpenRouter(LLMProvider):
                     latency_ms=latency_ms,
                 )
 
-        except httpx.ConnectError as e:
-            raise ProviderConnectionError(
-                message=f"Failed to connect to OpenRouter API: {str(e)}",
-                provider_name="openrouter",
-                original_error=e,
-            ) from e
-        except httpx.TimeoutException as e:
-            raise ProviderConnectionError(
-                message=f"Request to OpenRouter API timed out: {str(e)}",
-                provider_name="openrouter",
-                original_error=e,
-            ) from e
-        except httpx.RequestError as e:
-            raise ProviderConnectionError(
-                message=f"Request to OpenRouter API failed: {str(e)}",
-                provider_name="openrouter",
-                original_error=e,
-            ) from e
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError) as e:
+            self._raise_mapped_httpx_error(e)
+
+    async def generate_stream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """Stream generated text chunks from OpenRouter's SSE endpoint.
+
+        Args:
+            prompt: The input prompt to send to the LLM.
+            **kwargs: Additional generation parameters (see ``generate_with_usage``).
+
+        Yields:
+            Non-empty text delta strings parsed from SSE data frames.
+
+        Raises:
+            ProviderConnectionError: If the connection to OpenRouter fails.
+            ProviderExecutionError: If the API returns an error status or invalid stream data.
+        """
+        payload = self._build_payload(prompt, stream=True, **kwargs)
+        headers = self._build_headers()
+
+        try:
+            async with (
+                httpx.AsyncClient() as client,
+                client.stream(
+                    "POST",
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                    headers=headers,
+                    timeout=120.0,
+                ) as response,
+            ):
+                if response.status_code != 200:
+                    raw_body = (await response.aread()).decode(errors="replace")
+                    error_data: dict[str, Any] = {}
+                    if raw_body:
+                        try:
+                            error_data = json.loads(raw_body)
+                        except json.JSONDecodeError:
+                            error_data = {}
+                    error_message = error_data.get("error", {}).get(
+                        "message", f"HTTP {response.status_code}: {raw_body}"
+                    )
+                    raise ProviderExecutionError(
+                        message=f"OpenRouter API error: {error_message}",
+                        provider_name="openrouter",
+                        details={
+                            "status_code": response.status_code,
+                            "response": error_data,
+                        },
+                    )
+
+                async for line in response.aiter_lines():
+                    stripped = line.strip()
+                    if not stripped or not stripped.startswith("data:"):
+                        continue
+                    data_str = stripped.removeprefix("data:").strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        event = json.loads(data_str)
+                    except json.JSONDecodeError as e:
+                        raise ProviderExecutionError(
+                            message=f"Failed to parse OpenRouter stream chunk: {e!s}",
+                            provider_name="openrouter",
+                            original_error=e,
+                        ) from e
+                    choices = event.get("choices") or []
+                    if choices:
+                        delta = (choices[0].get("delta") or {}).get("content")
+                        if delta:
+                            yield str(delta)
+        except (ProviderConnectionError, ProviderExecutionError):
+            raise
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError) as e:
+            self._raise_mapped_httpx_error(e)
 
     def _extract_usage(self, result: dict[str, Any]) -> TokenUsage:
         """Extract token usage from an OpenRouter API response."""

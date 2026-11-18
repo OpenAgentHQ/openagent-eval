@@ -19,7 +19,11 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from typing import NoReturn
 
 from openagent_eval.exceptions.provider import (
     ProviderConnectionError,
@@ -231,6 +235,67 @@ class Gemini(LLMProvider):
             provider=self.name,
             latency_ms=elapsed_ms,
         )
+
+    def _raise_mapped_error(self, exc: Exception) -> NoReturn:
+        """Translate Gemini SDK/HTTP exceptions into provider hierarchy."""
+        if isinstance(exc, httpx.ConnectError):
+            raise ProviderConnectionError(
+                message=f"Failed to connect to Gemini API: {exc}",
+                provider_name=self.name,
+                original_error=exc,
+            ) from exc
+        if isinstance(exc, httpx.TimeoutException):
+            raise ProviderConnectionError(
+                message=f"Gemini API request timed out: {exc}",
+                provider_name=self.name,
+                original_error=exc,
+            ) from exc
+        if genai_errors is not None and isinstance(exc, genai_errors.APIError):
+            raise ProviderExecutionError(
+                message=f"Gemini API error: {exc.message}",
+                provider_name=self.name,
+                original_error=exc,
+                details={"code": exc.code, "status": exc.status},
+            ) from exc
+        raise ProviderExecutionError(
+            message=f"Gemini API execution failed: {exc}",
+            provider_name=self.name,
+            original_error=exc,
+        ) from exc
+
+    async def generate_stream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """Stream generated text chunks from the Gemini model.
+
+        Args:
+            prompt: The input prompt to send to the model.
+            **kwargs: Optional overrides (``temperature``, ``max_tokens``).
+
+        Yields:
+            Non-empty text chunks as returned by the streaming endpoint.
+
+        Raises:
+            ProviderConnectionError: If connection to the API fails.
+            ProviderExecutionError: If the API returns an error.
+        """
+        config = types.GenerateContentConfig(
+            temperature=kwargs.get("temperature", self._temperature),
+            max_output_tokens=kwargs.get("max_tokens", self._max_tokens),
+        )
+
+        try:
+            stream = await self._aclient.models.generate_content_stream(
+                model=self._model,
+                contents=prompt,
+                config=config,
+            )
+            async for chunk in stream:
+                text = getattr(chunk, "text", None)
+                if text:
+                    yield text
+        except (ProviderConnectionError, ProviderExecutionError):
+            raise
+        except Exception as exc:
+            self._raise_mapped_error(exc)
 
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the Gemini model.
