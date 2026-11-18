@@ -16,6 +16,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from openagent_eval.core.executor import TokenBucketRateLimiter
+
 if TYPE_CHECKING:
     from openagent_eval.config.models import Config
     from openagent_eval.metrics.base import BaseMetric
@@ -71,6 +73,7 @@ class Pipeline:
         self._executor = executor
         self._k = self._resolve_k()
         self._retriever_supports_ground_truth_contexts: bool | None = None
+        self._rate_limiter = self._resolve_rate_limiter()
 
     # ------------------------------------------------------------------ #
     # Public API                                                          #
@@ -271,6 +274,8 @@ class Pipeline:
             return "", None, None
 
         try:
+            if self._rate_limiter is not None:
+                await self._rate_limiter.acquire()
             response = await self._llm.generate_with_usage(
                 prompt, ground_truth=ground_truth
             )
@@ -345,6 +350,24 @@ class Pipeline:
             return int(settings.get("k", 5))
         except (TypeError, ValueError):
             return 5
+
+    def _resolve_rate_limiter(self) -> TokenBucketRateLimiter | None:
+        """Resolve the per-provider rate limiter from executor or LLM config."""
+        provider = self.config.llm.provider
+        if self._executor is not None and hasattr(self._executor, "get_rate_limiter"):
+            limiter = self._executor.get_rate_limiter(provider)
+            if isinstance(limiter, TokenBucketRateLimiter):
+                return limiter
+        rate = self.config.llm.rate_limit
+        if rate is None:
+            return None
+        if self._executor is not None and hasattr(
+            self._executor, "configure_rate_limit"
+        ):
+            configured = self._executor.configure_rate_limit(provider, rate)
+            if isinstance(configured, TokenBucketRateLimiter):
+                return configured
+        return TokenBucketRateLimiter(rate=rate)
 
     def _compute_summary(
         self, results: list[EvaluationResult], errors: list[dict[str, Any]]
