@@ -203,6 +203,11 @@ class Config(BaseModel):
     parallel: bool = Field(True, description="Enable parallel evaluation")
     max_workers: int = Field(4, ge=1, description="Maximum parallel workers")
     timeout: float = Field(300.0, ge=1.0, description="Evaluation timeout in seconds")
+    cache: bool = Field(True, description="Enable local disk caching of LLM responses")
+    cache_dir: str = Field(
+        ".cache/openagent_eval",
+        description="Directory for local disk LLM response cache",
+    )
 
     model_config = {
         "case_sensitive": False,
