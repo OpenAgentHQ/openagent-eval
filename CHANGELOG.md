@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 ### Added
+- Added local disk LLM response caching (`ResponseCache` in `openagent_eval/core/cache.py`), `Config.cache` / `Config.cache_dir` settings, and `cache_hits` / `cache_misses` / `cache_hit_rate` reporting in pipeline and engine summaries.
 - Added `oaeval doctor` warnings for configured providers whose optional extras are not installed.
 - Created `scripts/changelog_validator.py` to automatically verify Keep a Changelog formatting.
 - Added a section to `CONTRIBUTING.md` documenting the changelog update process for future contributors.
