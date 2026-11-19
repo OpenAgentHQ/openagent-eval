@@ -67,7 +67,7 @@ class TestRetryConfig:
 class TestIsRetryableError:
     """Classification tests for transient vs non-retryable provider failures."""
 
-    @pytest.mark.parametrize("status_code", [408, 429, 500, 502, 503, 504])
+    @pytest.mark.parametrize("status_code", [408, 409, 429, 500, 502, 503, 504])
     def test_transient_status_codes_are_retryable(self, status_code: int) -> None:
         exc = ProviderExecutionError(
             message="transient error",
@@ -398,3 +398,189 @@ class TestProviderUniformRetryIntegration:
 
         assert result == "ollama-ok"
         assert provider._client.post.call_count == 2
+
+
+def _make_transport_provider(
+    provider_kind: str, http_client: httpx.AsyncClient
+) -> tuple[OpenAIProvider | Anthropic | Groq, dict[str, object]]:
+    """Construct a real SDK provider swapping only the underlying httpx transport."""
+    if provider_kind == "openai":
+        pytest.importorskip("openai")
+        provider = OpenAIProvider(api_key="sk-test-transport")
+        provider._client = provider._client.with_options(http_client=http_client)
+        ok_body: dict[str, object] = {
+            "id": "chatcmpl-1",
+            "object": "chat.completion",
+            "created": 0,
+            "model": "gpt-4o",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "ok"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+        }
+        return provider, ok_body
+    if provider_kind == "anthropic":
+        pytest.importorskip("anthropic")
+        provider_ant = Anthropic(api_key="sk-ant-test-transport")
+        provider_ant._client = provider_ant._client.with_options(
+            http_client=http_client
+        )
+        ok_body = {
+            "id": "msg_1",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-sonnet-4-20250514",
+            "content": [{"type": "text", "text": "ok"}],
+            "stop_reason": "end_turn",
+            "usage": {"input_tokens": 1, "output_tokens": 1},
+        }
+        return provider_ant, ok_body
+    pytest.importorskip("groq")
+    provider_groq = Groq(api_key="gsk-test-transport")
+    provider_groq.client = provider_groq.client.with_options(http_client=http_client)
+    ok_body = {
+        "id": "chatcmpl-groq-1",
+        "object": "chat.completion",
+        "created": 0,
+        "model": "llama-3.3-70b-versatile",
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": "ok"},
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+    }
+    return provider_groq, ok_body
+
+
+class TestTransportRetryOwnership:
+    """Verify at HTTP transport level that shared retries run without SDK multipliers."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("provider_kind", ["openai", "anthropic", "groq"])
+    async def test_first_request_success_sends_single_http_request(
+        self, provider_kind: str
+    ) -> None:
+        request_count = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal request_count
+            request_count += 1
+            return httpx.Response(200, json=ok_body)
+
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler)
+        ) as http_client:
+            provider, ok_body = _make_transport_provider(provider_kind, http_client)
+            result = await provider.generate("hello")
+
+        assert result == "ok"
+        assert request_count == 1
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("provider_kind", ["openai", "anthropic", "groq"])
+    async def test_persistent_429_sends_exactly_three_http_requests(
+        self, provider_kind: str
+    ) -> None:
+        request_count = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal request_count
+            request_count += 1
+            return httpx.Response(
+                429,
+                json={
+                    "type": "error",
+                    "error": {"type": "rate_limit_error", "message": "rate limited"},
+                },
+            )
+
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler)
+        ) as http_client:
+            provider, _ = _make_transport_provider(provider_kind, http_client)
+            with (
+                patch(
+                    "openagent_eval.providers.base.retry.asyncio.sleep",
+                    new_callable=AsyncMock,
+                ),
+                pytest.raises(ProviderExecutionError),
+            ):
+                await provider.generate("hello")
+
+        assert request_count == 3
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("provider_kind", ["openai", "anthropic", "groq"])
+    async def test_409_conflict_retries_once_then_succeeds(
+        self, provider_kind: str
+    ) -> None:
+        request_count = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal request_count
+            request_count += 1
+            if request_count == 1:
+                return httpx.Response(
+                    409,
+                    json={
+                        "type": "error",
+                        "error": {"type": "conflict_error", "message": "conflict"},
+                    },
+                )
+            return httpx.Response(200, json=ok_body)
+
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler)
+        ) as http_client:
+            provider, ok_body = _make_transport_provider(provider_kind, http_client)
+            with patch(
+                "openagent_eval.providers.base.retry.asyncio.sleep",
+                new_callable=AsyncMock,
+            ):
+                result = await provider.generate("hello")
+
+        assert result == "ok"
+        assert request_count == 2
+
+    @pytest.mark.asyncio
+    async def test_anthropic_token_count_retries_once_through_shared_loop(
+        self,
+    ) -> None:
+        request_count = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal request_count
+            request_count += 1
+            if request_count == 1:
+                return httpx.Response(
+                    429,
+                    json={
+                        "type": "error",
+                        "error": {
+                            "type": "rate_limit_error",
+                            "message": "rate limited",
+                        },
+                    },
+                )
+            return httpx.Response(200, json={"input_tokens": 7})
+
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler)
+        ) as http_client:
+            provider, _ = _make_transport_provider("anthropic", http_client)
+            assert isinstance(provider, Anthropic)
+            with patch(
+                "openagent_eval.providers.base.retry.asyncio.sleep",
+                new_callable=AsyncMock,
+            ):
+                count = await provider.get_token_count("hello")
+
+        assert count == 7
+        assert request_count == 2

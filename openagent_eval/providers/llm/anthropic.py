@@ -143,7 +143,8 @@ class Anthropic(LLMProvider):
                 provider_name="anthropic",
             )
 
-        self._client = anthropic.AsyncAnthropic(api_key=api_key)
+        # Disable SDK-level retries so @retry_with_backoff solely controls attempts and backoff.
+        self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)
 
     @property
     def model_name(self) -> str | None:
@@ -241,6 +242,7 @@ class Anthropic(LLMProvider):
                 original_error=e,
             ) from e
 
+    @retry_with_backoff()
     async def get_token_count(self, text: str) -> int:
         """Count the number of tokens in the given text.
 

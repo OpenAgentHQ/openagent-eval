@@ -149,7 +149,8 @@ class Groq(LLMProvider):
             )
 
         try:
-            self.client = groq.AsyncGroq(api_key=api_key)
+            # Disable SDK-level retries so @retry_with_backoff solely controls attempts and backoff.
+            self.client = groq.AsyncGroq(api_key=api_key, max_retries=0)
         except Exception as e:
             raise ProviderConnectionError(
                 message=f"Failed to initialize Groq client: {str(e)}",

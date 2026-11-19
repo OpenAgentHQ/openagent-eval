@@ -138,7 +138,8 @@ class OpenAIProvider(LLMProvider):
                 provider_name=self.name,
             )
 
-        self._client = AsyncOpenAI(api_key=self._api_key)
+        # Disable SDK-level retries so @retry_with_backoff solely controls attempts and backoff.
+        self._client = AsyncOpenAI(api_key=self._api_key, max_retries=0)
         self._encoding: tiktoken.Encoding | None = None
 
     @property
