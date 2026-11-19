@@ -10,6 +10,7 @@ The adapter tracks token usage through Ollama's response metadata
 
 from __future__ import annotations
 
+import inspect
 import json
 import time
 from typing import TYPE_CHECKING, Any
@@ -183,13 +184,17 @@ class Ollama(LLMProvider):
                 original_error=exc,
             ) from exc
         if isinstance(exc, httpx.HTTPStatusError):
+            try:
+                response_text = exc.response.text
+            except httpx.ResponseNotRead:
+                response_text = ""
             raise ProviderExecutionError(
                 message=f"Ollama API error: {exc.response.status_code}",
                 provider_name=self.name,
                 original_error=exc,
                 details={
                     "status_code": exc.response.status_code,
-                    "response": exc.response.text,
+                    "response": response_text,
                 },
             ) from exc
         raise ProviderExecutionError(
@@ -268,7 +273,13 @@ class Ollama(LLMProvider):
                 content=request.model_dump_json(),
                 headers={"Content-Type": "application/json"},
             ) as response:
-                response.raise_for_status()
+                try:
+                    response.raise_for_status()
+                except httpx.HTTPStatusError:
+                    read_result = response.aread()
+                    if inspect.isawaitable(read_result):
+                        await read_result
+                    raise
                 async for line in response.aiter_lines():
                     if not line.strip():
                         continue
@@ -280,8 +291,26 @@ class Ollama(LLMProvider):
                             provider_name=self.name,
                             original_error=e,
                         ) from e
+                    if not isinstance(data, dict):
+                        raise ProviderExecutionError(
+                            message="Unexpected Ollama stream chunk format",
+                            provider_name=self.name,
+                            details={"chunk": data},
+                        )
+                    error = data.get("error")
+                    if error:
+                        error_message = (
+                            error.get("message") or str(error)
+                            if isinstance(error, dict)
+                            else str(error)
+                        )
+                        raise ProviderExecutionError(
+                            message=f"Ollama API error: {error_message}",
+                            provider_name=self.name,
+                            details={"response": data},
+                        )
                     chunk = data.get("response", "")
-                    if chunk:
+                    if isinstance(chunk, str) and chunk:
                         yield chunk
         except (ProviderConnectionError, ProviderExecutionError):
             raise

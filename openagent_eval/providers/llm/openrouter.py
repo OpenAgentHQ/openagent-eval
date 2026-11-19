@@ -164,6 +164,35 @@ class OpenRouter(LLMProvider):
         }
 
     @staticmethod
+    def _extract_error_message(error_payload: Any, fallback: str) -> str:
+        """Extract a human-readable message from an OpenRouter error payload."""
+        if isinstance(error_payload, dict):
+            message = error_payload.get("message")
+            if message:
+                return str(message)
+            return json.dumps(error_payload) if error_payload else fallback
+        if error_payload:
+            return str(error_payload)
+        return fallback
+
+    def _raise_http_error(
+        self, status_code: int, raw_body: str, error_data: dict[str, Any]
+    ) -> NoReturn:
+        """Raise ProviderExecutionError for a non-200 OpenRouter HTTP response."""
+        fallback = f"HTTP {status_code}: {raw_body}"
+        error_message = self._extract_error_message(
+            error_data.get("error"), fallback=fallback
+        )
+        raise ProviderExecutionError(
+            message=f"OpenRouter API error: {error_message}",
+            provider_name="openrouter",
+            details={
+                "status_code": status_code,
+                "response": error_data,
+            },
+        )
+
+    @staticmethod
     def _raise_mapped_httpx_error(exc: Exception) -> NoReturn:
         """Translate httpx transport errors into ProviderConnectionError."""
         if isinstance(exc, httpx.ConnectError):
@@ -219,31 +248,47 @@ class OpenRouter(LLMProvider):
 
                 # Handle HTTP errors
                 if response.status_code != 200:
-                    error_data = response.json() if response.text else {}
-                    error_message = error_data.get("error", {}).get(
-                        "message", f"HTTP {response.status_code}: {response.text}"
-                    )
-                    raise ProviderExecutionError(
-                        message=f"OpenRouter API error: {error_message}",
-                        provider_name="openrouter",
-                        details={
-                            "status_code": response.status_code,
-                            "response": error_data,
-                        },
+                    error_data: dict[str, Any] = {}
+                    if response.text:
+                        try:
+                            parsed_error = response.json()
+                            if isinstance(parsed_error, dict):
+                                error_data = parsed_error
+                        except ValueError:
+                            error_data = {}
+                    self._raise_http_error(
+                        response.status_code, response.text, error_data
                     )
 
                 # Parse response
                 result = response.json()
 
                 # Extract content
-                if "choices" not in result or len(result["choices"]) == 0:
+                if (
+                    not isinstance(result, dict)
+                    or "choices" not in result
+                    or not isinstance(result["choices"], list)
+                    or len(result["choices"]) == 0
+                ):
                     raise ProviderExecutionError(
                         message="No choices returned from OpenRouter API",
                         provider_name="openrouter",
                         details={"response": result},
                     )
 
-                content = str(result["choices"][0]["message"]["content"])
+                first_choice = result["choices"][0]
+                message = (
+                    first_choice.get("message")
+                    if isinstance(first_choice, dict)
+                    else None
+                )
+                content = message.get("content") if isinstance(message, dict) else None
+                if not isinstance(content, str):
+                    raise ProviderExecutionError(
+                        message="Invalid or missing content in OpenRouter API response",
+                        provider_name="openrouter",
+                        details={"response": result},
+                    )
 
                 latency_ms = (time.monotonic() - start_time) * 1000.0
                 usage = self._extract_usage(result)
@@ -291,20 +336,12 @@ class OpenRouter(LLMProvider):
                     error_data: dict[str, Any] = {}
                     if raw_body:
                         try:
-                            error_data = json.loads(raw_body)
+                            parsed_error = json.loads(raw_body)
+                            if isinstance(parsed_error, dict):
+                                error_data = parsed_error
                         except json.JSONDecodeError:
                             error_data = {}
-                    error_message = error_data.get("error", {}).get(
-                        "message", f"HTTP {response.status_code}: {raw_body}"
-                    )
-                    raise ProviderExecutionError(
-                        message=f"OpenRouter API error: {error_message}",
-                        provider_name="openrouter",
-                        details={
-                            "status_code": response.status_code,
-                            "response": error_data,
-                        },
-                    )
+                    self._raise_http_error(response.status_code, raw_body, error_data)
 
                 async for line in response.aiter_lines():
                     stripped = line.strip()
@@ -321,11 +358,38 @@ class OpenRouter(LLMProvider):
                             provider_name="openrouter",
                             original_error=e,
                         ) from e
+                    if not isinstance(event, dict):
+                        raise ProviderExecutionError(
+                            message="Unexpected OpenRouter stream chunk format",
+                            provider_name="openrouter",
+                            details={"chunk": event},
+                        )
+                    error_payload = event.get("error")
+                    if error_payload:
+                        error_message = self._extract_error_message(
+                            error_payload,
+                            fallback=str(error_payload),
+                        )
+                        raise ProviderExecutionError(
+                            message=f"OpenRouter API error: {error_message}",
+                            provider_name="openrouter",
+                            details={"error": error_payload, "response": event},
+                        )
                     choices = event.get("choices") or []
                     if choices:
-                        delta = (choices[0].get("delta") or {}).get("content")
-                        if delta:
-                            yield str(delta)
+                        first_choice = choices[0]
+                        delta_obj = (
+                            first_choice.get("delta")
+                            if isinstance(first_choice, dict)
+                            else None
+                        )
+                        delta = (
+                            delta_obj.get("content")
+                            if isinstance(delta_obj, dict)
+                            else None
+                        )
+                        if isinstance(delta, str) and delta:
+                            yield delta
         except (ProviderConnectionError, ProviderExecutionError):
             raise
         except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError) as e:

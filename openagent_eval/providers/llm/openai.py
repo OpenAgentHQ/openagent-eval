@@ -49,6 +49,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
+from openagent_eval.providers.llm._streaming import close_async_stream
 from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 if TYPE_CHECKING:
@@ -267,6 +268,7 @@ class OpenAIProvider(LLMProvider):
         request_params = self._build_request_params(prompt, **kwargs)
         request_params["stream"] = True
 
+        stream: Any = None
         try:
             stream = await self._client.chat.completions.create(**request_params)
             async for chunk in stream:
@@ -278,6 +280,8 @@ class OpenAIProvider(LLMProvider):
             raise
         except Exception as e:
             self._raise_mapped_error(e)
+        finally:
+            await close_async_stream(stream)
 
     async def get_token_count(self, text: str) -> int:
         """Count the number of tokens in the given text using tiktoken.

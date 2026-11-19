@@ -17,6 +17,7 @@ Usage:
 
 from __future__ import annotations
 
+import inspect
 import os
 import time
 from typing import TYPE_CHECKING, Any
@@ -31,6 +32,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
+from openagent_eval.providers.llm._streaming import close_async_stream
 from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 # google-genai SDK imports (current, non-deprecated SDK). Imported lazily so
@@ -282,11 +284,17 @@ class Gemini(LLMProvider):
             max_output_tokens=kwargs.get("max_tokens", self._max_tokens),
         )
 
+        stream: Any = None
         try:
-            stream = await self._aclient.models.generate_content_stream(
+            stream_or_coro = self._aclient.models.generate_content_stream(
                 model=self._model,
                 contents=prompt,
                 config=config,
+            )
+            stream = (
+                await stream_or_coro
+                if inspect.isawaitable(stream_or_coro)
+                else stream_or_coro
             )
             async for chunk in stream:
                 text = getattr(chunk, "text", None)
@@ -296,6 +304,8 @@ class Gemini(LLMProvider):
             raise
         except Exception as exc:
             self._raise_mapped_error(exc)
+        finally:
+            await close_async_stream(stream)
 
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the Gemini model.
