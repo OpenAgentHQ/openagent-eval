@@ -10,7 +10,11 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from typing import NoReturn
 
 try:
     import anthropic
@@ -149,6 +153,53 @@ class Anthropic(LLMProvider):
         """Return the configured Anthropic model identifier."""
         return self.model
 
+    def _build_request_params(self, prompt: str, **kwargs: Any) -> dict[str, Any]:
+        """Build Messages API request parameters."""
+        params: dict[str, Any] = {
+            "model": kwargs.get("model", self.model),
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": kwargs.get("temperature", self.temperature),
+        }
+        if "max_tokens" in kwargs:
+            params["max_tokens"] = kwargs["max_tokens"]
+        elif self.max_tokens is not None:
+            params["max_tokens"] = self.max_tokens
+        return params
+
+    @staticmethod
+    def _raise_mapped_error(exc: Exception) -> NoReturn:
+        """Translate Anthropic SDK exceptions into provider hierarchy."""
+        if isinstance(exc, anthropic.APIConnectionError):
+            raise ProviderConnectionError(
+                message=f"Failed to connect to Anthropic API: {exc}",
+                provider_name="anthropic",
+                original_error=exc,
+            ) from exc
+        if isinstance(exc, anthropic.APITimeoutError):
+            raise ProviderConnectionError(
+                message=f"Request to Anthropic API timed out: {exc}",
+                provider_name="anthropic",
+                original_error=exc,
+            ) from exc
+        if isinstance(exc, anthropic.APIStatusError):
+            raise ProviderExecutionError(
+                message=f"Anthropic API error ({exc.status_code}): {exc.message}",
+                provider_name="anthropic",
+                original_error=exc,
+                details={"status_code": exc.status_code, "request_id": exc.request_id},
+            ) from exc
+        if isinstance(exc, anthropic.APIError):
+            raise ProviderExecutionError(
+                message=f"Anthropic API error: {exc}",
+                provider_name="anthropic",
+                original_error=exc,
+            ) from exc
+        raise ProviderExecutionError(
+            message=f"Anthropic API error: {exc}",
+            provider_name="anthropic",
+            original_error=exc,
+        ) from exc
+
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the LLM.
 
@@ -171,18 +222,7 @@ class Anthropic(LLMProvider):
                 an error.
         """
         start_time = time.time()
-
-        # Build request parameters
-        params: dict[str, Any] = {
-            "model": kwargs.get("model", self.model),
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": kwargs.get("temperature", self.temperature),
-        }
-
-        if "max_tokens" in kwargs:
-            params["max_tokens"] = kwargs["max_tokens"]
-        elif self.max_tokens is not None:
-            params["max_tokens"] = self.max_tokens
+        params = self._build_request_params(prompt, **kwargs)
 
         try:
             response = await self._client.messages.create(**params)
@@ -213,31 +253,36 @@ class Anthropic(LLMProvider):
 
             return content
 
-        except anthropic.APIConnectionError as e:
-            raise ProviderConnectionError(
-                message=f"Failed to connect to Anthropic API: {e}",
-                provider_name="anthropic",
-                original_error=e,
-            ) from e
-        except anthropic.APITimeoutError as e:
-            raise ProviderConnectionError(
-                message=f"Request to Anthropic API timed out: {e}",
-                provider_name="anthropic",
-                original_error=e,
-            ) from e
-        except anthropic.APIStatusError as e:
-            raise ProviderExecutionError(
-                message=f"Anthropic API error ({e.status_code}): {e.message}",
-                provider_name="anthropic",
-                original_error=e,
-                details={"status_code": e.status_code, "request_id": e.request_id},
-            ) from e
-        except anthropic.APIError as e:
-            raise ProviderExecutionError(
-                message=f"Anthropic API error: {e}",
-                provider_name="anthropic",
-                original_error=e,
-            ) from e
+        except (ProviderConnectionError, ProviderExecutionError):
+            raise
+        except Exception as e:
+            self._raise_mapped_error(e)
+
+    async def generate_stream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """Stream generated text chunks from Anthropic's Messages API.
+
+        Args:
+            prompt: The input prompt to send to the LLM.
+            **kwargs: Additional generation parameters (same as :meth:`generate`).
+
+        Yields:
+            Non-empty text delta strings from ``stream.text_stream``.
+
+        Raises:
+            ProviderConnectionError: If the connection to Anthropic fails.
+            ProviderExecutionError: If the API request fails or returns an error.
+        """
+        params = self._build_request_params(prompt, **kwargs)
+
+        try:
+            async with self._client.messages.stream(**params) as stream:
+                async for text in stream.text_stream:
+                    if text:
+                        yield text
+        except (ProviderConnectionError, ProviderExecutionError):
+            raise
+        except Exception as e:
+            self._raise_mapped_error(e)
 
     async def get_token_count(self, text: str) -> int:
         """Count the number of tokens in the given text.
