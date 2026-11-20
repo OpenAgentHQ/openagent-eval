@@ -67,7 +67,7 @@ class TestRetryConfig:
 class TestIsRetryableError:
     """Classification tests for transient vs non-retryable provider failures."""
 
-    @pytest.mark.parametrize("status_code", [408, 409, 429, 500, 502, 503, 504])
+    @pytest.mark.parametrize("status_code", [408, 409, 429, 500, 502, 503, 504, 529])
     def test_transient_status_codes_are_retryable(self, status_code: int) -> None:
         exc = ProviderExecutionError(
             message="transient error",
@@ -584,3 +584,63 @@ class TestTransportRetryOwnership:
 
         assert count == 7
         assert request_count == 2
+
+    @pytest.mark.asyncio
+    async def test_anthropic_529_overload_and_retry_after_header_honored(
+        self,
+    ) -> None:
+        request_count = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal request_count
+            request_count += 1
+            if request_count == 1:
+                return httpx.Response(
+                    529,
+                    headers={"retry-after": "5"},
+                    json={
+                        "type": "error",
+                        "error": {
+                            "type": "overloaded_error",
+                            "message": "Overloaded",
+                        },
+                    },
+                )
+            if request_count == 2:
+                return httpx.Response(
+                    429,
+                    headers={"retry-after-ms": "2500"},
+                    json={
+                        "type": "error",
+                        "error": {
+                            "type": "rate_limit_error",
+                            "message": "Rate limited",
+                        },
+                    },
+                )
+            return httpx.Response(
+                200,
+                json={
+                    "id": "msg_529",
+                    "type": "message",
+                    "role": "assistant",
+                    "model": "claude-sonnet-4-20250514",
+                    "content": [{"type": "text", "text": "recovered"}],
+                    "stop_reason": "end_turn",
+                    "usage": {"input_tokens": 1, "output_tokens": 1},
+                },
+            )
+
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(handler)
+        ) as http_client:
+            provider, _ = _make_transport_provider("anthropic", http_client)
+            with patch(
+                "openagent_eval.providers.base.retry.asyncio.sleep",
+                new_callable=AsyncMock,
+            ) as mock_sleep:
+                result = await provider.generate("hello")
+
+        assert result == "recovered"
+        assert request_count == 3
+        assert [c.args[0] for c in mock_sleep.call_args_list] == [5.0, 2.5]

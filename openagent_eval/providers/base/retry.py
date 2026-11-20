@@ -5,8 +5,11 @@ from __future__ import annotations
 import asyncio
 import functools
 import logging
+import math
 import random
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, overload
 
 import httpx
@@ -25,7 +28,10 @@ logger = logging.getLogger(__name__)
 P = ParamSpec("P")
 T = TypeVar("T")
 
-RETRYABLE_STATUS_CODES: frozenset[int] = frozenset({408, 409, 429, 500, 502, 503, 504})
+RETRYABLE_STATUS_CODES: frozenset[int] = frozenset(
+    {408, 409, 429, 500, 502, 503, 504, 529}
+)
+_MAX_RETRY_AFTER_SECONDS: float = 60.0
 NON_RETRYABLE_ERROR_NAMES: frozenset[str] = frozenset(
     {
         "AuthenticationError",
@@ -135,6 +141,45 @@ def is_retryable_error(exc: BaseException) -> bool:
     return isinstance(exc, ProviderConnectionError)
 
 
+def _extract_retry_after(exc: BaseException) -> float | None:
+    """Return a positive Retry-After delay in seconds (up to 60s) if present."""
+    candidates: list[Any] = [exc]
+    original = getattr(exc, "original_error", None)
+    if original is not None:
+        candidates.append(original)
+
+    for candidate in candidates:
+        response = getattr(candidate, "response", None)
+        headers = getattr(response, "headers", None)
+        if headers is None or not hasattr(headers, "get"):
+            continue
+
+        retry_after_ms = headers.get("retry-after-ms")
+        if retry_after_ms is not None:
+            try:
+                seconds = float(retry_after_ms) / 1000.0
+            except (TypeError, ValueError):
+                seconds = -1.0
+            if math.isfinite(seconds) and 0 < seconds <= _MAX_RETRY_AFTER_SECONDS:
+                return seconds
+
+        retry_after = headers.get("retry-after")
+        if retry_after is not None:
+            try:
+                seconds = float(retry_after)
+            except (TypeError, ValueError):
+                try:
+                    dt = parsedate_to_datetime(str(retry_after))
+                except (TypeError, ValueError, IndexError):
+                    continue
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=UTC)
+                seconds = (dt - datetime.now(UTC)).total_seconds()
+            if math.isfinite(seconds) and 0 < seconds <= _MAX_RETRY_AFTER_SECONDS:
+                return seconds
+    return None
+
+
 async def _run_with_retry(
     config: RetryConfig | None,
     func: Callable[P, Coroutine[Any, Any, T]],
@@ -150,6 +195,9 @@ async def _run_with_retry(
             if attempt >= retry_config.max_attempts or not is_retryable_error(exc):
                 raise
             delay = retry_config.compute_delay(attempt)
+            retry_after = _extract_retry_after(exc)
+            if retry_after is not None:
+                delay = max(delay, retry_after)
             logger.warning(
                 "Transient provider failure on attempt %d/%d (%s); retrying in %.2fs",
                 attempt,
