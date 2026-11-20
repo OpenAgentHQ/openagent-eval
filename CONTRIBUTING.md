@@ -148,7 +148,7 @@ class TestMyMetric:
 
 ### Test Coverage
 
-- Target: 80%+ coverage
+- Target: 75%+ coverage (enforced in CI)
 - Mock all external dependencies
 - Test both success and failure paths
 
