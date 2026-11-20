@@ -8,9 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 ### Added
+- Added a shared async exponential-backoff retry wrapper (`retry_with_backoff`, `RetryConfig`, `is_retryable_error`) in `openagent_eval/providers/base/retry.py` and applied it uniformly across all six LLM provider adapters (`openai`, `anthropic`, `gemini`, `groq`, `openrouter`, `ollama`) (#342).
 - Added `oaeval doctor` warnings for configured providers whose optional extras are not installed.
 - Created `scripts/changelog_validator.py` to automatically verify Keep a Changelog formatting.
 - Added a section to `CONTRIBUTING.md` documenting the changelog update process for future contributors.
+
+### Changed
+- Unified Groq rate-limit handling under the shared retry wrapper by removing the bespoke `RateLimitError` short-circuit in `providers/llm/groq.py` (#360).
 
 ### Fixed
 - `schema_conformance` no longer scores an answer with all-valid fields plus a schema-level violation (e.g. a disallowed extra key) as 0.0, below answers with wrongly typed fields.

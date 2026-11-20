@@ -49,6 +49,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
+from openagent_eval.providers.base.retry import retry_with_backoff
 from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 if TYPE_CHECKING:
@@ -137,7 +138,8 @@ class OpenAIProvider(LLMProvider):
                 provider_name=self.name,
             )
 
-        self._client = AsyncOpenAI(api_key=self._api_key)
+        # Disable SDK-level retries so @retry_with_backoff solely controls attempts and backoff.
+        self._client = AsyncOpenAI(api_key=self._api_key, max_retries=0)
         self._encoding: tiktoken.Encoding | None = None
 
     @property
@@ -165,6 +167,7 @@ class OpenAIProvider(LLMProvider):
                 self._encoding = tiktoken.get_encoding("cl100k_base")
         return self._encoding
 
+    @retry_with_backoff()
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the OpenAI API.
 
@@ -263,6 +266,7 @@ class OpenAIProvider(LLMProvider):
                 original_error=e,
             ) from e
 
+    @retry_with_backoff()
     async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate a response with detailed token usage information.
 
