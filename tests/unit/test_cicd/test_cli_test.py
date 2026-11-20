@@ -1,9 +1,11 @@
 """Unit tests for CLI test command."""
 
 import asyncio
+import inspect
 import json
 import re
-from typing import get_type_hints
+from typing import Annotated, get_origin, get_type_hints
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 
@@ -226,3 +228,107 @@ class TestTestCommand:
         assert "exact_match: 1.0000 gte 0.5000" in output, output
         assert "PASS" in output, output
         assert result.exit_code == 0, output
+
+    def test_threshold_parameter_has_safe_annotated_default(self):
+        """Regression test for issue #304: threshold uses Annotated with None default."""
+        sig = inspect.signature(test_command.test_command)
+        param = sig.parameters["threshold"]
+        assert param.default is None
+
+        hints = get_type_hints(test_command.test_command, include_extras=True)
+        assert get_origin(hints["threshold"]) is Annotated
+
+    def test_test_command_default_empty_threshold(self, tmp_path):
+        """Running oaeval test without -t defaults to an empty threshold list."""
+        config_path = _write_offline_config(tmp_path)
+
+        result = runner.invoke(app, ["test", str(config_path)])
+        output = _strip_ansi(result.output)
+
+        assert result.exit_code == 0, output
+        assert "Thresholds:" not in output
+        assert "PASSED" in output
+
+    def test_test_command_long_threshold_option(self, tmp_path):
+        """Long --threshold option parses and evaluates threshold gates."""
+        config_path = _write_offline_config(tmp_path)
+
+        result = runner.invoke(
+            app,
+            ["test", str(config_path), "--threshold", "exact_match:gte:0.5"],
+        )
+        output = _strip_ansi(result.output)
+
+        assert result.exit_code == 0, output
+        assert "Thresholds: exact_match:gte:0.5" in output
+        assert "exact_match: 1.0000 gte 0.5000" in output
+
+    def test_test_command_multiple_thresholds_and_isolation(self, tmp_path):
+        """Multiple -t/--threshold options evaluate all gates without leaking state."""
+        config_path = _write_offline_config(tmp_path)
+
+        first = runner.invoke(
+            app,
+            [
+                "test",
+                str(config_path),
+                "-t",
+                "exact_match:gte:0.5",
+                "--threshold",
+                "exact_match:lte:1.0",
+            ],
+        )
+        first_output = _strip_ansi(first.output)
+        assert first.exit_code == 0, first_output
+        assert "Thresholds: exact_match:gte:0.5, exact_match:lte:1.0" in first_output
+        assert "exact_match: 1.0000 gte 0.5000" in first_output
+        assert "exact_match: 1.0000 lte 1.0000" in first_output
+
+        # Subsequent call without -t must not inherit thresholds from the previous call.
+        second = runner.invoke(app, ["test", str(config_path)])
+        second_output = _strip_ansi(second.output)
+        assert second.exit_code == 0, second_output
+        assert "Thresholds:" not in second_output
+
+    def test_test_command_multiple_thresholds_mixed_pass_fail(self, tmp_path):
+        """If any gate among multiple -t options fails, exit code is 1."""
+        config_path = _write_offline_config(tmp_path)
+
+        result = runner.invoke(
+            app,
+            [
+                "test",
+                str(config_path),
+                "-t",
+                "exact_match:gte:0.5",
+                "-t",
+                "exact_match:lt:0.5",
+            ],
+        )
+        output = _strip_ansi(result.output)
+
+        assert result.exit_code == 1, output
+        assert "exact_match: 1.0000 gte 0.5000" in output
+        assert "exact_match: 1.0000 NOT lt 0.5000" in output
+
+    def test_test_command_fail_on_error_options(self, tmp_path):
+        """--fail-on-error exits 1 on unexpected errors; --no-fail-on-error exits 0."""
+        config_path = _write_offline_config(tmp_path)
+
+        with patch(
+            "openagent_eval.cli.commands.test.OAEvalPlugin.run_evaluation",
+            side_effect=RuntimeError("unexpected failure"),
+        ):
+            fail_result = runner.invoke(
+                app,
+                ["test", str(config_path), "--fail-on-error"],
+            )
+            no_fail_result = runner.invoke(
+                app,
+                ["test", str(config_path), "--no-fail-on-error"],
+            )
+
+        assert fail_result.exit_code == 1, fail_result.output
+        assert "unexpected failure" in _strip_ansi(fail_result.output)
+        assert no_fail_result.exit_code == 0, no_fail_result.output
+        assert "unexpected failure" in _strip_ansi(no_fail_result.output)
