@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from rich.text import Text
 
 from openagent_eval.cli.main import app
 
@@ -23,4 +24,4 @@ def test_recorded_tool_call_gate(runner, monkeypatch, threshold, exit_code):
         ],
     )
     assert result.exit_code == exit_code, result.output
-    assert '"actual": 0.5' in result.output
+    assert '"actual": 0.5' in Text.from_ansi(result.output).plain

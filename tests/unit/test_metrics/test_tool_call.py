@@ -44,6 +44,7 @@ def test_scores_recorded_sequence(expected, actual, score):
         ({"x": 1, "y": None}, {"x": 1}, 0.75),
         ({"x": {"a": [1, 2], "b": 0}}, {"x": {"b": 0.0, "a": [1, 2]}}, 1.0),
         ({"x": [1, 2]}, {"x": [2, 1]}, 0.5),
+        ({"x": [1, 2]}, {"x": (1, 2)}, 1.0),
         ({"x": [True]}, {"x": [1]}, 0.5),
     ],
 )
@@ -63,3 +64,12 @@ def test_argument_similarity_uses_keys_and_json_values(expected, actual, score):
 def test_invalid_dataset_call_is_rejected(field, bad_call):
     with pytest.raises(ValidationError):
         DatasetItemModel.model_validate({"question": "Search?", field: [bad_call]})
+
+
+@pytest.mark.parametrize("value", [float("nan"), {"a", "b"}])
+def test_sdk_arguments_require_json_values(value):
+    call = {"name": "search", "arguments": {"filter": value}}
+    with pytest.raises(ValidationError, match="JSON values"):
+        get_metric("tool_call_correctness")().evaluate(
+            expected_tool_calls=[call], actual_tool_calls=[]
+        )
