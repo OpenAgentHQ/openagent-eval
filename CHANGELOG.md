@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Add a copyable GitHub Actions workflow that checks retrieval hit rate with a key-free example.
 - Added `oaeval doctor` warnings for configured providers whose optional extras are not installed.
+- Resolve installed retrievers from the `openagent_eval.retrievers` entry-point group.
 - Created `scripts/changelog_validator.py` to automatically verify Keep a Changelog formatting.
 - Added a section to `CONTRIBUTING.md` documenting the changelog update process for future contributors.
 
