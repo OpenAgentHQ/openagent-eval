@@ -1,0 +1,13 @@
+dataset:
+  path: examples/tool-call-correctness/traces.jsonl
+llm:
+  provider: mock
+  model: mock-model
+retriever:
+  provider: mock
+metrics:
+  retrieval: []
+  generation: []
+  performance: []
+  cost: []
+  agent: [tool_call_correctness]

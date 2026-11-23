@@ -32,6 +32,8 @@ class DatasetItem:
     metadata: dict[str, Any] = field(default_factory=dict)
     contexts: list[str] = field(default_factory=list)
     ground_truth_contexts: list[str] = field(default_factory=list)
+    expected_tool_calls: list[dict[str, Any]] | None = None
+    actual_tool_calls: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format.
@@ -48,6 +50,10 @@ class DatasetItem:
             result["contexts"] = self.contexts
         if self.ground_truth_contexts:
             result["ground_truth_contexts"] = self.ground_truth_contexts
+        if self.expected_tool_calls is not None:
+            result["expected_tool_calls"] = self.expected_tool_calls
+        if self.actual_tool_calls is not None:
+            result["actual_tool_calls"] = self.actual_tool_calls
         if self.metadata:
             result["metadata"] = self.metadata
         return result
