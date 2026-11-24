@@ -142,7 +142,7 @@ def is_retryable_error(exc: BaseException) -> bool:
 
 
 def _extract_retry_after(exc: BaseException) -> float | None:
-    """Return a positive Retry-After delay in seconds (up to 60s) if present."""
+    """Return a valid Retry-After delay in seconds, capped at 60 seconds."""
     candidates: list[Any] = [exc]
     original = getattr(exc, "original_error", None)
     if original is not None:
@@ -160,8 +160,8 @@ def _extract_retry_after(exc: BaseException) -> float | None:
                 seconds = float(retry_after_ms) / 1000.0
             except (TypeError, ValueError):
                 seconds = -1.0
-            if math.isfinite(seconds) and 0 < seconds <= _MAX_RETRY_AFTER_SECONDS:
-                return seconds
+            if math.isfinite(seconds) and seconds > 0:
+                return min(seconds, _MAX_RETRY_AFTER_SECONDS)
 
         retry_after = headers.get("retry-after")
         if retry_after is not None:
@@ -175,8 +175,8 @@ def _extract_retry_after(exc: BaseException) -> float | None:
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=UTC)
                 seconds = (dt - datetime.now(UTC)).total_seconds()
-            if math.isfinite(seconds) and 0 < seconds <= _MAX_RETRY_AFTER_SECONDS:
-                return seconds
+            if math.isfinite(seconds) and seconds > 0:
+                return min(seconds, _MAX_RETRY_AFTER_SECONDS)
     return None
 
 

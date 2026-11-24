@@ -586,8 +586,12 @@ class TestTransportRetryOwnership:
         assert request_count == 2
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("retry_after", "retry_after_ms", "expected_delays"),
+        [("5", "2500", [5.0, 2.5]), ("120", "120000", [60.0, 60.0])],
+    )
     async def test_anthropic_529_overload_and_retry_after_header_honored(
-        self,
+        self, retry_after: str, retry_after_ms: str, expected_delays: list[float]
     ) -> None:
         request_count = 0
 
@@ -597,7 +601,7 @@ class TestTransportRetryOwnership:
             if request_count == 1:
                 return httpx.Response(
                     529,
-                    headers={"retry-after": "5"},
+                    headers={"retry-after": retry_after},
                     json={
                         "type": "error",
                         "error": {
@@ -609,7 +613,7 @@ class TestTransportRetryOwnership:
             if request_count == 2:
                 return httpx.Response(
                     429,
-                    headers={"retry-after-ms": "2500"},
+                    headers={"retry-after-ms": retry_after_ms},
                     json={
                         "type": "error",
                         "error": {
@@ -643,4 +647,4 @@ class TestTransportRetryOwnership:
 
         assert result == "recovered"
         assert request_count == 3
-        assert [c.args[0] for c in mock_sleep.call_args_list] == [5.0, 2.5]
+        assert [c.args[0] for c in mock_sleep.call_args_list] == expected_delays

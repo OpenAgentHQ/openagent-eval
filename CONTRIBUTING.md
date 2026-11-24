@@ -125,6 +125,17 @@ uv run pytest tests/unit/test_exceptions.py
 uv run pytest -m slow
 ```
 
+### Provider contract tests
+
+When adding an LLM provider or retriever, add a contract test in
+`tests/contract/test_provider_contract.py` by subclassing
+`LLMProviderContract` or `RetrieverContract` from
+`tests/contract/provider_contracts.py`. Override the fixture to return a
+configured provider backed by a mock client or local data. These shared tests
+check the public metadata and behavior expected of every provider; keep
+provider-specific configuration and API error cases in the provider's unit
+tests. Run the shared checks with `uv run pytest tests/contract`.
+
 ### Writing Tests
 
 ```python
