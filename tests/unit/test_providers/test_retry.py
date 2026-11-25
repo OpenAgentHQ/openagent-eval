@@ -148,7 +148,7 @@ class TestRetryDecorator:
 
         assert result == "ok"
         assert calls == 3
-        assert [c.args[0] for c in mock_sleep.call_args_list] == [0.5, 1.0]
+        assert [c.args[0] for c in mock_sleep.await_args_list] == [0.5, 1.0]
 
     @pytest.mark.asyncio
     async def test_non_retryable_fails_immediately_without_sleep(self) -> None:
@@ -234,6 +234,7 @@ class TestProviderUniformRetryIntegration:
     @pytest.mark.asyncio
     async def test_openai_retries_transient_connection_then_succeeds(self) -> None:
         pytest.importorskip("openai")
+        pytest.importorskip("tiktoken")
         ok_completion = MagicMock()
         ok_completion.choices = [MagicMock(message=MagicMock(content="openai-ok"))]
         ok_completion.usage = MagicMock(total_tokens=12)
@@ -314,10 +315,14 @@ class TestProviderUniformRetryIntegration:
             assert mock_aclient.models.generate_content.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_openrouter_retries_503_then_succeeds_and_skips_401(self) -> None:
+    @pytest.mark.parametrize("status_code", [429, 503])
+    async def test_openrouter_retries_transient_http_errors_and_skips_401(
+        self, status_code: int
+    ) -> None:
         rate_resp = httpx.Response(
-            status_code=503,
-            json={"error": {"message": "Upstream busy"}},
+            status_code=status_code,
+            content=b"<html>Upstream busy</html>",
+            headers={"Retry-After": "5"},
             request=httpx.Request(
                 "POST", "https://openrouter.ai/api/v1/chat/completions"
             ),
@@ -358,10 +363,11 @@ class TestProviderUniformRetryIntegration:
             patch(
                 "openagent_eval.providers.base.retry.asyncio.sleep",
                 new_callable=AsyncMock,
-            ),
+            ) as mock_sleep,
         ):
             assert await provider.generate("hello") == "or-ok"
-        assert mock_client.post.call_count == 2
+        assert mock_client.post.await_count == 2
+        mock_sleep.assert_awaited_once_with(5.0)
 
         mock_client.post = AsyncMock(return_value=auth_resp)
         with (
@@ -372,7 +378,20 @@ class TestProviderUniformRetryIntegration:
             pytest.raises(ProviderExecutionError),
         ):
             await provider.generate("hello")
-        assert mock_client.post.call_count == 1
+        assert mock_client.post.await_count == 1
+
+        mock_client.post = AsyncMock(
+            return_value=httpx.Response(200, content=b"invalid JSON")
+        )
+        with (
+            patch(
+                "openagent_eval.providers.llm.openrouter.httpx.AsyncClient",
+                return_value=mock_client,
+            ),
+            pytest.raises(ValueError),
+        ):
+            await provider.generate("hello")
+        assert mock_client.post.await_count == 1
 
     @pytest.mark.asyncio
     async def test_ollama_retries_connect_error_then_succeeds(self) -> None:
@@ -399,6 +418,47 @@ class TestProviderUniformRetryIntegration:
         assert result == "ollama-ok"
         assert provider._client.post.call_count == 2
 
+    @pytest.mark.asyncio
+    async def test_ollama_usage_retries_503_then_returns_content_and_tokens(
+        self,
+    ) -> None:
+        request_count = 0
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            nonlocal request_count
+            request_count += 1
+            if request_count == 1:
+                return httpx.Response(503)
+            return httpx.Response(
+                200,
+                json={
+                    "model": "llama3.2",
+                    "response": "ollama-ok",
+                    "done": True,
+                    "prompt_eval_count": 3,
+                    "eval_count": 5,
+                },
+            )
+
+        async with Ollama() as provider:
+            await provider._client.aclose()
+            provider._client = httpx.AsyncClient(
+                base_url="http://localhost:11434",
+                transport=httpx.MockTransport(handler),
+            )
+            with patch(
+                "openagent_eval.providers.base.retry.asyncio.sleep",
+                new_callable=AsyncMock,
+            ):
+                result = await provider.generate_with_usage("hello")
+
+        assert request_count == 2
+        assert result.content == "ollama-ok"
+        assert result.usage is not None
+        assert result.usage.prompt_tokens == 3
+        assert result.usage.completion_tokens == 5
+        assert result.usage.total_tokens == 8
+
 
 def _make_transport_provider(
     provider_kind: str, http_client: httpx.AsyncClient
@@ -406,6 +466,7 @@ def _make_transport_provider(
     """Construct a real SDK provider swapping only the underlying httpx transport."""
     if provider_kind == "openai":
         pytest.importorskip("openai")
+        pytest.importorskip("tiktoken")
         provider = OpenAIProvider(api_key="sk-test-transport")
         provider._client = provider._client.with_options(http_client=http_client)
         ok_body: dict[str, object] = {
@@ -485,8 +546,9 @@ class TestTransportRetryOwnership:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("provider_kind", ["openai", "anthropic", "groq"])
-    async def test_persistent_429_sends_exactly_three_http_requests(
-        self, provider_kind: str
+    @pytest.mark.parametrize("max_attempts", [None, 1], ids=["default", "single"])
+    async def test_persistent_429_leaves_retries_to_the_shared_loop(
+        self, provider_kind: str, max_attempts: int | None
     ) -> None:
         request_count = 0
 
@@ -505,6 +567,8 @@ class TestTransportRetryOwnership:
             transport=httpx.MockTransport(handler)
         ) as http_client:
             provider, _ = _make_transport_provider(provider_kind, http_client)
+            if max_attempts is not None:
+                provider._retry_config = RetryConfig(max_attempts=max_attempts)
             with (
                 patch(
                     "openagent_eval.providers.base.retry.asyncio.sleep",
@@ -514,7 +578,7 @@ class TestTransportRetryOwnership:
             ):
                 await provider.generate("hello")
 
-        assert request_count == 3
+        assert request_count == (3 if max_attempts is None else max_attempts)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("provider_kind", ["openai", "anthropic", "groq"])
@@ -647,4 +711,4 @@ class TestTransportRetryOwnership:
 
         assert result == "recovered"
         assert request_count == 3
-        assert [c.args[0] for c in mock_sleep.call_args_list] == expected_delays
+        assert [c.args[0] for c in mock_sleep.await_args_list] == expected_delays
