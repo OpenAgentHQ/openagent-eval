@@ -1,0 +1,56 @@
+name: Retrieval evaluation
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  retrieval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install OpenAgent Eval
+        run: python -m pip install 'openagent-eval[bm25]==0.4.10'
+
+      - name: Prepare the two-question demo
+        if: vars.OAEVAL_CONFIG == ''
+        working-directory: ${{ runner.temp }}
+        run: |
+          cat > questions.jsonl <<'JSONL'
+          {"question":"When was the termination notice sent?","ground_truth_contexts":["Counsel sent the termination notice on April 3."]}
+          {"question":"How much did the invoice charge?","ground_truth_contexts":["The invoice lists a charge of 900 dollars."]}
+          JSONL
+
+          cat > retrieval-eval.yaml <<YAML
+          dataset:
+            path: "$RUNNER_TEMP/questions.jsonl"
+          llm:
+            provider: mock
+            model: mock-model
+          retriever:
+            provider: bm25
+            settings:
+              k: 1
+              tokenizer: simple
+              documents:
+                - content: Counsel sent the termination notice on April 3.
+                - content: The invoice lists a charge of 900 dollars.
+                - content: A witness reserved a conference room.
+          metrics:
+            retrieval: [hit_rate]
+            generation: []
+            performance: []
+            cost: []
+          YAML
+
+      - name: Require the expected document to rank first
+        env:
+          EVAL_CONFIG: ${{ vars.OAEVAL_CONFIG || format('{0}/retrieval-eval.yaml', runner.temp) }}
+        run: oaeval test "$EVAL_CONFIG" -t hit_rate:gte:1
