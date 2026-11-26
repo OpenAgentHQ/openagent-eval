@@ -6,15 +6,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Skip tests if chromadb is not installed
+# Skip before provider imports: the Chroma adapter imports chromadb unconditionally.
 chromadb = pytest.importorskip("chromadb", reason="chromadb not installed")
 
-from openagent_eval.exceptions.provider import (
+from openagent_eval.exceptions.provider import (  # noqa: E402
     ProviderConnectionError,
     ProviderExecutionError,
 )
-from openagent_eval.providers.retrievers._scoring import normalize_distance
-from openagent_eval.providers.retrievers.chroma import ChromaRetriever
+from openagent_eval.providers.retrievers._scoring import (  # noqa: E402
+    normalize_distance,
+)
+from openagent_eval.providers.retrievers.chroma import ChromaRetriever  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
