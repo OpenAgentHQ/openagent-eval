@@ -175,7 +175,9 @@ class Ollama(LLMProvider):
             options=options,
         )
 
-    def _raise_mapped_http_error(self, exc: Exception) -> NoReturn:
+    def _raise_mapped_http_error(
+        self, exc: Exception, *, cause: Exception | None = None
+    ) -> NoReturn:
         """Translate httpx exceptions into provider hierarchy."""
         if isinstance(exc, httpx.ConnectError):
             raise ProviderConnectionError(
@@ -196,7 +198,7 @@ class Ollama(LLMProvider):
                     "status_code": exc.response.status_code,
                     "response": response_text,
                 },
-            ) from exc
+            ) from (cause or exc)
         raise ProviderExecutionError(
             message=f"Unexpected error calling Ollama: {exc!s}",
             provider_name=self.name,
@@ -275,10 +277,13 @@ class Ollama(LLMProvider):
             ) as response:
                 try:
                     response.raise_for_status()
-                except httpx.HTTPStatusError:
-                    read_result = response.aread()
-                    if inspect.isawaitable(read_result):
-                        await read_result
+                except httpx.HTTPStatusError as status_error:
+                    try:
+                        read_result = response.aread()
+                        if inspect.isawaitable(read_result):
+                            await read_result
+                    except httpx.RequestError as read_error:
+                        self._raise_mapped_http_error(status_error, cause=read_error)
                     raise
                 async for line in response.aiter_lines():
                     if not line.strip():
@@ -312,6 +317,13 @@ class Ollama(LLMProvider):
                     chunk = data.get("response", "")
                     if isinstance(chunk, str) and chunk:
                         yield chunk
+                    if data.get("done") is True:
+                        return
+                raise ProviderExecutionError(
+                    message="Ollama generation did not complete",
+                    provider_name=self.name,
+                    details={"model": request.model},
+                )
         except (ProviderConnectionError, ProviderExecutionError):
             raise
         except Exception as e:

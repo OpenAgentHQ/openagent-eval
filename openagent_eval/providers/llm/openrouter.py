@@ -343,11 +343,17 @@ class OpenRouter(LLMProvider):
                             error_data = {}
                     self._raise_http_error(response.status_code, raw_body, error_data)
 
+                data_lines: list[str] = []
                 async for line in response.aiter_lines():
-                    stripped = line.strip()
-                    if not stripped or not stripped.startswith("data:"):
+                    if line.startswith("data:"):
+                        data_lines.append(line.removeprefix("data:").removeprefix(" "))
                         continue
-                    data_str = stripped.removeprefix("data:").strip()
+                    if line or not data_lines:
+                        continue
+                    data_str = "\n".join(data_lines).strip()
+                    data_lines.clear()
+                    if not data_str:
+                        continue
                     if data_str == "[DONE]":
                         break
                     try:

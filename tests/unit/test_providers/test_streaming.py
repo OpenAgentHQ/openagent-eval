@@ -539,6 +539,47 @@ class TestOllamaStream:
     """Tests for Ollama.generate_stream()."""
 
     @pytest.mark.asyncio
+    async def test_generate_stream_rejects_eof_after_partial_text(self):
+        provider = Ollama()
+        async with httpx.AsyncClient(
+            base_url="http://localhost:11434",
+            transport=httpx.MockTransport(
+                lambda request: httpx.Response(
+                    200, content=b'{"response":"Partial","done":false}\n'
+                )
+            ),
+        ) as client:
+            await provider.close()
+            provider._client = client
+            async with contextlib.aclosing(provider.generate_stream("Hi")) as stream:
+                assert await anext(stream) == "Partial"
+                with pytest.raises(ProviderExecutionError, match="did not complete"):
+                    await anext(stream)
+
+    @pytest.mark.asyncio
+    async def test_generate_stream_preserves_status_when_error_body_read_fails(self):
+        class UnreadableBody(httpx.AsyncByteStream):
+            async def __aiter__(self) -> AsyncIterator[bytes]:
+                raise httpx.ReadError("body unavailable")
+                yield b""  # pragma: no cover
+
+        provider = Ollama()
+        async with httpx.AsyncClient(
+            base_url="http://localhost:11434",
+            transport=httpx.MockTransport(
+                lambda request: httpx.Response(404, stream=UnreadableBody())
+            ),
+        ) as client:
+            await provider.close()
+            provider._client = client
+            with pytest.raises(
+                ProviderExecutionError, match="Ollama API error: 404"
+            ) as exc:
+                await _collect(provider.generate_stream("Hi"))
+        assert exc.value.details["status_code"] == 404
+        assert isinstance(exc.value.__cause__, httpx.ReadError)
+
+    @pytest.mark.asyncio
     async def test_generate_stream_parses_ndjson(self):
         provider = Ollama(base_url="http://localhost:11434", model="llama3.2")
 
@@ -703,11 +744,17 @@ class TestOpenRouterStream:
         mock_response.aiter_lines = lambda: _async_iter(
             [
                 ": keep-alive",
-                'data: {"choices":[{"delta":{"content":"Routed "}}]}',
+                'data: {"choices":',
+                'data: [{"delta":{"content":"Routed "}}]}',
+                "",
                 'data: {"choices":[{"delta":{}}]}',
+                "",
                 'data: {"choices":[{"delta":{"content":"reply"}}]}',
+                "",
                 "data: [DONE]",
+                "",
                 'data: {"choices":[{"delta":{"content":"ignored"}}]}',
+                "",
             ]
         )
         mock_stream_ctx = MagicMock()
@@ -757,7 +804,9 @@ class TestOpenRouterStream:
         mock_response.aiter_lines = lambda: _async_iter(
             [
                 'data: {"choices":[{"delta":{"content":"Part 1"}}]}',
+                "",
                 'data: {"error":{"code":503,"message":"Upstream overloaded"},"choices":[{"delta":{"content":"ignored"}}]}',
+                "",
             ]
         )
         mock_stream_ctx = MagicMock()
@@ -791,7 +840,7 @@ class TestOpenRouterStream:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.aiter_lines = lambda: _async_iter(
-            ['data: {"error":"Rate limited"}']
+            ['data: {"error":"Rate limited"}', ""]
         )
         mock_stream_ctx = MagicMock()
         mock_stream_ctx.__aenter__ = AsyncMock(return_value=mock_response)
@@ -816,11 +865,17 @@ class TestOpenRouterStream:
         mock_response.aiter_lines = lambda: _async_iter(
             [
                 'data: {"error":null,"choices":[{"delta":{"content":"Valid"}}]}',
+                "",
                 'data: {"choices":[{"delta":{"content":null}}]}',
+                "",
                 'data: {"choices":[{"delta":{"content":""}}]}',
+                "",
                 'data: {"choices":[{"delta":{}}]}',
+                "",
                 'data: {"choices":[],"usage":{"prompt_tokens":5,"completion_tokens":2,"total_tokens":7}}',
+                "",
                 "data: [DONE]",
+                "",
             ]
         )
         mock_stream_ctx = MagicMock()
