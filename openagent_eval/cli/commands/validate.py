@@ -132,6 +132,7 @@ def validate_command(
         + config.metrics.generation
         + config.metrics.performance
         + config.metrics.cost
+        + config.metrics.agent
     )
     console.print(f"  [dim]Configured: {len(all_metrics)} metrics[/dim]")
     if config.metrics.retrieval:
@@ -148,6 +149,8 @@ def validate_command(
         )
     if config.metrics.cost:
         console.print(f"    [dim]Cost: {', '.join(config.metrics.cost)}[/dim]")
+    if config.metrics.agent:
+        console.print(f"    [dim]Agent: {', '.join(config.metrics.agent)}[/dim]")
 
     # Print summary
     _print_summary(has_errors, warnings, errors)

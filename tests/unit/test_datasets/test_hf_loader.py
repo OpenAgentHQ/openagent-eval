@@ -55,6 +55,15 @@ class TestHFDatasetLoader:
         assert mapped["ground_truth"] == "A programming language."
         assert mapped["context"] == "Some context."
 
+    def test_load_recorded_tool_calls(self) -> None:
+        row = {
+            "question": "Search?",
+            "expected_tool_calls": [],
+            "actual_tool_calls": [],
+        }
+        dataset = self.loader._parse_data([row], "recorded-traces")
+        assert dataset.items[0].to_dict() == row
+
     def test_map_fields_alternative_names(self) -> None:
         """Test field mapping with alternative field names."""
         raw = {

@@ -217,6 +217,7 @@ def _apply_metrics_override(config: object, metrics_str: str) -> None:
         generation=[m for m in metric_list if m in generation_metrics],
         performance=[m for m in metric_list if m in performance_metrics],
         cost=[m for m in metric_list if m in cost_metrics],
+        agent=[m for m in metric_list if m == "tool_call_correctness"],
     )
 
 
@@ -244,6 +245,7 @@ def _run_dry_run(config: object, config_path: Path) -> None:
         + config.metrics.generation
         + config.metrics.performance
         + config.metrics.cost
+        + config.metrics.agent
     )
     console.print(f"\n[bold]Metrics ({len(all_metrics)}):[/bold]")
     if config.metrics.retrieval:
@@ -258,6 +260,8 @@ def _run_dry_run(config: object, config_path: Path) -> None:
         )
     if config.metrics.cost:
         console.print(f"  [dim]Cost: {', '.join(config.metrics.cost)}[/dim]")
+    if config.metrics.agent:
+        console.print(f"  [dim]Agent: {', '.join(config.metrics.agent)}[/dim]")
 
     # Try to load dataset
     console.print("\n[bold]Dataset:[/bold]")

@@ -145,6 +145,7 @@ class Engine:
         names.extend(self.config.metrics.generation)
         names.extend(self.config.metrics.performance)
         names.extend(self.config.metrics.cost)
+        names.extend(self.config.metrics.agent)
 
         resolved: list[tuple[str, BaseMetric]] = []
         for name in names:
