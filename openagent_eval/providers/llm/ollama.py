@@ -10,8 +10,14 @@ The adapter tracks token usage through Ollama's response metadata
 
 from __future__ import annotations
 
+import inspect
+import json
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from typing import NoReturn
 
 import httpx
 from pydantic import BaseModel, Field
@@ -150,6 +156,55 @@ class Ollama(LLMProvider):
         """Return the configured Ollama model identifier."""
         return self._model
 
+    def _build_generate_request(
+        self, prompt: str, *, stream: bool, **kwargs: Any
+    ) -> OllamaGenerateRequest:
+        """Build an Ollama /api/generate request model."""
+        model = kwargs.get("model", self._model)
+        temperature = kwargs.get("temperature", self._temperature)
+        max_tokens = kwargs.get("max_tokens", self._max_tokens)
+
+        options: dict[str, Any] = {"temperature": temperature}
+        if max_tokens is not None:
+            options["num_predict"] = max_tokens
+
+        return OllamaGenerateRequest(
+            model=model,
+            prompt=prompt,
+            stream=stream,
+            options=options,
+        )
+
+    def _raise_mapped_http_error(
+        self, exc: Exception, *, cause: Exception | None = None
+    ) -> NoReturn:
+        """Translate httpx exceptions into provider hierarchy."""
+        if isinstance(exc, httpx.ConnectError):
+            raise ProviderConnectionError(
+                message=f"Failed to connect to Ollama server at {self._base_url}",
+                provider_name=self.name,
+                original_error=exc,
+            ) from exc
+        if isinstance(exc, httpx.HTTPStatusError):
+            try:
+                response_text = exc.response.text
+            except httpx.ResponseNotRead:
+                response_text = ""
+            raise ProviderExecutionError(
+                message=f"Ollama API error: {exc.response.status_code}",
+                provider_name=self.name,
+                original_error=exc,
+                details={
+                    "status_code": exc.response.status_code,
+                    "response": response_text,
+                },
+            ) from (cause or exc)
+        raise ProviderExecutionError(
+            message=f"Unexpected error calling Ollama: {exc!s}",
+            provider_name=self.name,
+            original_error=exc,
+        ) from exc
+
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the Ollama model.
 
@@ -164,21 +219,8 @@ class Ollama(LLMProvider):
             ProviderConnectionError: If unable to connect to Ollama server.
             ProviderExecutionError: If the API call fails or returns an error.
         """
-        model = kwargs.get("model", self._model)
-        temperature = kwargs.get("temperature", self._temperature)
-        max_tokens = kwargs.get("max_tokens", self._max_tokens)
-
-        # Build request payload
-        options: dict[str, Any] = {"temperature": temperature}
-        if max_tokens is not None:
-            options["num_predict"] = max_tokens
-
-        request = OllamaGenerateRequest(
-            model=model,
-            prompt=prompt,
-            stream=False,
-            options=options,
-        )
+        request = self._build_generate_request(prompt, stream=False, **kwargs)
+        model = request.model
 
         try:
             response = await self._client.post(
@@ -187,28 +229,8 @@ class Ollama(LLMProvider):
                 headers={"Content-Type": "application/json"},
             )
             response.raise_for_status()
-        except httpx.ConnectError as e:
-            raise ProviderConnectionError(
-                message=f"Failed to connect to Ollama server at {self._base_url}",
-                provider_name=self.name,
-                original_error=e,
-            ) from e
-        except httpx.HTTPStatusError as e:
-            raise ProviderExecutionError(
-                message=f"Ollama API error: {e.response.status_code}",
-                provider_name=self.name,
-                original_error=e,
-                details={
-                    "status_code": e.response.status_code,
-                    "response": e.response.text,
-                },
-            ) from e
         except Exception as e:
-            raise ProviderExecutionError(
-                message=f"Unexpected error calling Ollama: {str(e)}",
-                provider_name=self.name,
-                original_error=e,
-            ) from e
+            self._raise_mapped_http_error(e)
 
         # Parse response
         try:
@@ -229,6 +251,83 @@ class Ollama(LLMProvider):
             )
 
         return ollama_response.response
+
+    async def generate_stream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """Stream generated text chunks from Ollama's NDJSON ``/api/generate`` API.
+
+        Args:
+            prompt: The input prompt to send to Ollama.
+            **kwargs: Optional overrides for model, temperature, max_tokens.
+
+        Yields:
+            Non-empty response text deltas emitted by Ollama.
+
+        Raises:
+            ProviderConnectionError: If unable to connect to Ollama server.
+            ProviderExecutionError: If the API call or response parsing fails.
+        """
+        request = self._build_generate_request(prompt, stream=True, **kwargs)
+
+        try:
+            async with self._client.stream(
+                "POST",
+                "/api/generate",
+                content=request.model_dump_json(),
+                headers={"Content-Type": "application/json"},
+            ) as response:
+                try:
+                    response.raise_for_status()
+                except httpx.HTTPStatusError as status_error:
+                    try:
+                        read_result = response.aread()
+                        if inspect.isawaitable(read_result):
+                            await read_result
+                    except httpx.RequestError as read_error:
+                        self._raise_mapped_http_error(status_error, cause=read_error)
+                    raise
+                async for line in response.aiter_lines():
+                    if not line.strip():
+                        continue
+                    try:
+                        data = json.loads(line)
+                    except json.JSONDecodeError as e:
+                        raise ProviderExecutionError(
+                            message=f"Failed to parse Ollama stream chunk: {e!s}",
+                            provider_name=self.name,
+                            original_error=e,
+                        ) from e
+                    if not isinstance(data, dict):
+                        raise ProviderExecutionError(
+                            message="Unexpected Ollama stream chunk format",
+                            provider_name=self.name,
+                            details={"chunk": data},
+                        )
+                    error = data.get("error")
+                    if error:
+                        error_message = (
+                            error.get("message") or str(error)
+                            if isinstance(error, dict)
+                            else str(error)
+                        )
+                        raise ProviderExecutionError(
+                            message=f"Ollama API error: {error_message}",
+                            provider_name=self.name,
+                            details={"response": data},
+                        )
+                    chunk = data.get("response", "")
+                    if isinstance(chunk, str) and chunk:
+                        yield chunk
+                    if data.get("done") is True:
+                        return
+                raise ProviderExecutionError(
+                    message="Ollama generation did not complete",
+                    provider_name=self.name,
+                    details={"model": request.model},
+                )
+        except (ProviderConnectionError, ProviderExecutionError):
+            raise
+        except Exception as e:
+            self._raise_mapped_http_error(e)
 
     async def get_token_count(self, text: str) -> int:
         """Count tokens using Ollama's tokenizer endpoint.

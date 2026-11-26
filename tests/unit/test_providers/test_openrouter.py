@@ -287,3 +287,48 @@ class TestOpenRouterGenerateWithUsage:
         assert result.usage.prompt_tokens == 5
         assert result.usage.completion_tokens == 10
         assert result.usage.total_tokens == 15
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "message_payload",
+        [
+            {"content": None},
+            {"content": [{"type": "text", "text": "part"}]},
+            {"content": 123},
+            {},
+        ],
+    )
+    async def test_generate_with_usage_non_string_content_raises(
+        self,
+        provider_with_key: OpenRouter,
+        mock_httpx_client,
+        message_payload: dict,
+    ):
+        """generate_with_usage() rejects null or non-string content instead of str()."""
+        mock_response = _make_response(
+            status_code=200,
+            json_data={"choices": [{"message": message_payload}]},
+            text='{"choices": [...]}',
+        )
+        mock_httpx_client.post = AsyncMock(return_value=mock_response)
+
+        with pytest.raises(ProviderExecutionError, match="Invalid or missing content"):
+            await provider_with_key.generate_with_usage("Test prompt")
+
+    @pytest.mark.asyncio
+    async def test_generate_with_usage_empty_string_content_allowed(
+        self, provider_with_key: OpenRouter, mock_httpx_client
+    ):
+        """generate_with_usage() accepts valid empty string content."""
+        from openagent_eval.providers.models import LLMResponse
+
+        mock_response = _make_response(
+            status_code=200,
+            json_data={"choices": [{"message": {"content": ""}}]},
+            text='{"choices": [{"message": {"content": ""}}]}',
+        )
+        mock_httpx_client.post = AsyncMock(return_value=mock_response)
+
+        result = await provider_with_key.generate_with_usage("Test prompt")
+        assert isinstance(result, LLMResponse)
+        assert result.content == ""
