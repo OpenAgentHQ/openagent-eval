@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -22,16 +23,18 @@ def test_command(
         ...,
         help="Path to evaluation configuration file.",
     ),
-    threshold: list[str] = typer.Option(
-        [],
-        "--threshold",
-        "-t",
-        help=(
-            "Threshold gate in format: metric:operator:value. "
-            "Operators: gt, gte, lt, lte, eq, neq. "
-            "Example: -t faithfulness:gte:0.8"
+    threshold: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--threshold",
+            "-t",
+            help=(
+                "Threshold gate in format: metric:operator:value. "
+                "Operators: gt, gte, lt, lte, eq, neq. "
+                "Example: -t faithfulness:gte:0.8"
+            ),
         ),
-    ),
+    ] = None,
     fail_on_error: bool = typer.Option(
         True,
         "--fail-on-error/--no-fail-on-error",
@@ -91,8 +94,10 @@ def test_command(
     path = resolved_path
     console.print(f"[dim]Configuration: {path}[/dim]")
 
-    if threshold:
-        console.print(f"[dim]Thresholds: {', '.join(threshold)}[/dim]")
+    thresholds = threshold or []
+
+    if thresholds:
+        console.print(f"[dim]Thresholds: {', '.join(thresholds)}[/dim]")
 
     console.print()
 
@@ -104,7 +109,7 @@ def test_command(
     )
 
     # Parse thresholds
-    for threshold_str in threshold:
+    for threshold_str in thresholds:
         parts = threshold_str.split(":")
         if len(parts) != 3:
             console.print(
