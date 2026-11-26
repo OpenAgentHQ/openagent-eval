@@ -121,8 +121,12 @@ class TestReadCorpus:
         bad_file = tmp_path / "bad.txt"
         bad_file.write_bytes(b"\xff\xfe\x00\x00")  # Invalid UTF-8
 
-        with pytest.raises(SynthesisExecutionError, match="Failed to read corpus file"):
+        with pytest.raises(
+            SynthesisExecutionError, match="Failed to read corpus file"
+        ) as exc_info:
             _read_corpus(bad_file)
+
+        assert isinstance(exc_info.value.__cause__, UnicodeDecodeError)
 
 
 class TestSyntheticDataGenerator:

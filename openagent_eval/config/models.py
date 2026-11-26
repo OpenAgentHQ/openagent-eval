@@ -102,6 +102,9 @@ class MetricsConfig(BaseModel):
         default_factory=lambda: ["token_count"],
         description="Cost metrics to track",
     )
+    agent: list[str] = Field(
+        default_factory=list, description="Recorded agent trace metrics"
+    )
 
 
 class DatasetConfig(BaseModel):

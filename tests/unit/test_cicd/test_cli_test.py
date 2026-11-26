@@ -7,6 +7,8 @@ import re
 from typing import Annotated, get_origin, get_type_hints
 from unittest.mock import patch
 
+import pytest
+import typer
 from typer.testing import CliRunner
 
 from openagent_eval.cicd.thresholds import EvaluationResult
@@ -332,3 +334,20 @@ class TestTestCommand:
         assert "unexpected failure" in _strip_ansi(fail_result.output)
         assert no_fail_result.exit_code == 0, no_fail_result.output
         assert "unexpected failure" in _strip_ansi(no_fail_result.output)
+
+    def test_test_command_invalid_threshold_value_preserves_cause(self, tmp_path):
+        """Invalid threshold value chains the underlying ValueError (issue #303)."""
+        config_path = _write_offline_config(tmp_path)
+
+        with pytest.raises(typer.Exit) as exc_info:
+            test_command.test_command(
+                config_path=str(config_path),
+                threshold=["faithfulness:gte:not_a_number"],
+                fail_on_error=True,
+                timeout=300,
+                verbose=False,
+                json_output=False,
+            )
+
+        assert exc_info.value.exit_code == 2
+        assert isinstance(exc_info.value.__cause__, ValueError)

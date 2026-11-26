@@ -150,8 +150,8 @@ class OAEvalPlugin:
                 metric_name, operator_str, value_str = parts
                 try:
                     value = float(value_str)
-                except ValueError:
-                    raise ValueError(f"Invalid threshold value: {value_str}")
+                except ValueError as err:
+                    raise ValueError(f"Invalid threshold value: {value_str}") from err
 
                 cicd_config.gates.append(
                     EvaluationGate(

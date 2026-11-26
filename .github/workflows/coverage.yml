@@ -1,6 +1,6 @@
 # Coverage Workflow for OpenAgent Eval
 # Generates coverage reports and uploads to Codecov
-# Fails CI if coverage drops below 90%
+# Fails CI if coverage drops below 75%
 
 name: Coverage
 

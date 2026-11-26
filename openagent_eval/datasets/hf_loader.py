@@ -210,16 +210,7 @@ class HFDatasetLoader(BaseDatasetLoader):
                 # Map common HuggingFace field names to our schema
                 mapped = self._map_fields(raw_item)
                 model = DatasetItemModel(**mapped)
-                items.append(
-                    DatasetItem(
-                        question=model.question,
-                        ground_truth=model.ground_truth,
-                        context=model.context,
-                        metadata=model.metadata,
-                        contexts=model.contexts,
-                        ground_truth_contexts=model.ground_truth_contexts,
-                    )
-                )
+                items.append(DatasetItem(**model.model_dump()))
             except Exception as e:
                 validation_errors.append(f"Item {i}: {e}")
 
@@ -286,6 +277,10 @@ class HFDatasetLoader(BaseDatasetLoader):
             if field in raw_item and raw_item[field]:
                 mapped["context"] = str(raw_item[field])
                 break
+
+        for field in ("expected_tool_calls", "actual_tool_calls"):
+            if field in raw_item:
+                mapped[field] = raw_item[field]
 
         # Metadata - include all other fields
         metadata_fields = set(mapped.keys()) | {"question", "ground_truth", "context"}
