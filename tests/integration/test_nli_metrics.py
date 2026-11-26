@@ -84,21 +84,21 @@ class TestFaithfulnessNLIIntegration:
         mock_ragas.side_effect = ImportError("No ragas")
 
         with (
-            patch("openagent_eval.metrics.nli.NLIJudge") as MockJudge,
-            patch("openagent_eval.metrics.nli.ClaimExtractor") as MockExtractor,
-            patch("openagent_eval.metrics.nli.EvidenceFinder") as MockFinder,
+            patch("openagent_eval.metrics.nli.NLIJudge") as mock_judge,
+            patch("openagent_eval.metrics.nli.ClaimExtractor") as mock_extractor,
+            patch("openagent_eval.metrics.nli.EvidenceFinder") as mock_finder,
         ):
             # Setup mocks
             mock_judge_instance = MagicMock()
             mock_judge_instance._model_name = "test-model"
-            MockJudge.return_value = mock_judge_instance
+            mock_judge.return_value = mock_judge_instance
 
             mock_extractor_instance = MagicMock()
             mock_extractor_instance.extract.return_value = [
                 Claim(text="The sky is blue", index=0),
                 Claim(text="It is clear", index=1),
             ]
-            MockExtractor.return_value = mock_extractor_instance
+            mock_extractor.return_value = mock_extractor_instance
 
             mock_finder_instance = MagicMock()
             mock_finder_instance.score_faithfulness.return_value = (
@@ -108,7 +108,7 @@ class TestFaithfulnessNLIIntegration:
                     MagicMock(nli_result=MagicMock(entailed_score=0.6)),
                 ],
             )
-            MockFinder.return_value = mock_finder_instance
+            mock_finder.return_value = mock_finder_instance
 
             metric = Faithfulness()
             result = metric.evaluate(
@@ -168,7 +168,7 @@ class TestAnswerRelevancyNLIIntegration:
         """Test NLI fallback path when Ragas unavailable."""
         mock_ragas.side_effect = ImportError("No ragas")
 
-        with patch("openagent_eval.metrics.nli.NLIJudge") as MockJudge:
+        with patch("openagent_eval.metrics.nli.NLIJudge") as mock_judge:
             mock_judge_instance = MagicMock()
             mock_judge_instance._model_name = "test-model"
             mock_judge_instance.evaluate.return_value = NLIResult(
@@ -176,7 +176,7 @@ class TestAnswerRelevancyNLIIntegration:
                 score=0.9,
                 entailed_score=0.88,
             )
-            MockJudge.return_value = mock_judge_instance
+            mock_judge.return_value = mock_judge_instance
 
             metric = AnswerRelevancy()
             result = metric.evaluate(
