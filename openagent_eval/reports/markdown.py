@@ -58,6 +58,11 @@ class MarkdownReport(ReportGenerator):
         sections.append(f"| Total Items | {summary.get('total_items', 0)} |")
         sections.append(f"| Successful | {summary.get('successful_evaluations', 0)} |")
         sections.append(f"| Failed | {summary.get('failed_evaluations', 0)} |")
+        if summary.get("total_tokens") is not None:
+            sections.append(f"| Total Tokens | {summary['total_tokens']} |")
+        if summary.get("total_estimated_cost_usd") is not None:
+            cost_str = self._format_usd(float(summary["total_estimated_cost_usd"]))
+            sections.append(f"| Estimated Cost (USD) | {cost_str} |")
         sections.append("")
 
         # Metrics

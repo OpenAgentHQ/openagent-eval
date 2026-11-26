@@ -12,7 +12,7 @@ All metrics implement the BaseMetric interface and return MetricResult.
 
 from openagent_eval.metrics.agent import ToolCallCorrectness
 from openagent_eval.metrics.base import BaseMetric, MetricResult
-from openagent_eval.metrics.cost import TokenCountMetric
+from openagent_eval.metrics.cost import CostEstimateMetric, TokenCountMetric
 from openagent_eval.metrics.generation import (
     BLEU,
     ROUGE,
@@ -86,6 +86,7 @@ __all__ = [
     # Performance
     "LatencyMetric",
     # Cost
+    "CostEstimateMetric",
     "TokenCountMetric",
 ]
 
@@ -111,6 +112,7 @@ METRIC_REGISTRY: dict[str, type[BaseMetric]] = {
     "schema_conformance": SchemaConformance,
     "latency": LatencyMetric,
     "token_count": TokenCountMetric,
+    "cost_estimate": CostEstimateMetric,
 }
 
 

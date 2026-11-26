@@ -26,6 +26,7 @@ _LEGACY_METRIC_MAP: dict[str, str] = {
     "similarity": "semantic_similarity",
     "latency": "latency",
     "tokens": "token_count",
+    "cost": "cost_estimate",
 }
 
 # Metric classification categories for legacy flat metrics lists.
@@ -54,7 +55,7 @@ _GENERATION_METRICS = frozenset(
     }
 )
 _PERFORMANCE_METRICS = frozenset({"latency"})
-_COST_METRICS = frozenset({"token_count"})
+_COST_METRICS = frozenset({"token_count", "cost_estimate"})
 _AGENT_METRICS = frozenset({"tool_call_correctness"})
 
 _FIELD_FORMAT_HINTS = {

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 ### Added
+- Added maintained per-model USD pricing table in `openagent_eval/providers/pricing.py` (`MODEL_PRICING`, `get_model_pricing`, `estimate_cost_usd`), registered the `cost_estimate` metric (`CostEstimateMetric`), and surfaced `total_estimated_cost_usd` in run summaries and Terminal, Markdown, JSON, and HTML reports.
 - Add `tool_call_correctness` to score the order, tool names, and arguments in recorded agent traces.
 - Add a copyable GitHub Actions workflow that checks retrieval hit rate with a key-free example.
 - Added `oaeval doctor` warnings for configured providers whose optional extras are not installed.

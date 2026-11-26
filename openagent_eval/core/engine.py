@@ -89,6 +89,9 @@ class Engine:
             "failed_evaluations": len(result.errors),
             "metrics_summary": result.summary.get("metrics", {}),
             "total_tokens": result.summary.get("total_tokens", 0),
+            "total_estimated_cost_usd": result.summary.get(
+                "total_estimated_cost_usd", 0.0
+            ),
             "average_latency_ms": result.summary.get("average_latency_ms"),
         }
 

@@ -16,6 +16,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from openagent_eval.providers.pricing import estimate_cost_usd
+
 if TYPE_CHECKING:
     from openagent_eval.config.models import Config
     from openagent_eval.metrics.base import BaseMetric
@@ -133,6 +135,19 @@ class Pipeline:
                 token_usage,
             )
 
+            provider_name = getattr(self._llm, "name", None)
+            model_name = getattr(self._llm, "model_name", None) or self.config.llm.model
+            item_cost_usd = (
+                estimate_cost_usd(
+                    token_usage.prompt_tokens,
+                    token_usage.completion_tokens,
+                    provider=provider_name,
+                    model=model_name,
+                )
+                if token_usage is not None
+                else None
+            )
+
             return EvaluationResult(
                 question=question,
                 answer=answer,
@@ -146,6 +161,7 @@ class Pipeline:
                     if token_usage
                     else None,
                     "total_tokens": token_usage.total_tokens if token_usage else None,
+                    "estimated_cost_usd": item_cost_usd,
                     "metric_errors": metric_errors,
                     **item.get("metadata", {}),
                 },
@@ -358,7 +374,12 @@ class Pipeline:
             Summary statistics dictionary.
         """
         if not results:
-            return {"total": 0, "errors": len(errors)}
+            return {
+                "total": 0,
+                "errors": len(errors),
+                "total_tokens": 0,
+                "total_estimated_cost_usd": 0.0,
+            }
 
         metric_sums: dict[str, float] = {}
         metric_counts: dict[str, int] = {}
@@ -375,6 +396,7 @@ class Pipeline:
         }
 
         total_tokens = sum((r.metadata.get("total_tokens") or 0) for r in results)
+        total_estimated_cost_usd = sum(self._result_cost_usd(r) for r in results)
         latencies = [
             r.metadata.get("latency_ms")
             for r in results
@@ -387,5 +409,24 @@ class Pipeline:
             "errors": len(errors),
             "metrics": metric_averages,
             "total_tokens": total_tokens,
+            "total_estimated_cost_usd": total_estimated_cost_usd,
             "average_latency_ms": avg_latency,
         }
+
+    def _result_cost_usd(self, result: EvaluationResult) -> float:
+        """Return precomputed USD cost or derive it from item token metadata."""
+        recorded = result.metadata.get("estimated_cost_usd")
+        if isinstance(recorded, (int, float)):
+            return float(recorded)
+        prompt = result.metadata.get("prompt_tokens") or 0
+        completion = result.metadata.get("completion_tokens") or 0
+        if not prompt and not completion:
+            return 0.0
+        provider_name = result.metadata.get("provider") or self.config.llm.provider
+        model_name = result.metadata.get("model") or self.config.llm.model
+        return estimate_cost_usd(
+            int(prompt),
+            int(completion),
+            provider=str(provider_name) if provider_name else None,
+            model=str(model_name) if model_name else None,
+        )
