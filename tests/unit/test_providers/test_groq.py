@@ -7,14 +7,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-# Skip tests if groq is not installed
+# Check groq before provider imports so SDK-free installs skip at collection.
 groq = pytest.importorskip("groq", reason="groq not installed")
 
-from openagent_eval.exceptions.provider import (
+from openagent_eval.exceptions.provider import (  # noqa: E402
     ProviderConnectionError,
     ProviderExecutionError,
 )
-from openagent_eval.providers.llm.groq import Groq
+from openagent_eval.providers.llm.groq import Groq  # noqa: E402
 
 
 def _make_httpx_response(status_code: int = 200, text: str = "") -> httpx.Response:
