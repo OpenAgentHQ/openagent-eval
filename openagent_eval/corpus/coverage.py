@@ -62,11 +62,11 @@ class CoverageAnalyzer(BaseCorpusAnalyzer):
                 from sentence_transformers import SentenceTransformer
 
                 self._embedder = SentenceTransformer(self.embedding_model)
-            except ImportError:
+            except ImportError as err:
                 raise ImportError(
                     "sentence-transformers is required for coverage analysis. "
                     "Install it with: pip install openagent-eval[corpus]"
-                )
+                ) from err
         return self._embedder
 
     async def analyze(

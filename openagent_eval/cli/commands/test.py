@@ -118,9 +118,9 @@ def test_command(
 
         try:
             value = float(value_str)
-        except ValueError:
+        except ValueError as err:
             console.print(f"[red]Error:[/red] Invalid threshold value: {value_str}")
-            raise typer.Exit(code=2)
+            raise typer.Exit(code=2) from err
 
         # Validate operator
         valid_operators = ["gt", "gte", "lt", "lte", "eq", "neq"]
