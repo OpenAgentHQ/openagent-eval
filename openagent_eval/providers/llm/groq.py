@@ -25,6 +25,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
+from openagent_eval.providers.base.retry import retry_with_backoff
 from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 
@@ -148,7 +149,8 @@ class Groq(LLMProvider):
             )
 
         try:
-            self.client = groq.AsyncGroq(api_key=api_key)
+            # Disable SDK-level retries so @retry_with_backoff solely controls attempts and backoff.
+            self.client = groq.AsyncGroq(api_key=api_key, max_retries=0)
         except Exception as e:
             raise ProviderConnectionError(
                 message=f"Failed to initialize Groq client: {str(e)}",
@@ -161,6 +163,7 @@ class Groq(LLMProvider):
         """Return the configured Groq model identifier."""
         return self.model
 
+    @retry_with_backoff()
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the LLM.
 
@@ -233,12 +236,6 @@ class Groq(LLMProvider):
                 provider_name="groq",
                 original_error=e,
             ) from e
-        except groq.RateLimitError as e:
-            raise ProviderExecutionError(
-                message=f"Groq rate limit exceeded: {str(e)}",
-                provider_name="groq",
-                original_error=e,
-            ) from e
         except Exception as e:
             raise ProviderExecutionError(
                 message=f"Unexpected error during Groq generation: {str(e)}",
@@ -246,6 +243,7 @@ class Groq(LLMProvider):
                 original_error=e,
             ) from e
 
+    @retry_with_backoff()
     async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate a response with detailed token usage information.
 

@@ -2616,7 +2616,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "anthropic", marker = "extra == 'providers'", specifier = ">=0.40.0" },
+    { name = "anthropic", marker = "extra == 'providers'", specifier = ">=0.41.0" },
     { name = "datasets", marker = "extra == 'datasets'", specifier = ">=2.0.0" },
     { name = "deepeval", marker = "extra == 'evaluation'", specifier = ">=1.0.0" },
     { name = "elasticsearch", marker = "extra == 'elasticsearch'", specifier = ">=8.0.0" },

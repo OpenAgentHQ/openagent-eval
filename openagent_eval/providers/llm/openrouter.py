@@ -21,6 +21,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
+from openagent_eval.providers.base.retry import retry_with_backoff
 from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 
@@ -132,6 +133,7 @@ class OpenRouter(LLMProvider):
         """Return the configured OpenRouter model identifier."""
         return self.model
 
+    @retry_with_backoff()
     async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate a response and return it with token usage and latency.
 
@@ -184,13 +186,25 @@ class OpenRouter(LLMProvider):
 
                 # Handle HTTP errors
                 if response.status_code != 200:
-                    error_data = response.json() if response.text else {}
-                    error_message = error_data.get("error", {}).get(
-                        "message", f"HTTP {response.status_code}: {response.text}"
+                    try:
+                        error_data = response.json() if response.content else {}
+                    except ValueError:
+                        error_data = {}
+                    error = (
+                        error_data.get("error")
+                        if isinstance(error_data, dict)
+                        else None
+                    )
+                    message = error.get("message") if isinstance(error, dict) else None
+                    status_error = httpx.HTTPStatusError(
+                        f"HTTP {response.status_code}",
+                        request=response.request,
+                        response=response,
                     )
                     raise ProviderExecutionError(
-                        message=f"OpenRouter API error: {error_message}",
+                        message=f"OpenRouter API error: {message or status_error}",
                         provider_name="openrouter",
+                        original_error=status_error,
                         details={
                             "status_code": response.status_code,
                             "response": error_data,

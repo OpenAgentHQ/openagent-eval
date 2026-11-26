@@ -7,5 +7,18 @@ document retrieval integrations.
 
 from openagent_eval.providers.base.llm import LLMProvider
 from openagent_eval.providers.base.retriever import Retriever
+from openagent_eval.providers.base.retry import (
+    RetryConfig,
+    execute_with_retry,
+    is_retryable_error,
+    retry_with_backoff,
+)
 
-__all__ = ["LLMProvider", "Retriever"]
+__all__ = [
+    "LLMProvider",
+    "Retriever",
+    "RetryConfig",
+    "execute_with_retry",
+    "is_retryable_error",
+    "retry_with_backoff",
+]

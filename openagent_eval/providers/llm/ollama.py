@@ -21,6 +21,7 @@ from openagent_eval.exceptions.provider import (
     ProviderExecutionError,
 )
 from openagent_eval.providers.base.llm import LLMProvider
+from openagent_eval.providers.base.retry import retry_with_backoff
 from openagent_eval.providers.models import LLMResponse, TokenUsage
 
 
@@ -150,6 +151,7 @@ class Ollama(LLMProvider):
         """Return the configured Ollama model identifier."""
         return self._model
 
+    @retry_with_backoff()
     async def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate a response from the Ollama model.
 
@@ -342,6 +344,7 @@ class Ollama(LLMProvider):
             latency_ms=latency_ms,
         )
 
+    @retry_with_backoff()
     async def generate_with_usage(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate text and return a full LLMResponse asynchronously.
 
@@ -393,6 +396,7 @@ class Ollama(LLMProvider):
                 message=f"Ollama API error: {e.response.status_code}",
                 provider_name=self.name,
                 original_error=e,
+                details={"status_code": e.response.status_code},
             ) from e
         except Exception as e:
             raise ProviderExecutionError(
