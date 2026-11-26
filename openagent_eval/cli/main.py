@@ -16,6 +16,7 @@ from openagent_eval.cli.commands.compare import compare_command
 from openagent_eval.cli.commands.delete import delete_command
 from openagent_eval.cli.commands.diagnose import diagnose_command
 from openagent_eval.cli.commands.doctor import doctor_command
+from openagent_eval.cli.commands.history import history_command
 from openagent_eval.cli.commands.init import init_command
 from openagent_eval.cli.commands.list_evaluations import list_command
 from openagent_eval.cli.commands.report import report_command
@@ -149,6 +150,7 @@ app.command(name="init")(init_command)
 app.command(name="run")(run_command)
 app.command(name="report")(report_command)
 app.command(name="compare")(compare_command)
+app.command(name="history")(history_command)
 app.command(name="list")(list_command)
 app.command(name="doctor")(doctor_command)
 app.command(name="validate")(validate_command)

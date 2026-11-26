@@ -351,3 +351,40 @@ class TestCorpusAuditorJsonl:
         report = await auditor.audit(str(jsonl_file))
 
         assert report.total_documents == 4
+
+
+class TestEmbedderImportChaining:
+    """Regression tests for B904 exception chaining in corpus analyzers (issue #303)."""
+
+    def test_coverage_analyzer_import_error_preserves_cause(self, monkeypatch):
+        """CoverageAnalyzer._get_embedder chains the underlying ImportError."""
+        import sys
+
+        from openagent_eval.corpus.coverage import CoverageAnalyzer
+
+        monkeypatch.setitem(sys.modules, "sentence_transformers", None)
+        analyzer = CoverageAnalyzer()
+
+        with pytest.raises(
+            ImportError, match="sentence-transformers is required for coverage analysis"
+        ) as exc_info:
+            analyzer._get_embedder()
+
+        assert isinstance(exc_info.value.__cause__, ImportError)
+
+    def test_duplicate_detector_import_error_preserves_cause(self, monkeypatch):
+        """DuplicateDetector._get_embedder chains the underlying ImportError."""
+        import sys
+
+        from openagent_eval.corpus.duplicates import DuplicateDetector
+
+        monkeypatch.setitem(sys.modules, "sentence_transformers", None)
+        detector = DuplicateDetector()
+
+        with pytest.raises(
+            ImportError,
+            match="sentence-transformers is required for duplicate detection",
+        ) as exc_info:
+            detector._get_embedder()
+
+        assert isinstance(exc_info.value.__cause__, ImportError)

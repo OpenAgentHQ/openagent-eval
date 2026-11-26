@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import math
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, cast
 
@@ -12,7 +14,17 @@ from openagent_eval.core.pipeline import EvaluationResult, PipelineResult
 from openagent_eval.exceptions import ConfigurationError
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
+
+
+@dataclass(frozen=True)
+class MetricHistoryPoint:
+    """One completed run's aggregate score and UTC timestamp."""
+
+    report_id: str
+    created_at: datetime
+    value: float
 
 
 class ReportManager:
@@ -108,21 +120,59 @@ class ReportManager:
         output_dir = self._ensure_dir(output_dir)
         reports: list[dict[str, str]] = []
 
-        for path in output_dir.glob("*.json"):
-            try:
-                data = json.loads(path.read_text(encoding="utf-8"))
-                reports.append(
-                    {
-                        "report_id": data.get("report_id", path.stem),
-                        "created_at": data.get("created_at", ""),
-                    }
-                )
-            except (json.JSONDecodeError, KeyError):
-                # Skip files that are not valid report JSON.
-                continue
+        for path, data in self._stored_reports(output_dir):
+            reports.append(
+                {
+                    "report_id": data.get("report_id", path.stem),
+                    "created_at": data.get("created_at", ""),
+                }
+            )
 
         reports.sort(key=lambda r: r.get("created_at", ""), reverse=True)
         return reports
+
+    def metric_history(self, metric: str, output_dir: Path) -> list[MetricHistoryPoint]:
+        """Read a metric from saved summaries in chronological order."""
+        points = []
+        for path, data in self._stored_reports(output_dir):
+            summary = data.get("summary")
+            metrics = (
+                summary.get("metrics_summary") if isinstance(summary, dict) else None
+            )
+            value = metrics.get(metric) if isinstance(metrics, dict) else None
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                continue
+
+            timestamp = data.get("created_at")
+            if timestamp is None and isinstance(data.get("metadata"), dict):
+                # The JSON report generator stores the timestamp in metadata.
+                timestamp = data["metadata"].get("timestamp")
+            if not isinstance(timestamp, str):
+                continue
+            try:
+                created_at = datetime.fromisoformat(timestamp)
+                if created_at.tzinfo is None:
+                    created_at = created_at.replace(tzinfo=UTC)
+                created_at = created_at.astimezone(UTC)
+                score = float(value)
+            except (ValueError, OverflowError):
+                continue
+            if math.isfinite(score):
+                report_id = data.get("report_id") or path.stem
+                points.append(MetricHistoryPoint(str(report_id), created_at, score))
+        return sorted(points, key=lambda point: (point.created_at, point.report_id))
+
+    @staticmethod
+    def _stored_reports(output_dir: Path) -> Iterator[tuple[Path, dict[str, Any]]]:
+        for path in output_dir.glob("*.json"):
+            try:
+                with path.open(encoding="utf-8") as stream:
+                    data = json.load(stream)
+            except (ValueError, FileNotFoundError, IsADirectoryError):
+                # A run can be incomplete or removed while listing reports.
+                continue
+            if isinstance(data, dict):
+                yield path, data
 
     def get_latest_report(self, output_dir: Path) -> dict[str, Any]:
         """Return the most recent report.

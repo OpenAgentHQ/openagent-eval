@@ -10,9 +10,11 @@ external services are available.
 
 from __future__ import annotations
 
+from importlib.metadata import entry_points
 from typing import TYPE_CHECKING, Any
 
-from openagent_eval.exceptions.provider import ProviderNotFoundError
+from openagent_eval.exceptions.provider import ProviderError, ProviderNotFoundError
+from openagent_eval.plugins.discovery import ENTRY_POINT_GROUPS
 from openagent_eval.providers.base.llm import LLMProvider
 from openagent_eval.providers.base.retriever import Retriever
 from openagent_eval.providers.models import Document, LLMResponse, TokenUsage
@@ -95,6 +97,31 @@ _RETRIEVER_PROVIDERS: dict[str, str] = {
 }
 
 
+def _retriever_class(key: str) -> type[Retriever]:
+    """Load only the selected retriever, preferring installed entry points."""
+    entries = entry_points(group=ENTRY_POINT_GROUPS["retrievers"])
+    matches = [entry for entry in entries if entry.name.lower() == key]
+    if len(matches) > 1:
+        raise ProviderError("Multiple installed retrievers use this name", key)
+    if matches:
+        entry = matches[0]
+        try:
+            cls = entry.load()
+        except Exception as exc:
+            raise ProviderError(
+                f"Cannot load retriever {entry.value}: {exc}", key
+            ) from exc
+        if not isinstance(cls, type) or not issubclass(cls, Retriever):
+            raise ProviderError(f"{entry.value} must be a Retriever subclass", key)
+        return cls
+    if key in _RETRIEVER_PROVIDERS:
+        return _resolve(_RETRIEVER_PROVIDERS[key])
+    available = sorted(set(_RETRIEVER_PROVIDERS) | {entry.name for entry in entries})
+    raise ProviderNotFoundError(
+        provider_name=key, details={"available_retrievers": ", ".join(available)}
+    )
+
+
 def get_retriever(config: RetrieverConfig) -> Retriever:
     """Construct a retriever from configuration.
 
@@ -111,13 +138,7 @@ def get_retriever(config: RetrieverConfig) -> Retriever:
         ProviderNotFoundError: If the retriever name is unknown.
     """
     key = (config.provider or "").lower().strip()
-    if key not in _RETRIEVER_PROVIDERS:
-        available = ", ".join(sorted(_RETRIEVER_PROVIDERS))
-        raise ProviderNotFoundError(
-            provider_name=key,
-            details={"available_retrievers": available},
-        )
-    retriever_cls = _resolve(_RETRIEVER_PROVIDERS[key])
+    retriever_cls = _retriever_class(key)
     settings = dict(config.settings or {})
 
     # Catch typos/unknown keys in the free-form settings dict early, before the
