@@ -126,6 +126,19 @@ oaeval compare exp-001 exp-002 --metrics faithfulness answer_relevancy
 | `--metrics`, `-m` | Specific metrics to compare (default: all) |
 | `--output-dir`, `-d` | Reports directory (default `./reports`) |
 
+## `oaeval history`
+
+Show a metric's value across locally saved runs, oldest first. The change
+column compares each value with the previous run that recorded that metric.
+Runs missing the metric are skipped. The command reads the existing JSON
+files under `./reports`, including runs saved with `--output json`.
+
+```bash
+oaeval history hit_rate
+oaeval history latency --output-dir results/
+oaeval --json history faithfulness
+```
+
 ## `oaeval list`
 
 List previous evaluation runs.

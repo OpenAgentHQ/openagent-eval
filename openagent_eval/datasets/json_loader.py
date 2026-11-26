@@ -140,16 +140,7 @@ class JSONDatasetLoader(BaseDatasetLoader):
         for i, raw_item in enumerate(raw_data):
             try:
                 model = DatasetItemModel(**raw_item)
-                items.append(
-                    DatasetItem(
-                        question=model.question,
-                        ground_truth=model.ground_truth,
-                        context=model.context,
-                        metadata=model.metadata,
-                        contexts=model.contexts,
-                        ground_truth_contexts=model.ground_truth_contexts,
-                    )
-                )
+                items.append(DatasetItem(**model.model_dump()))
             except Exception as e:
                 validation_errors.append(f"Item {i}: {e}")
 

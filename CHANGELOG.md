@@ -9,9 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 ### Added
 - Added maintained per-model USD pricing table in `openagent_eval/providers/pricing.py` (`MODEL_PRICING`, `get_model_pricing`, `estimate_cost_usd`), registered the `cost_estimate` metric (`CostEstimateMetric`), and surfaced `total_estimated_cost_usd` in run summaries and Terminal, Markdown, JSON, and HTML reports.
+- Add `tool_call_correctness` to score the order, tool names, and arguments in recorded agent traces.
+- Add a copyable GitHub Actions workflow that checks retrieval hit rate with a key-free example.
 - Added `oaeval doctor` warnings for configured providers whose optional extras are not installed.
+- Resolve installed retrievers from the `openagent_eval.retrievers` entry-point group.
 - Created `scripts/changelog_validator.py` to automatically verify Keep a Changelog formatting.
 - Added a section to `CONTRIBUTING.md` documenting the changelog update process for future contributors.
+- Add `oaeval history <metric>` to show changes across locally saved evaluations.
 
 ### Fixed
 - `schema_conformance` no longer scores an answer with all-valid fields plus a schema-level violation (e.g. a disallowed extra key) as 0.0, below answers with wrongly typed fields.

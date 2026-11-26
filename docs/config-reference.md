@@ -166,7 +166,7 @@ retriever:
 
 ## `metrics`
 
-The `metrics` section defines which evaluation metrics are computed across retrieval, generation, performance, and cost categories. Metric names must correspond to registered keys in `openagent_eval.metrics.METRIC_REGISTRY`.
+The `metrics` section selects retrieval, generation, performance, cost, and agent metrics. Metric names must correspond to registered keys in `openagent_eval.metrics.METRIC_REGISTRY`.
 
 | Field | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
@@ -174,6 +174,7 @@ The `metrics` section defines which evaluation metrics are computed across retri
 | `generation` | `list[str]` | `["faithfulness", "answer_relevancy"]` | No | Generation quality metrics to compute. |
 | `performance` | `list[str]` | `["latency"]` | No | Latency and speed performance metrics to track. |
 | `cost` | `list[str]` | `["token_count"]` | No | Token usage and financial cost metrics to track. |
+| `agent` | `list[str]` | `[]` | No | Metrics for recorded tool calls, such as `tool_call_correctness`. |
 
 ### Example
 
@@ -193,6 +194,36 @@ metrics:
 ```
 
 ---
+
+### Scoring recorded tool calls
+
+Enable `agent: [tool_call_correctness]` under `metrics`. Each labeled dataset
+row supplies two ordered lists, `expected_tool_calls` and `actual_tool_calls`.
+Each call has a case-sensitive `name` and an `arguments` JSON object, which
+defaults to `{}`. Record the actual calls in your application before evaluation.
+
+The metric compares calls at the same position. A wrong tool, a missing step,
+or an extra step earns zero. A matching name earns half credit. The other half
+is the fraction of argument keys across both calls whose JSON values match.
+Object key order is immaterial and array order matters. Identically named calls
+with no arguments earn full credit. The total is divided by the length of the
+longer trace. Two explicit empty lists score 1.0. An absent trace scores 0.0.
+
+The bundled example asks an assistant to search matter A for a notice. From
+the repository root, run:
+
+```bash
+oaeval test examples/tool-call-correctness/config.yaml -t tool_call_correctness:gte:1
+```
+
+| Recorded call | Score |
+| --- | --- |
+| Search documents in matter A | 1.0 |
+| Search documents in matter B | 0.5 |
+| Draft a document in matter A | 0.0 |
+
+The example uses mock providers and needs no API keys. The mean is 0.5, so
+the command exits with status 1. Change the minimum to 0.5 to see it pass.
 
 ## `report`
 

@@ -10,6 +10,7 @@ This package provides all evaluation metrics organized by category:
 All metrics implement the BaseMetric interface and return MetricResult.
 """
 
+from openagent_eval.metrics.agent import ToolCallCorrectness
 from openagent_eval.metrics.base import BaseMetric, MetricResult
 from openagent_eval.metrics.cost import CostEstimateMetric, TokenCountMetric
 from openagent_eval.metrics.generation import (
@@ -51,6 +52,7 @@ __all__ = [
     # Base
     "BaseMetric",
     "MetricResult",
+    "ToolCallCorrectness",
     # Retrieval
     "ContextPrecision",
     "ContextRecall",
@@ -90,6 +92,7 @@ __all__ = [
 
 # Metric registry for dynamic lookup
 METRIC_REGISTRY: dict[str, type[BaseMetric]] = {
+    "tool_call_correctness": ToolCallCorrectness,
     "context_precision": ContextPrecision,
     "context_recall": ContextRecall,
     "recall_at_k": RecallAtK,
