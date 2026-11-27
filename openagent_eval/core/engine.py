@@ -55,9 +55,15 @@ class Engine:
         """
         self.config = config
         self.registry = Registry()
+        rate_limits = (
+            {config.llm.provider: config.llm.rate_limit}
+            if config.llm.rate_limit is not None
+            else None
+        )
         self.executor = Executor(
             max_workers=config.max_workers,
             timeout=config.timeout,
+            rate_limits=rate_limits,
         )
         self._retriever = (
             retriever if retriever is not None else self._build_retriever()

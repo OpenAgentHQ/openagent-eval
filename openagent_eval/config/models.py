@@ -31,6 +31,11 @@ class LLMConfig(BaseModel):
         0.0, ge=0.0, le=2.0, description="Temperature for generation"
     )
     max_tokens: int | None = Field(None, ge=1, description="Maximum tokens to generate")
+    rate_limit: float | None = Field(
+        None,
+        gt=0.0,
+        description="Maximum LLM requests per second (None disables rate limiting)",
+    )
 
     @field_validator("api_key")
     @classmethod
