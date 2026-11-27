@@ -12,6 +12,32 @@ OpenAgent Eval provides CI/CD integration through:
 
 ## Quick Start
 
+### Run a retrieval check in GitHub Actions
+
+Copy [the retrieval evaluation workflow](https://github.com/OpenAgentHQ/openagent-eval/blob/main/.github/workflows/retrieval-eval.yml)
+to `.github/workflows/retrieval-eval.yml` in your repository. Open a pull request
+to run it. You can also run it from the Actions tab once the workflow is on the
+default branch. The built-in example uses a local BM25 keyword search and a
+mock language model. It requires no API keys.
+
+The two questions ask for a notice date and an invoice amount. Each has a known
+source passage. With `k: 1`, only the first search result counts. The command
+`oaeval test "$EVAL_CONFIG" -t hit_rate:gte:1` requires both results to match
+their expected passages.
+
+| Try it | What to change | Hit rate | Job result |
+| --- | --- | --- | --- |
+| Baseline | Use the example as written. | 2/2 (1.0) | Pass |
+| Missing notice | Under `documents`, replace the notice with `The billing memo records postage for the termination notice.` Keep both expected passages in `questions.jsonl` unchanged. | 1/2 (0.5) | Fail |
+| Restore the notice | Restore the original notice in `documents` and rerun. | 2/2 (1.0) | Pass |
+
+To check your own application, set the Actions repository variable
+`OAEVAL_CONFIG` to the path of your evaluation YAML. This skips the demo and
+runs the same gate against your configured retriever and labeled dataset.
+Dataset paths are relative to the repository root. Enable `hit_rate` in your
+config and set the retrieval depth and threshold to suit your use case.
+Install any additional provider dependencies your config needs in the install step.
+
 ### Using `oaeval test`
 
 The simplest way to add RAG evaluation to your CI/CD pipeline:

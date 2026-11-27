@@ -6,6 +6,22 @@ production. Every retriever implements the same
 `Retriever` interface and returns `Document` objects with a relevance `score`
 normalized to the `[0.0, 1.0]` range (higher = more relevant).
 
+## Use an installed retriever
+
+A package can expose a `Retriever` subclass through its `pyproject.toml`:
+
+```toml
+[project.entry-points."openagent_eval.retrievers"]
+archive = "my_package.search:ArchiveRetriever"
+```
+
+Install the package in the same Python environment as OpenAgent Eval, then
+select it with `retriever.provider: archive`. The factory passes configured
+settings and any configured embedder to the constructor. A subclass can
+declare `SETTINGS_KEYS` to warn about and drop unrecognized settings.
+An installed entry point takes precedence over a built-in of the same name.
+Two installed entries with the same name produce an ambiguity error.
+
 ## Quick start
 
 ```yaml

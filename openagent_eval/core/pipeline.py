@@ -118,7 +118,6 @@ class Pipeline:
         ground_truth = item.get("ground_truth")
         context = item.get("context")
         gt_contexts = item.get("ground_truth_contexts", []) or []
-        metadata = item.get("metadata", {})
         try:
             # 1. Retrieval
             contexts = await self._retrieve(question, context, gt_contexts)
@@ -130,14 +129,11 @@ class Pipeline:
 
             # 3. Metrics
             metrics, metric_errors = self._run_metrics(
-                question,
+                item,
                 answer,
-                ground_truth,
                 contexts,
-                gt_contexts,
                 latency_ms,
                 token_usage,
-                metadata,
             )
 
             return EvaluationResult(
@@ -286,14 +282,11 @@ class Pipeline:
 
     def _run_metrics(
         self,
-        question: str,
+        item: dict[str, Any],
         answer: str,
-        ground_truth: str | None,
         contexts: list[str],
-        gt_contexts: list[str],
         latency_ms: float | None,
         token_usage: Any | None,
-        metadata: dict[str, Any],
     ) -> tuple[dict[str, float], dict[str, str]]:
         """Run every configured metric and collect scores.
 
@@ -308,22 +301,28 @@ class Pipeline:
         completion_tokens = token_usage.completion_tokens if token_usage else 0
         provider_name = getattr(self._llm, "name", None)
         model_name = getattr(self._llm, "model_name", None) or self.config.llm.model
+        traces = {
+            field: item[field]
+            for field in ("expected_tool_calls", "actual_tool_calls")
+            if field in item
+        }
 
         for name, metric in self._metrics:
             try:
                 result = metric.evaluate(
-                    question=question,
+                    question=item.get("question", ""),
                     answer=answer,
-                    ground_truth=ground_truth,
+                    ground_truth=item.get("ground_truth"),
                     contexts=contexts,
                     retrieved_contexts=contexts,
-                    ground_truth_contexts=gt_contexts,
+                    ground_truth_contexts=item.get("ground_truth_contexts") or [],
                     latency_ms=latency_ms,
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
                     provider=provider_name,
                     model=model_name,
-                    metadata=metadata,
+                    metadata=item.get("metadata", {}),
+                    **traces,
                 )
                 scores[name] = result.score
             except Exception as e:

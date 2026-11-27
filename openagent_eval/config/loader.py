@@ -55,6 +55,7 @@ _GENERATION_METRICS = frozenset(
 )
 _PERFORMANCE_METRICS = frozenset({"latency"})
 _COST_METRICS = frozenset({"token_count"})
+_AGENT_METRICS = frozenset({"tool_call_correctness"})
 
 _FIELD_FORMAT_HINTS = {
     "llm.provider": (
@@ -154,6 +155,7 @@ def load_config(config_path: str | Path) -> Config:
                 "generation": [m for m in normalised if m in _GENERATION_METRICS],
                 "performance": [m for m in normalised if m in _PERFORMANCE_METRICS],
                 "cost": [m for m in normalised if m in _COST_METRICS],
+                "agent": [m for m in normalised if m in _AGENT_METRICS],
             }
 
             # Surface metrics that were silently dropped (unknown name or typo)
@@ -163,6 +165,7 @@ def load_config(config_path: str | Path) -> Config:
                 + raw_config["metrics"]["generation"]
                 + raw_config["metrics"]["performance"]
                 + raw_config["metrics"]["cost"]
+                + raw_config["metrics"]["agent"]
             )
             dropped = [m for m in normalised if m not in kept]
             if dropped:

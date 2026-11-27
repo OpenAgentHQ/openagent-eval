@@ -1,0 +1,3 @@
+{"question":"Find the notice in matter A.","expected_tool_calls":[{"name":"search_documents","arguments":{"matter_id":"A"}}],"actual_tool_calls":[{"name":"search_documents","arguments":{"matter_id":"A"}}]}
+{"question":"Find the notice in matter A.","expected_tool_calls":[{"name":"search_documents","arguments":{"matter_id":"A"}}],"actual_tool_calls":[{"name":"search_documents","arguments":{"matter_id":"B"}}]}
+{"question":"Find the notice in matter A.","expected_tool_calls":[{"name":"search_documents","arguments":{"matter_id":"A"}}],"actual_tool_calls":[{"name":"draft_document","arguments":{"matter_id":"A"}}]}

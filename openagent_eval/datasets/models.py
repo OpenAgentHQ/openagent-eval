@@ -4,11 +4,11 @@ This module defines the Pydantic models used for validating dataset entries
 and enforcing the expected schema.
 """
 
-from __future__ import annotations
-
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
+
+from openagent_eval.types.tool_call import ToolCall
 
 
 class DatasetItemModel(BaseModel):
@@ -38,6 +38,8 @@ class DatasetItemModel(BaseModel):
         default_factory=dict, description="Additional metadata"
     )
     contexts: list[str] = Field(default_factory=list, description="Retrieved contexts")
+    expected_tool_calls: list[ToolCall] | None = None
+    actual_tool_calls: list[ToolCall] | None = None
 
     @field_validator("question")
     @classmethod

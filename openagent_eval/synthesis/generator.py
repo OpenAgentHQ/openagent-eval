@@ -94,7 +94,7 @@ def _read_corpus(corpus_path: str | Path) -> list[tuple[str, str]]:
                 message=f"Failed to read corpus file: {path}",
                 original_error=e,
                 details={"path": str(path)},
-            )
+            ) from e
 
     documents: list[tuple[str, str]] = []
     failed_files: list[dict[str, str]] = []
