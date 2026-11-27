@@ -19,6 +19,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from openagent_eval.config.models import Config, DatasetConfig, LLMConfig
 from openagent_eval.core.pipeline import Pipeline
 from openagent_eval.providers.llm.ollama import Ollama
 
@@ -48,10 +49,12 @@ async def test_pipeline_generate_with_ollama_returns_non_empty_answer() -> None:
     # Mock the async HTTP client so no network call is made.
     provider._client.post = AsyncMock(return_value=_mock_generate_response())
 
-    # Build a Pipeline without a full Config; _generate only needs _llm and
-    # _build_prompt, so construct the instance directly and inject the provider.
-    pipeline = Pipeline.__new__(Pipeline)
-    pipeline._llm = provider
+    config = Config(
+        dataset=DatasetConfig(path="unused.json"),
+        llm=LLMConfig(provider="ollama", model="llama3.2"),
+        cache=False,
+    )
+    pipeline = Pipeline(config, llm=provider)
 
     answer, usage, latency_ms = await pipeline._generate(
         question="What is the capital of France?",

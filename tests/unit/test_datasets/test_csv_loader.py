@@ -72,6 +72,21 @@ class TestCSVDatasetLoader:
         assert dataset[0].question == "Q1"
         assert dataset[0].ground_truth is None
 
+    def test_load_trace_columns(self, tmp_path: Path) -> None:
+        path = tmp_path / "traces.csv"
+        row = {
+            "question": "Search?",
+            "expected_tool_calls": '[{"name":"search","arguments":{"id":1}}]',
+            "actual_tool_calls": "[]",
+        }
+        self._write_csv(path, [row, dict(row, actual_tool_calls="")])
+        recorded, missing = self.loader.load(path).items
+        assert recorded.expected_tool_calls == [
+            {"name": "search", "arguments": {"id": 1}}
+        ]
+        assert recorded.to_dict()["actual_tool_calls"] == []
+        assert "actual_tool_calls" not in missing.to_dict()
+
     def test_load_file_not_found(self, tmp_path: Path) -> None:
         """Test loading a non-existent file."""
         csv_path = tmp_path / "nonexistent.csv"

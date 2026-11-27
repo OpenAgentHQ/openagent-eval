@@ -36,6 +36,24 @@ class TestOAEvalPlugin:
         # The parsing happens in the test_command function
         pass
 
+    def test_run_evaluation_invalid_threshold_value_preserves_cause(
+        self, tmp_path, monkeypatch
+    ):
+        """Invalid threshold value chains the underlying ValueError (issue #303)."""
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("")
+        monkeypatch.setattr(
+            "openagent_eval.config.loader.load_config", lambda _path: object()
+        )
+
+        with pytest.raises(ValueError, match="Invalid threshold value") as exc_info:
+            OAEvalPlugin.run_evaluation(
+                config_path=config_file,
+                thresholds=["faithfulness:gte:not_a_number"],
+            )
+
+        assert isinstance(exc_info.value.__cause__, ValueError)
+
 
 class TestPluginMarkers:
     """Tests for pytest plugin markers."""

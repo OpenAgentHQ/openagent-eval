@@ -7,6 +7,7 @@ The CSV should have a header row with column names.
 from __future__ import annotations
 
 import csv
+import json
 from typing import TYPE_CHECKING, Any
 
 from openagent_eval.datasets.base import BaseDatasetLoader, Dataset, DatasetItem
@@ -150,8 +151,6 @@ class CSVDatasetLoader(BaseDatasetLoader):
                     # Try to parse metadata as JSON. A valid JSON value that is
                     # not an object (e.g. a number, array, or bool) must be kept
                     # rather than crashing the whole row.
-                    import json
-
                     try:
                         parsed = json.loads(row["metadata"])
                         item_data["metadata"] = (
@@ -162,17 +161,12 @@ class CSVDatasetLoader(BaseDatasetLoader):
                     except (json.JSONDecodeError, TypeError):
                         item_data["metadata"] = {"raw": row["metadata"]}
 
+                for field in ("expected_tool_calls", "actual_tool_calls"):
+                    if row.get(field):
+                        item_data[field] = json.loads(row[field])
+
                 model = DatasetItemModel(**item_data)
-                items.append(
-                    DatasetItem(
-                        question=model.question,
-                        ground_truth=model.ground_truth,
-                        context=model.context,
-                        metadata=model.metadata,
-                        contexts=model.contexts,
-                        ground_truth_contexts=model.ground_truth_contexts,
-                    )
-                )
+                items.append(DatasetItem(**model.model_dump()))
             except Exception as e:
                 validation_errors.append(f"Row {i + 1}: {e}")
 
