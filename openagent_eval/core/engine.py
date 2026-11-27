@@ -90,6 +90,9 @@ class Engine:
             "metrics_summary": result.summary.get("metrics", {}),
             "total_tokens": result.summary.get("total_tokens", 0),
             "average_latency_ms": result.summary.get("average_latency_ms"),
+            "cache_hits": result.summary.get("cache_hits", 0),
+            "cache_misses": result.summary.get("cache_misses", 0),
+            "cache_hit_rate": result.summary.get("cache_hit_rate", 0.0),
         }
 
         return EvaluationReport(

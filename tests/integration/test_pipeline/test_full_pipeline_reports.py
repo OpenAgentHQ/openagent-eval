@@ -107,6 +107,7 @@ def dataset_dicts(dataset_file: Path) -> list[dict]:
 def mock_config(dataset_file: Path) -> Config:
     return Config(
         dataset=DatasetConfig(path=str(dataset_file)),
+        cache_dir=str(dataset_file.parent / "response-cache"),
         llm=LLMConfig(provider="mock", model="mock-model"),
         retriever=RetrieverConfig(provider="mock", settings={"collection_name": "c"}),
         metrics=MetricsConfig(

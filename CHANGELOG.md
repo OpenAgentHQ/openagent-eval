@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 ### Added
+- Added local disk LLM response caching (`ResponseCache` in `openagent_eval/core/cache.py`), `Config.cache` / `Config.cache_dir` settings, and `cache_hits` / `cache_misses` / `cache_hit_rate` reporting in pipeline and engine summaries.
 - Add `tool_call_correctness` to score the order, tool names, and arguments in recorded agent traces.
 - Add a copyable GitHub Actions workflow that checks retrieval hit rate with a key-free example.
 - Added `oaeval doctor` warnings for configured providers whose optional extras are not installed.

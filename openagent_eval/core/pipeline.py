@@ -13,8 +13,12 @@ from __future__ import annotations
 
 import inspect
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
+
+from openagent_eval.core.cache import ResponseCache
+from openagent_eval.providers.models import TokenUsage
 
 if TYPE_CHECKING:
     from openagent_eval.config.models import Config
@@ -71,6 +75,9 @@ class Pipeline:
         self._executor = executor
         self._k = self._resolve_k()
         self._retriever_supports_ground_truth_contexts: bool | None = None
+        self._cache = ResponseCache(cache_dir=config.cache_dir, enabled=config.cache)
+        self._cache_hits = 0
+        self._cache_misses = 0
 
     # ------------------------------------------------------------------ #
     # Public API                                                          #
@@ -85,6 +92,8 @@ class Pipeline:
         Returns:
             PipelineResult with evaluation results and summary.
         """
+        self._cache_hits = 0
+        self._cache_misses = 0
         result = PipelineResult()
         items = list(dataset)
 
@@ -266,10 +275,41 @@ class Pipeline:
         if self._llm is None:
             return "", None, None
 
+        provider_name = str(
+            getattr(self._llm, "name", None) or self.config.llm.provider or ""
+        )
+        model_name = str(
+            getattr(self._llm, "model_name", None) or self.config.llm.model or ""
+        )
+
+        if self.config.cache:
+            start = time.perf_counter()
+            cached = self._cache.get(provider_name, model_name, prompt)
+            if cached is not None:
+                cached_content, _ = cached
+                self._cache_hits += 1
+                hit_latency_ms = round((time.perf_counter() - start) * 1000.0, 3)
+                # Cache hits consume zero fresh LLM API tokens.
+                return (
+                    cached_content,
+                    TokenUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
+                    hit_latency_ms,
+                )
+            self._cache_misses += 1
+
         try:
             response = await self._llm.generate_with_usage(
                 prompt, ground_truth=ground_truth
             )
+            if self.config.cache:
+                self._cache.set(
+                    provider_name,
+                    model_name,
+                    prompt,
+                    response.content,
+                    usage=response.usage,
+                    latency_ms=response.latency_ms,
+                )
             return response.content, response.usage, response.latency_ms
         except Exception:
             # Generation failure -> empty answer; metrics will report accordingly.
@@ -382,10 +422,18 @@ class Pipeline:
         ]
         avg_latency = sum(latencies) / len(latencies) if latencies else None
 
+        total_cache_lookups = self._cache_hits + self._cache_misses
+        cache_hit_rate = (
+            self._cache_hits / total_cache_lookups if total_cache_lookups > 0 else 0.0
+        )
+
         return {
             "total": len(results),
             "errors": len(errors),
             "metrics": metric_averages,
             "total_tokens": total_tokens,
             "average_latency_ms": avg_latency,
+            "cache_hits": self._cache_hits,
+            "cache_misses": self._cache_misses,
+            "cache_hit_rate": cache_hit_rate,
         }
